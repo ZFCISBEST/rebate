@@ -3,8 +3,11 @@ package com.help.rebate.dao;
 import com.help.rebate.dao.entity.TklConvertHistory;
 import com.help.rebate.dao.entity.TklConvertHistoryExample;
 import java.util.List;
+
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+@Mapper
 public interface TklConvertHistoryDao {
     long countByExample(TklConvertHistoryExample example);
 

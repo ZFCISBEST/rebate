@@ -3,8 +3,11 @@ package com.help.rebate.dao;
 import com.help.rebate.dao.entity.TimeCursorPosition;
 import com.help.rebate.dao.entity.TimeCursorPositionExample;
 import java.util.List;
+
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+@Mapper
 public interface TimeCursorPositionDao {
     long countByExample(TimeCursorPositionExample example);
 

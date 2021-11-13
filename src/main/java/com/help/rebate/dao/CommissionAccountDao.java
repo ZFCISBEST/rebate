@@ -3,8 +3,11 @@ package com.help.rebate.dao;
 import com.help.rebate.dao.entity.CommissionAccount;
 import com.help.rebate.dao.entity.CommissionAccountExample;
 import java.util.List;
+
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+@Mapper
 public interface CommissionAccountDao {
     long countByExample(CommissionAccountExample example);
 

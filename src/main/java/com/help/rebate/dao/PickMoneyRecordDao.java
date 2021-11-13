@@ -3,8 +3,11 @@ package com.help.rebate.dao;
 import com.help.rebate.dao.entity.PickMoneyRecord;
 import com.help.rebate.dao.entity.PickMoneyRecordExample;
 import java.util.List;
+
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+@Mapper
 public interface PickMoneyRecordDao {
     long countByExample(PickMoneyRecordExample example);
 

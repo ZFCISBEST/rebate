@@ -3,8 +3,11 @@ package com.help.rebate.dao;
 import com.help.rebate.dao.entity.UserInfos;
 import com.help.rebate.dao.entity.UserInfosExample;
 import java.util.List;
+
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+@Mapper
 public interface UserInfosDao {
     long countByExample(UserInfosExample example);
 

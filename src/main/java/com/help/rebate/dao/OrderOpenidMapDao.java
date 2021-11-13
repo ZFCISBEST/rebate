@@ -3,8 +3,11 @@ package com.help.rebate.dao;
 import com.help.rebate.dao.entity.OrderOpenidMap;
 import com.help.rebate.dao.entity.OrderOpenidMapExample;
 import java.util.List;
+
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+@Mapper
 public interface OrderOpenidMapDao {
     long countByExample(OrderOpenidMapExample example);
 

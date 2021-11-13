@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.help.rebate.dao.PickMoneyRecordDao">
+  <resultMap id="BaseResultMap" type="com.help.rebate.dao.entity.PickMoneyRecord">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="gmt_created" jdbcType="TIMESTAMP" property="gmtCreated" />
+    <result column="gmt_modified" jdbcType="TIMESTAMP" property="gmtModified" />
+    <result column="open_id" jdbcType="VARCHAR" property="openId" />
+    <result column="external_id" jdbcType="VARCHAR" property="externalId" />
+    <result column="total_commission" jdbcType="VARCHAR" property="totalCommission" />
+    <result column="remain_commission" jdbcType="VARCHAR" property="remainCommission" />
+    <result column="pre_pick_commission" jdbcType="VARCHAR" property="prePickCommission" />
+    <result column="act_pick_commission" jdbcType="VARCHAR" property="actPickCommission" />
+    <result column="pick_attach_info" jdbcType="VARCHAR" property="pickAttachInfo" />
+    <result column="pick_status" jdbcType="VARCHAR" property="pickStatus" />
+    <result column="status" jdbcType="INTEGER" property="status" />
+  </resultMap>
+  <sql id="Example_Where_Clause">
+    <where>
+      <foreach collection="oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause">
+    <where>
+      <foreach collection="example.oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List">
+    id, gmt_created, gmt_modified, open_id, external_id, total_commission, remain_commission, 
+    pre_pick_commission, act_pick_commission, pick_attach_info, pick_status, `status`
+  </sql>
+  <select id="selectByExample" parameterType="com.help.rebate.dao.entity.PickMoneyRecordExample" resultMap="BaseResultMap">
+    select
+    <if test="distinct">
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from pick_money_record
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null">
+      order by ${orderByClause}
+    </if>
+    <if test="limit != null">
+      <if test="offset != null">
+        limit ${offset}, ${limit}
+      </if>
+      <if test="offset == null">
+        limit ${limit}
+      </if>
+    </if>
+    <if test="forUpdate != null and forUpdate == true">
+      for update
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from pick_money_record
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from pick_money_record
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.help.rebate.dao.entity.PickMoneyRecordExample">
+    delete from pick_money_record
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.help.rebate.dao.entity.PickMoneyRecord" useGeneratedKeys="true">
+    insert into pick_money_record (gmt_created, gmt_modified, open_id, 
+      external_id, total_commission, remain_commission, 
+      pre_pick_commission, act_pick_commission, pick_attach_info, 
+      pick_status, `status`)
+    values (#{gmtCreated,jdbcType=TIMESTAMP}, #{gmtModified,jdbcType=TIMESTAMP}, #{openId,jdbcType=VARCHAR}, 
+      #{externalId,jdbcType=VARCHAR}, #{totalCommission,jdbcType=VARCHAR}, #{remainCommission,jdbcType=VARCHAR}, 
+      #{prePickCommission,jdbcType=VARCHAR}, #{actPickCommission,jdbcType=VARCHAR}, #{pickAttachInfo,jdbcType=VARCHAR}, 
+      #{pickStatus,jdbcType=VARCHAR}, #{status,jdbcType=INTEGER})
+  </insert>
+  <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.help.rebate.dao.entity.PickMoneyRecord" useGeneratedKeys="true">
+    insert into pick_money_record
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="gmtCreated != null">
+        gmt_created,
+      </if>
+      <if test="gmtModified != null">
+        gmt_modified,
+      </if>
+      <if test="openId != null">
+        open_id,
+      </if>
+      <if test="externalId != null">
+        external_id,
+      </if>
+      <if test="totalCommission != null">
+        total_commission,
+      </if>
+      <if test="remainCommission != null">
+        remain_commission,
+      </if>
+      <if test="prePickCommission != null">
+        pre_pick_commission,
+      </if>
+      <if test="actPickCommission != null">
+        act_pick_commission,
+      </if>
+      <if test="pickAttachInfo != null">
+        pick_attach_info,
+      </if>
+      <if test="pickStatus != null">
+        pick_status,
+      </if>
+      <if test="status != null">
+        `status`,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="gmtCreated != null">
+        #{gmtCreated,jdbcType=TIMESTAMP},
+      </if>
+      <if test="gmtModified != null">
+        #{gmtModified,jdbcType=TIMESTAMP},
+      </if>
+      <if test="openId != null">
+        #{openId,jdbcType=VARCHAR},
+      </if>
+      <if test="externalId != null">
+        #{externalId,jdbcType=VARCHAR},
+      </if>
+      <if test="totalCommission != null">
+        #{totalCommission,jdbcType=VARCHAR},
+      </if>
+      <if test="remainCommission != null">
+        #{remainCommission,jdbcType=VARCHAR},
+      </if>
+      <if test="prePickCommission != null">
+        #{prePickCommission,jdbcType=VARCHAR},
+      </if>
+      <if test="actPickCommission != null">
+        #{actPickCommission,jdbcType=VARCHAR},
+      </if>
+      <if test="pickAttachInfo != null">
+        #{pickAttachInfo,jdbcType=VARCHAR},
+      </if>
+      <if test="pickStatus != null">
+        #{pickStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="status != null">
+        #{status,jdbcType=INTEGER},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.help.rebate.dao.entity.PickMoneyRecordExample" resultType="java.lang.Long">
+    select count(*) from pick_money_record
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map">
+    update pick_money_record
+    <set>
+      <if test="record.id != null">
+        id = #{record.id,jdbcType=INTEGER},
+      </if>
+      <if test="record.gmtCreated != null">
+        gmt_created = #{record.gmtCreated,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.gmtModified != null">
+        gmt_modified = #{record.gmtModified,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.openId != null">
+        open_id = #{record.openId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.externalId != null">
+        external_id = #{record.externalId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.totalCommission != null">
+        total_commission = #{record.totalCommission,jdbcType=VARCHAR},
+      </if>
+      <if test="record.remainCommission != null">
+        remain_commission = #{record.remainCommission,jdbcType=VARCHAR},
+      </if>
+      <if test="record.prePickCommission != null">
+        pre_pick_commission = #{record.prePickCommission,jdbcType=VARCHAR},
+      </if>
+      <if test="record.actPickCommission != null">
+        act_pick_commission = #{record.actPickCommission,jdbcType=VARCHAR},
+      </if>
+      <if test="record.pickAttachInfo != null">
+        pick_attach_info = #{record.pickAttachInfo,jdbcType=VARCHAR},
+      </if>
+      <if test="record.pickStatus != null">
+        pick_status = #{record.pickStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="record.status != null">
+        `status` = #{record.status,jdbcType=INTEGER},
+      </if>
+    </set>
+    <if test="_parameter != null">
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map">
+    update pick_money_record
+    set id = #{record.id,jdbcType=INTEGER},
+      gmt_created = #{record.gmtCreated,jdbcType=TIMESTAMP},
+      gmt_modified = #{record.gmtModified,jdbcType=TIMESTAMP},
+      open_id = #{record.openId,jdbcType=VARCHAR},
+      external_id = #{record.externalId,jdbcType=VARCHAR},
+      total_commission = #{record.totalCommission,jdbcType=VARCHAR},
+      remain_commission = #{record.remainCommission,jdbcType=VARCHAR},
+      pre_pick_commission = #{record.prePickCommission,jdbcType=VARCHAR},
+      act_pick_commission = #{record.actPickCommission,jdbcType=VARCHAR},
+      pick_attach_info = #{record.pickAttachInfo,jdbcType=VARCHAR},
+      pick_status = #{record.pickStatus,jdbcType=VARCHAR},
+      `status` = #{record.status,jdbcType=INTEGER}
+    <if test="_parameter != null">
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.help.rebate.dao.entity.PickMoneyRecord">
+    update pick_money_record
+    <set>
+      <if test="gmtCreated != null">
+        gmt_created = #{gmtCreated,jdbcType=TIMESTAMP},
+      </if>
+      <if test="gmtModified != null">
+        gmt_modified = #{gmtModified,jdbcType=TIMESTAMP},
+      </if>
+      <if test="openId != null">
+        open_id = #{openId,jdbcType=VARCHAR},
+      </if>
+      <if test="externalId != null">
+        external_id = #{externalId,jdbcType=VARCHAR},
+      </if>
+      <if test="totalCommission != null">
+        total_commission = #{totalCommission,jdbcType=VARCHAR},
+      </if>
+      <if test="remainCommission != null">
+        remain_commission = #{remainCommission,jdbcType=VARCHAR},
+      </if>
+      <if test="prePickCommission != null">
+        pre_pick_commission = #{prePickCommission,jdbcType=VARCHAR},
+      </if>
+      <if test="actPickCommission != null">
+        act_pick_commission = #{actPickCommission,jdbcType=VARCHAR},
+      </if>
+      <if test="pickAttachInfo != null">
+        pick_attach_info = #{pickAttachInfo,jdbcType=VARCHAR},
+      </if>
+      <if test="pickStatus != null">
+        pick_status = #{pickStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="status != null">
+        `status` = #{status,jdbcType=INTEGER},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.help.rebate.dao.entity.PickMoneyRecord">
+    update pick_money_record
+    set gmt_created = #{gmtCreated,jdbcType=TIMESTAMP},
+      gmt_modified = #{gmtModified,jdbcType=TIMESTAMP},
+      open_id = #{openId,jdbcType=VARCHAR},
+      external_id = #{externalId,jdbcType=VARCHAR},
+      total_commission = #{totalCommission,jdbcType=VARCHAR},
+      remain_commission = #{remainCommission,jdbcType=VARCHAR},
+      pre_pick_commission = #{prePickCommission,jdbcType=VARCHAR},
+      act_pick_commission = #{actPickCommission,jdbcType=VARCHAR},
+      pick_attach_info = #{pickAttachInfo,jdbcType=VARCHAR},
+      pick_status = #{pickStatus,jdbcType=VARCHAR},
+      `status` = #{status,jdbcType=INTEGER}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>

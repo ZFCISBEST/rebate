@@ -7,6 +7,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
  * @author zfcisbest
  * @date 21/11/13
  */
+@Service
 public class PrettyHttpService {
     private static final Logger logger = LoggerFactory.getLogger(PrettyHttpService.class);
 

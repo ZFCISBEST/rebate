@@ -16,16 +16,16 @@ public class EmptyUtils {
      * 断言条件必须为真
      * @param object
      */
-    public static boolean isNotEmpty(String object) {
-        return object!=null && !object.trim().isEmpty();
+    public static boolean isEmpty(String object) {
+        return object == null || object.trim().isEmpty();
     }
 
     /**
      * 断言条件必须为真
      * @param object
      */
-    public static boolean isNotEmpty(Collection object) {
-        return object!=null && object.size()!=0;
+    public static boolean isEmpty(Collection object) {
+        return object == null || object.size() == 0;
     }
 
     /**

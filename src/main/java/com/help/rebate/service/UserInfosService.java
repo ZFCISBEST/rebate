@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.Date;
 import java.util.List;
 
@@ -30,7 +31,7 @@ public class UserInfosService {
     /**
      * 用户操作
      */
-    @Autowired
+    @Resource
     private UserInfosDao userInfosDao;
 
     /**

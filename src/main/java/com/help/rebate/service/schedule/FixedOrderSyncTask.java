@@ -15,4 +15,11 @@ public class FixedOrderSyncTask {
     private static final Logger logger = LoggerFactory.getLogger(FixedOrderSyncTask.class);
 
 
+    public void setRunning(boolean running) {
+
+    }
+
+    public void cleanContext(String orderUpdateTime, Long minuteStep, int orderScene, Integer queryType, Boolean running) {
+
+    }
 }

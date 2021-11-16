@@ -109,11 +109,13 @@ public class OrderService {
         OrderDetailExample orderDetailExample = new OrderDetailExample();
         orderDetailExample.setLimit(20);
         OrderDetailExample.Criteria criteria = orderDetailExample.createCriteria();
+
         if (!EmptyUtils.isEmpty(parentTradeId)) {
             criteria.andParentTradeIdEqualTo(parentTradeId);
         }
         if (!EmptyUtils.isEmpty(tradeId)) {
             criteria.andTradeIdEqualTo(tradeId);
+            orderDetailExample.setLimit(1);
         }
 
         //查询

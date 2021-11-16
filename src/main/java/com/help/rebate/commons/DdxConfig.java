@@ -24,6 +24,8 @@ public class DdxConfig {
      */
     public final static String TKL_PRIVILEGES_URL = "http://api.tbk.dingdanxia.com/tbk/tkl_privilege";
 
-
-
+    /**
+     * 订单同步接口
+     */
+    public final static String TKL_ORDER_DETAILS_URL = "http://api.tbk.dingdanxia.com/tbk/order_details";
 }

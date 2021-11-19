@@ -47,9 +47,9 @@ public class PubsiteCombinationController {
      */
     @ApiOperation("构建推广位组合")
     @RequestMapping("/build")
-    public SafeServiceResponse build(@ApiParam(name = "淘口令类型", value = "渠道(relation)、会员(special)、虚拟(virtual)、无(none)，默认为virtual") @RequestParam(required = false) String tklType,
-                                     @ApiParam(name = "对应类型下的Id") @RequestParam(required = false) String vipIds,
-                                     @ApiParam(name = "对应类型下可用的所有推广位") @RequestParam(required = false) String pubSites) {
+    public SafeServiceResponse build(@ApiParam(name = "tklType", value = "淘口令类型 渠道(relation)、会员(special)、虚拟(virtual)、无(none)，默认为virtual") @RequestParam(required = false) String tklType,
+                                     @ApiParam(name = "vipIds", value = "对应类型下的Id") @RequestParam(required = false) String vipIds,
+                                     @ApiParam(name = "pubSites", value = "对应类型下可用的所有推广位") @RequestParam(required = false) String pubSites) {
         try{
             SafeServiceResponse.startBiz();
 
@@ -81,8 +81,8 @@ public class PubsiteCombinationController {
      */
     @ApiOperation("构建推广位组合")
     @RequestMapping("/list/all")
-    public SafeServiceResponse listAll(@ApiParam(name = "淘口令类型", value = "渠道(relation)、会员(special)、虚拟(virtual)、无(none)，默认为null") @RequestParam(required = false) String tklType,
-                                     @ApiParam(name = "对应类型下的Id") @RequestParam(required = false) String vipIds) {
+    public SafeServiceResponse listAll(@ApiParam(name = "tklType", value = "淘口令类型 渠道(relation)、会员(special)、虚拟(virtual)、无(none)，默认为null") @RequestParam(required = false) String tklType,
+                                       @ApiParam(name = "vipIds", value = "对应类型下的Id") @RequestParam(required = false) String vipIds) {
         try{
             SafeServiceResponse.startBiz();
 

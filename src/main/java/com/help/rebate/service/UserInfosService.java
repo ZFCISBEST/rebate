@@ -54,7 +54,12 @@ public class UserInfosService {
         UserInfosExample example = new UserInfosExample();
         example.setLimit(1);
         UserInfosExample.Criteria criteria = example.createCriteria();
-        criteria.andOpenIdEqualTo(openId);
+        if (!EmptyUtils.isEmpty(openId)) {
+            criteria.andOpenIdEqualTo(openId);
+        }
+        if (!EmptyUtils.isEmpty(externalId)) {
+            criteria.andExternalIdEqualTo(externalId);
+        }
         criteria.andDataFromEqualTo(dataFrom);
         List<UserInfos> userInfos = userInfosDao.selectByExample(example);
 
@@ -65,7 +70,7 @@ public class UserInfosService {
             userInfo.setGmtModified(new Date());
             userInfo.setOpenId(openId);
             userInfo.setOpenName(null);
-            userInfo.setExternalId(externalId == null ? openId : externalId);
+            userInfo.setExternalId(EmptyUtils.isEmpty(externalId) ? openId : externalId);
             userInfo.setSpecialId(specialId);
             userInfo.setRelationId(relationId);
             userInfo.setDataFrom(dataFrom);
@@ -82,7 +87,16 @@ public class UserInfosService {
         infos.setGmtModified(new Date());
         infos.setRelationId(relationId);
         infos.setSpecialId(specialId);
-        infos.setExternalId(externalId == null ? openId : externalId);
+        if (!EmptyUtils.isEmpty(openId)){
+            infos.setOpenId(openId);
+        }
+        //更新操作，不能因为externalId为null，就指定成openId，需要加一层判断
+        if (!EmptyUtils.isEmpty(externalId)){
+            infos.setExternalId(externalId);
+        }
+        else if (EmptyUtils.isEmpty(externalId) && EmptyUtils.isEmpty(infos.getExternalId())){
+            infos.setExternalId(openId);
+        }
         int affectedCnt = userInfosDao.updateByPrimaryKeySelective(infos);
 
         Checks.isTrue(affectedCnt == 1, "存在的用户，更新用户信息失败");

@@ -1,5 +1,6 @@
 package com.help.rebate.service.wx;
 
+import com.alibaba.fastjson.JSON;
 import com.help.rebate.service.TklConvertService;
 import com.help.rebate.utils.MsgUtil;
 import com.help.rebate.vo.TextMessage;
@@ -26,14 +27,15 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     public String newMessageRequest(HttpServletRequest request) {
-        String ReplyMessage = null;
+        String replyMessage = null;
 
         Map<String,String> map = new HashMap<>();
-        logger.info("request="+request.toString());
+        //logger.info("request="+request.toString());
 
 
         try {
             map = MsgUtil.xmlToMap(request);
+            logger.info("request = {}", JSON.toJSONString(map, true));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -46,8 +48,6 @@ public class MessageServiceImpl implements MessageService {
         // 消息内容
         String content = map.get("Content");
 
-        logger.info(fromUserName+";"+toUserName+";"+msgType+";"+content);
-
         if (msgType.equals("text")) {
             //这里根据关键字执行相应的逻辑，只有你想不到的，没有做不到的
             /*if(content.equals("xxx")){
@@ -57,7 +57,7 @@ public class MessageServiceImpl implements MessageService {
             String tkl = content;
             String openId = fromUserName;
             String tklType = "virtual";
-            String newTkl = tklConvertService.convert(tkl, openId, null, tklType);
+            String newTkl = tklConvertService.convert(tkl, openId, null, tklType, "tb");
 
             //自动回复
             TextMessage text = new TextMessage();
@@ -66,9 +66,9 @@ public class MessageServiceImpl implements MessageService {
             text.setFromUserName(toUserName);
             text.setCreateTime(new Date().getTime());
             text.setMsgType(msgType);
-            ReplyMessage = MsgUtil.textMessageToXML(text);
+            replyMessage = MsgUtil.textMessageToXML(text);
 
-            logger.info("returnText="+ReplyMessage);
+            logger.info("returnText = {}", replyMessage);
         } else {
             TextMessage text = new TextMessage();
             text.setContent("回复：该消息非文本格式；暂无自动回复能力。");
@@ -76,11 +76,11 @@ public class MessageServiceImpl implements MessageService {
             text.setFromUserName(toUserName);
             text.setCreateTime(new Date().getTime());
             text.setMsgType("text");
-            ReplyMessage = MsgUtil.textMessageToXML(text);
+            replyMessage = MsgUtil.textMessageToXML(text);
 
-            logger.info("returnOther="+ReplyMessage);
+            logger.info("returnOther="+replyMessage);
         }
 
-        return ReplyMessage;
+        return replyMessage;
     }
 }

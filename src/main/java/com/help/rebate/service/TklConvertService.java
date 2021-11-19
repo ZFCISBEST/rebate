@@ -59,13 +59,14 @@ public class TklConvertService {
      * @param openId 外部ID
      * @param externalId 外部ID
      * @param tklType 口令类型 - 渠道、会员、虚拟、无
+     * @param dataFrom 来源 tb、jd、pdd、wph（唯品会）、mt（美团）、elem（饿了么）
      * @return
      */
-    public String convert(String tkl, String openId, String externalId, String tklType) {
+    public String convert(String tkl, String openId, String externalId, String tklType, String dataFrom) {
         // TODO: 21/11/15 接入缓存系统，这里暂略
 
         //查询openId的用户信息，如果不存在，那么重新插入
-        UserInfos userInfo = getOrCreateUserInfos(openId, externalId, "tb");
+        UserInfos userInfo = getOrCreateUserInfos(openId, externalId, dataFrom);
         openId = userInfo.getOpenId();
         externalId = userInfo.getExternalId();
         Checks.isNotEmpty(externalId, "openId必须依附externalId存在，当前不存在externalId，请管理员维护映射关系");
@@ -239,7 +240,7 @@ public class TklConvertService {
      * @return
      */
     @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRED)
-    private UserInfos getOrCreateUserInfos(String openId, String externalId, String dataFrom) {
+    public UserInfos getOrCreateUserInfos(String openId, String externalId, String dataFrom) {
         UserInfosExample userInfosExample = new UserInfosExample();
         userInfosExample.setLimit(1);
         UserInfosExample.Criteria criteria = userInfosExample.createCriteria();
@@ -257,13 +258,16 @@ public class TklConvertService {
             return userInfos.get(0);
         }
 
+        //两个不能同时为空
+        Checks.isTrue(!EmptyUtils.isEmpty(openId) || !EmptyUtils.isEmpty(externalId), "openId和externalId不能同时为空");
+
         //不存在，执行插入操作
         UserInfos infos = new UserInfos();
         infos.setGmtCreated(new Date());
         infos.setGmtModified(new Date());
         infos.setOpenId(openId);
         infos.setOpenName(null);
-        infos.setExternalId(externalId);
+        infos.setExternalId(EmptyUtils.isEmpty(externalId) ? openId : externalId);
         infos.setSpecialId(null);
         infos.setRelationId(null);
         infos.setDataFrom(dataFrom);

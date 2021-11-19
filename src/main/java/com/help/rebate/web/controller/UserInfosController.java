@@ -7,6 +7,7 @@ import com.help.rebate.utils.EmptyUtils;
 import com.help.rebate.web.response.SafeServiceResponse;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,16 +35,24 @@ public class UserInfosController {
 
     @ApiOperation("创建新用户")
     @RequestMapping("/create")
-    public SafeServiceResponse create(@RequestParam String openId,
-                                      @RequestParam(required = false) String relationId,
-                                      @RequestParam(required = false) String specialId,
-                                      @RequestParam(required = false) String externalId,
-                                      @RequestParam(required = false) String dataFrom) {
+    public SafeServiceResponse create(@ApiParam(name = "openId", value = "微信openId 和externalId不能同时为空") @RequestParam(required = false) String openId,
+                                      @ApiParam(name = "relationId", value = "渠道ID 同步自淘宝联盟") @RequestParam(required = false) String relationId,
+                                      @ApiParam(name = "specialId", value = "会员ID 同步自淘宝联盟") @RequestParam(required = false) String specialId,
+                                      @ApiParam(name = "externalId", value = "外部关联ID 默认和openId一致，和openId不能同时为空") @RequestParam(required = false) String externalId,
+                                      @ApiParam(name = "dataFrom", value = "来源 tb、jd、pdd、wph、mt、elem") @RequestParam(required = false) String dataFrom) {
         try{
             SafeServiceResponse.startBiz();
 
+            //重构
+            if (EmptyUtils.isEmpty(openId)) {
+                openId = null;
+            }
+            if (EmptyUtils.isEmpty(externalId)) {
+                externalId = null;
+            }
+
             //校验
-            Checks.isNotEmpty(openId, "openId不能为空");
+            Checks.isTrue(openId != null || externalId != null, "openId和externalId不能同时为空");
 
             //为空，默认为淘宝
             if (EmptyUtils.isEmpty(dataFrom)) {
@@ -61,10 +70,10 @@ public class UserInfosController {
         }
     }
 
-    @ApiOperation("自动建立开放ID和会员信息的关系")
+    @ApiOperation("自动建立开放ID和会员信息的关系，根据给定条件查询淘宝联盟的会员数据，并与本地数据库的数据做关联")
     @RequestMapping("/automap/special")
-    public SafeServiceResponse create(@RequestParam(required = false) String specialId,
-                                      @RequestParam(required = false) String externalId) {
+    public SafeServiceResponse create(@ApiParam(name = "specialId", value = "会员ID 同步自淘宝联盟") @RequestParam(required = false) String specialId,
+                                      @ApiParam(name = "externalId", value = "外部ID 默认和openId一致，作为关联会员ID和openId的中间关系") @RequestParam(required = false) String externalId) {
         try{
             SafeServiceResponse.startBiz();
 

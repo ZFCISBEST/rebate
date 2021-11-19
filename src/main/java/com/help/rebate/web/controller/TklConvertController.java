@@ -31,16 +31,28 @@ import java.util.Map;
 public class TklConvertController {
     private static final Logger logger = LoggerFactory.getLogger(TklConvertController.class);
 
+    /**
+     * 口令转链服务
+     */
     @Autowired
     private TklConvertService tklConvertService;
 
+    /**
+     * 转链接
+     * @param tkl
+     * @param openId
+     * @param externalId
+     * @param tklType
+     * @param dataFrom
+     * @return
+     */
     @ApiOperation("转链接")
     @RequestMapping("/convert")
-    public SafeServiceResponse convert(@ApiParam(name = "原始淘口令") @RequestParam String tkl,
-                                       @ApiParam(name = "微信的OpenId") @RequestParam(required = false) String openId,
-                                       @ApiParam(name = "淘宝联盟外部ID") @RequestParam(required = false) String externalId,
-                                       @ApiParam(name = "淘口令类型", value = "渠道(relation)、会员(special)、虚拟(virtual)、无(none)，默认为virtual")
-                                           @RequestParam(required = false) String tklType) {
+    public SafeServiceResponse convert(@ApiParam(name = "tkl", value = "原始淘口令") @RequestParam String tkl,
+                                       @ApiParam(name = "openId", value = "微信的OpenId") @RequestParam(required = false) String openId,
+                                       @ApiParam(name = "externalId", value = "淘宝联盟外部ID") @RequestParam(required = false) String externalId,
+                                       @ApiParam(name = "tklType", value = "淘口令类型 渠道(relation)、会员(special)、虚拟(virtual)、无(none)，默认为virtual") @RequestParam(required = false) String tklType,
+                                       @ApiParam(name = "dataFrom", value = "口令的平台来源 tb、jd、pdd、wph（唯品会）、mt（美团）、elem（饿了么）") @RequestParam String dataFrom) {
         try{
             SafeServiceResponse.startBiz();
 
@@ -53,8 +65,13 @@ public class TklConvertController {
                 tklType = "virtual";
             }
 
+            //为空就是淘宝
+            if (EmptyUtils.isEmpty(dataFrom)) {
+                dataFrom = "tb";
+            }
+
             //转换
-            String newTkl = tklConvertService.convert(tkl, openId, externalId, tklType);
+            String newTkl = tklConvertService.convert(tkl, openId, externalId, tklType, dataFrom);
 
             //返回
             return SafeServiceResponse.success(newTkl);

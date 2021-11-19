@@ -50,11 +50,11 @@ public class OrderDetailController {
      */
     @ApiOperation("订单同步")
     @RequestMapping("/build")
-    public SafeServiceResponse build(@ApiParam(name = "订单同步起始时间", value = "yyyy-MM-dd HH:mm:ss，为空时直接取数据库的数据") @RequestParam(required = false) String orderUpdateTime,
-                                     @ApiParam(name = "取数据时长", value = "范围[1-180]，为空取默认180") @RequestParam(required = false) Long minuteStep,
-                                     @ApiParam(name = "订单类型", value = "1-常规订单、2-渠道订单、3-会员运营订单、0-都查，默认0都查") @RequestParam(required = false) Integer orderScene,
-                                     @ApiParam(name = "时间的属性", value = "1-创建时间、2-付款时间、3-结算时间、4-更新时间、0-都使用，默认2付款时间") @RequestParam(required = false) Integer queryType,
-                                     @ApiParam(name = "运行标识", value = "true/false") @RequestParam(required = false) Boolean running){
+    public SafeServiceResponse build(@ApiParam(name = "orderUpdateTime", value = "订单同步起始时间 yyyy-MM-dd HH:mm:ss，为空时直接取数据库的数据") @RequestParam(required = false) String orderUpdateTime,
+                                     @ApiParam(name = "minuteStep", value = "取数据时长 范围[1-180]，为空取默认180") @RequestParam(required = false) Long minuteStep,
+                                     @ApiParam(name = "orderScene", value = "订单类型 1-常规订单、2-渠道订单、3-会员运营订单、0-都查，默认0都查") @RequestParam(required = false) Integer orderScene,
+                                     @ApiParam(name = "queryType", value = "时间的属性1-创建时间、2-付款时间、3-结算时间、4-更新时间、0-都使用，默认2付款时间") @RequestParam(required = false) Integer queryType,
+                                     @ApiParam(name = "running", value = "运行标识 true/false") @RequestParam(required = false) Boolean running){
         try {
             SafeServiceResponse.startBiz();
 
@@ -97,12 +97,12 @@ public class OrderDetailController {
      */
     @ApiOperation("列出所有符合条件的订单")
     @RequestMapping("/list/all")
-    public SafeServiceResponse listAll(@ApiParam(name = "交易父单号", value = "指定父单号") @RequestParam(required = false) String parentTradeId,
-                                       @ApiParam(name = "交易子单", value = "指定子单号") @RequestParam(required = false) String tradeId,
-                                       @ApiParam(name = "会员ID") @RequestParam(required = false) String specialId,
-                                       @ApiParam(name = "渠道ID") @RequestParam(required = false) String relationId,
-                                       @ApiParam(name = "页码", value = "默认为1") @RequestParam(required = false) Integer pageNo,
-                                       @ApiParam(name = "每页行数", value = "默认为10") @RequestParam(required = false) Integer pageSize){
+    public SafeServiceResponse listAll(@ApiParam(name = "parentTradeId", value = "指定父单号") @RequestParam(required = false) String parentTradeId,
+                                       @ApiParam(name = "tradeId", value = "指定子单号") @RequestParam(required = false) String tradeId,
+                                       @ApiParam(name = "specialId", value = "会员ID") @RequestParam(required = false) String specialId,
+                                       @ApiParam(name = "relationId", value = "渠道ID") @RequestParam(required = false) String relationId,
+                                       @ApiParam(name = "pageNo", value = "页码 默认为1") @RequestParam(required = false) Integer pageNo,
+                                       @ApiParam(name = "pageSize", value = "每页行数 默认为10") @RequestParam(required = false) Integer pageSize){
         try{
             SafeServiceResponse.startBiz();
 

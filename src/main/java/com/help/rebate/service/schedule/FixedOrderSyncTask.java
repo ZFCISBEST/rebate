@@ -87,7 +87,7 @@ public class FixedOrderSyncTask {
     @Scheduled(cron = "*/2 * * * * ?")
     public void execute() {
         if (!running) {
-            logger.info("[fix-sync-task] running flag:{}", running);
+            logger.debug("[fix-sync-task] running flag:{}", running);
             return;
         }
 

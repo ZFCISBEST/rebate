@@ -7,6 +7,7 @@ import com.help.rebate.dao.entity.*;
 import com.help.rebate.utils.Checks;
 import com.help.rebate.utils.EmptyUtils;
 import com.help.rebate.utils.MD5Utils;
+import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -76,11 +77,11 @@ public class TklConvertService {
             DdxReturnPriceService.TklDO newTkl = null;
             if (!EmptyUtils.isEmpty(userInfo.getSpecialId())) {
                 //使用会员的specialId
-                newTkl = ddxReturnPriceService.generateReturnPriceInfo(tkl, null, userInfo.getSpecialId(), null, 1.0);
+                newTkl = ddxReturnPriceService.generateReturnPriceInfo(tkl, null, userInfo.getSpecialId(), null, 0.88);
             }
             else {
                 //使用引导添加会员的externalId，默认与openId是一样的
-                newTkl = ddxReturnPriceService.generateReturnPriceInfo(tkl, null, null, userInfo.getExternalId(), 1.0);
+                newTkl = ddxReturnPriceService.generateReturnPriceInfo(tkl, null, null, userInfo.getExternalId(), 0.88);
             }
 
             //存储到转链记录表
@@ -173,7 +174,7 @@ public class TklConvertService {
             vipId = vipIdAndPubSite[0];
         }
 
-        return ddxReturnPriceService.generateReturnPriceInfo(tkl, vipId, null, null, pubSite, 1.0);
+        return ddxReturnPriceService.generateReturnPriceInfo(tkl, vipId, null, null, pubSite, 0.88);
     }
 
     /**
@@ -299,8 +300,8 @@ public class TklConvertService {
 
             //会员转码，该字段传入的是null，因为不需要
             tklConvertHistory.setPubsiteCombination(pubSiteCombination);
-            tklConvertHistory.setTkl(tkl);
-            tklConvertHistory.setNewTkl(newTkl.getTkl());
+            tklConvertHistory.setTkl(Base64.encodeBase64String(tkl.getBytes()));
+            tklConvertHistory.setNewTkl(Base64.encodeBase64String(newTkl.getTkl().getBytes()));
             tklConvertHistory.setItemId(newTkl.getItemId());
             tklConvertHistory.setTkltype(tklType);
             tklConvertHistory.setAttachInfo(null);
@@ -315,8 +316,8 @@ public class TklConvertService {
         //执行更新
         TklConvertHistory tklConvertHistory = tklConvertHistories.get(0);
         tklConvertHistory.setGmtModified(new Date());
-        tklConvertHistory.setTkl(tkl);
-        tklConvertHistory.setNewTkl(newTkl.getTkl());
+        tklConvertHistory.setTkl(Base64.encodeBase64String(tkl.getBytes()));
+        tklConvertHistory.setNewTkl(Base64.encodeBase64String(newTkl.getTkl().getBytes()));
         int affectedCnt = tklConvertHistoryDao.updateByPrimaryKeySelective(tklConvertHistory);
         Checks.isTrue(affectedCnt == 1, "更新新生成的淘口令失败");
     }

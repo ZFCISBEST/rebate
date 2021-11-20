@@ -28,7 +28,7 @@ public class DdxReturnPriceService {
     /**
      * 金额格式化
      */
-    private static final DecimalFormat decimal = new DecimalFormat("##.#");
+    private static final DecimalFormat decimal = new DecimalFormat("##.##");
 
     /**
      * 生成的口令的模板

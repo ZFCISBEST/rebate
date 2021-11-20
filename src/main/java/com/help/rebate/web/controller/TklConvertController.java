@@ -52,7 +52,7 @@ public class TklConvertController {
                                        @ApiParam(name = "openId", value = "微信的OpenId") @RequestParam(required = false) String openId,
                                        @ApiParam(name = "externalId", value = "淘宝联盟外部ID") @RequestParam(required = false) String externalId,
                                        @ApiParam(name = "tklType", value = "淘口令类型 渠道(relation)、会员(special)、虚拟(virtual)、无(none)，默认为virtual") @RequestParam(required = false) String tklType,
-                                       @ApiParam(name = "dataFrom", value = "口令的平台来源 tb、jd、pdd、wph（唯品会）、mt（美团）、elem（饿了么）") @RequestParam String dataFrom) {
+                                       @ApiParam(name = "dataFrom", value = "口令的平台来源 tb、jd、pdd、wph（唯品会）、mt（美团）、elem（饿了么）") @RequestParam(required = false) String dataFrom) {
         try{
             SafeServiceResponse.startBiz();
 

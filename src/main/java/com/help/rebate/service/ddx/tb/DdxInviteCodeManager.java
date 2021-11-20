@@ -1,4 +1,4 @@
-package com.help.rebate.service;
+package com.help.rebate.service.ddx.tb;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -62,7 +62,7 @@ public class DdxInviteCodeManager {
             params.put("external_id", externalId);
         }
 
-        String result = prettyHttpService.get(DdxConfig.PUBLISHER_URL, params);
+        String result = prettyHttpService.get(DdxConfig.TB_PUBLISHER_URL, params);
         return JSON.parseObject(result);
     }
 

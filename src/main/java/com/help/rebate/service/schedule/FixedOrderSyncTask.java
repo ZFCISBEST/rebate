@@ -172,7 +172,7 @@ public class FixedOrderSyncTask {
                     params.put("page_size", pageSize);
 
                     //请求数据
-                    String response = prettyHttpService.get(DdxConfig.TKL_ORDER_DETAILS_URL, params);
+                    String response = prettyHttpService.get(DdxConfig.TB_TKL_ORDER_DETAILS_URL, params);
                     JSONObject jsonObject = JSON.parseObject(response);
 
                     //判定

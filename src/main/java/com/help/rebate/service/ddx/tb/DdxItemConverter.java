@@ -1,4 +1,4 @@
-package com.help.rebate.service;
+package com.help.rebate.service.ddx.tb;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -60,7 +60,7 @@ public class DdxItemConverter {
             params.put("external_id", externalId);
         }
 
-        String result = prettyHttpService.get(DdxConfig.TKL_PRIVILEGES_URL, params);
+        String result = prettyHttpService.get(DdxConfig.TB_TKL_PRIVILEGES_URL, params);
         return JSON.parseObject(result);
     }
 

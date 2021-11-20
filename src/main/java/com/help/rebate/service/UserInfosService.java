@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.help.rebate.dao.UserInfosDao;
 import com.help.rebate.dao.entity.UserInfos;
 import com.help.rebate.dao.entity.UserInfosExample;
+import com.help.rebate.service.ddx.tb.DdxInviteCodeManager;
 import com.help.rebate.utils.Checks;
 import com.help.rebate.utils.EmptyUtils;
 import com.help.rebate.utils.PropertyValueResolver;

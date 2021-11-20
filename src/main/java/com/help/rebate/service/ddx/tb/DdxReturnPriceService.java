@@ -1,4 +1,4 @@
-package com.help.rebate.service;
+package com.help.rebate.service.ddx.tb;
 
 import com.alibaba.fastjson.JSONObject;
 import com.help.rebate.utils.PropertyValueResolver;

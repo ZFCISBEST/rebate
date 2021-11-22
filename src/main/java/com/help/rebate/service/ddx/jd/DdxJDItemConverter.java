@@ -38,7 +38,8 @@ public class DdxJDItemConverter {
     private static final String template_simple = "$title $jcmd\n" +
             "【最低价】$finalPrice元\n" +
             "【预计返】$returnPrice (plus返 $returnPlusPrice)\n" +
-            "【领券抢购】$url";
+            "【领券抢购】$url\n" +
+            "【小程序】<a href=\"$url\" data-miniprogram-appid=\"wx91d27dbf599dff74\" data-miniprogram-path=\"pages/union/proxy/proxy?spreadUrl=$url\">点击跳转小程序</a>";
 
     /**
      * http服务
@@ -87,7 +88,7 @@ public class DdxJDItemConverter {
         String content = template_simple.replace("$finalPrice", decimal.format(lowestPrice))
                 .replace("$returnPrice", decimal.format(commissionShare) + "%")
                 .replace("$returnPlusPrice", decimal.format(plusCommissionShare) + "%")
-                .replace("$url", link)
+                .replaceAll("\\$url", link)
                 .replace("$title", skuName)
                 .replace("$jcmd", jCommand == null ? "" : jCommand);
 

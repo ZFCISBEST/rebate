@@ -3,6 +3,9 @@ package com.help.rebate.service.wx;
 import com.alibaba.fastjson.JSON;
 import com.help.rebate.service.TklConvertService;
 import com.help.rebate.service.ddx.jd.DdxJDItemConverter;
+import com.help.rebate.service.ddx.mt.DdxMeiTuanActivityConverter;
+import com.help.rebate.service.ddx.pdd.DdxPddItemConverter;
+import com.help.rebate.service.ddx.tb.DdxElemeActivityConverter;
 import com.help.rebate.utils.MsgUtil;
 import com.help.rebate.vo.TextMessage;
 import org.slf4j.Logger;
@@ -32,6 +35,24 @@ public class MessageServiceImpl implements MessageService {
      */
     @Resource
     private DdxJDItemConverter ddxJDItemConverter;
+
+    /**
+     * 拼多多转链接
+     */
+    @Resource
+    private DdxPddItemConverter ddxPddItemConverter;
+
+    /**
+     * 饿了么转链接
+     */
+    @Resource
+    private DdxElemeActivityConverter ddxElemeActivityConverter;
+
+    /**
+     * 美团转链接
+     */
+    @Resource
+    private DdxMeiTuanActivityConverter ddxMeiTuanActivityConverter;
 
     @Override
     public String newMessageRequest(HttpServletRequest request) {
@@ -101,6 +122,30 @@ public class MessageServiceImpl implements MessageService {
             Double tempReturnRate = 0.9;
             DdxJDItemConverter.JDLinkDO jdLinkDO = ddxJDItemConverter.generateReturnPriceInfo(materialId, positionId, subUnionId, tempReturnRate);
             return jdLinkDO.getLinkInfo();
+        }
+
+        //解析为pdd的链接
+        else if (content.contains("pdd") || content.contains("pinduoduo") || content.contains("yangkeduo")) {
+            String url = content;
+            String customId = "wx_" + fromUserName;
+            Double tempReturnRate = 0.9;
+
+            DdxPddItemConverter.PddLinkDO pddLinkDO = ddxPddItemConverter.generateReturnPriceInfo(url, customId, tempReturnRate);
+            return pddLinkDO.getLinkInfo();
+        }
+
+        //解析为饿了么 - 外卖、活动、生鲜 - 这个暂时没法跟踪，只能订单绑定
+        else if(content.contains("饿了么")) {
+            String keyword = content;
+            String link = ddxElemeActivityConverter.generateReturnPriceInfo(keyword);
+            return link;
+        }
+
+        //解析为美团
+        else if(content.contains("美团")) {
+            String keyword = content;
+            String link = ddxMeiTuanActivityConverter.generateReturnPriceInfo(keyword, fromUserName);
+            return link;
         }
 
         //默认就是淘宝的链接

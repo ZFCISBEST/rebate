@@ -39,4 +39,9 @@ public class DdxConfig {
      * 京东转链接口
      */
     public final static String JD_BY_UNIONID_PROMOTION_URL = "http://api.tbk.dingdanxia.com/jd/by_unionid_promotion";
+
+    /**
+     * 拼多多转链接口
+     */
+    public final static String PDD_URL_CONVERT_URL = "http://api.tbk.dingdanxia.com/pdd/url_convert";
 }

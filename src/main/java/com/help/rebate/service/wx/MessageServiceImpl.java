@@ -6,6 +6,7 @@ import com.help.rebate.service.ddx.jd.DdxJDItemConverter;
 import com.help.rebate.service.ddx.mt.DdxMeiTuanActivityConverter;
 import com.help.rebate.service.ddx.pdd.DdxPddItemConverter;
 import com.help.rebate.service.ddx.tb.DdxElemeActivityConverter;
+import com.help.rebate.service.exception.ConvertException;
 import com.help.rebate.utils.MsgUtil;
 import com.help.rebate.vo.TextMessage;
 import org.slf4j.Logger;
@@ -77,7 +78,48 @@ public class MessageServiceImpl implements MessageService {
         // 消息内容
         String content = map.get("Content");
 
-        if (msgType.equals("text")) {
+
+        if(msgType.equals("event")) {
+
+            if(map.get("Event").equals("subscribe")) {
+                // 订阅
+                TextMessage text = new TextMessage();
+                text.setContent("感谢您的关注，本服务号当前提供淘宝/京东/拼多多链接返利功能，将商品链接发送给服务号，使用服务号返回的链接购买商品，确认收货后可以通过平台提取优惠现金。");
+                text.setToUserName(fromUserName);
+                text.setFromUserName(toUserName);
+                text.setCreateTime(new Date().getTime());
+                text.setMsgType("text");
+                replyMessage = MsgUtil.textMessageToXML(text);
+
+                logger.info("returnOther=" + replyMessage);
+            } else if (map.get("Event").equals("CLICK")) {
+                String eventKey = map.get("EventKey");// 事件KEY值，与创建自定义菜单时指定的KEY值对应
+                if (eventKey.equals("V001_CHECK_MONEY")) {
+                    TextMessage text = new TextMessage();
+                    text.setContent("待开发查看余额功能");
+                    text.setToUserName(fromUserName);
+                    text.setFromUserName(toUserName);
+                    text.setCreateTime(new Date().getTime());
+                    text.setMsgType("text");
+
+                    replyMessage = MsgUtil.textMessageToXML(text);
+
+                    logger.info("returnOther="+replyMessage);
+                } else if (eventKey.equals("V001_GET_MONEY")) {
+                    // 订阅
+                    TextMessage text = new TextMessage();
+                    text.setContent("待开发领取红包功能。");
+                    text.setToUserName(fromUserName);
+                    text.setFromUserName(toUserName);
+                    text.setCreateTime(new Date().getTime());
+                    text.setMsgType("text");
+                    replyMessage = MsgUtil.textMessageToXML(text);
+
+                    logger.info("returnOther="+replyMessage);
+                }
+            }
+        }
+        else  if (msgType.equals("text")) {
             //这里根据关键字执行相应的逻辑，只有你想不到的，没有做不到的
             String newContent = convert(fromUserName, toUserName, content);
 
@@ -93,13 +135,12 @@ public class MessageServiceImpl implements MessageService {
             logger.info("returnText = {}", replyMessage);
         } else {
             TextMessage text = new TextMessage();
-            text.setContent("回复：该消息非文本格式；暂无自动回复能力。");
+            text.setContent("公众号无法提供相关服务。");
             text.setToUserName(fromUserName);
             text.setFromUserName(toUserName);
             text.setCreateTime(new Date().getTime());
             text.setMsgType("text");
             replyMessage = MsgUtil.textMessageToXML(text);
-
             logger.info("returnOther="+replyMessage);
         }
 
@@ -114,8 +155,30 @@ public class MessageServiceImpl implements MessageService {
      * @return
      */
     private String convert(String fromUserName, String toUserName, String content) {
+        try {
+            return doConvert(fromUserName, toUserName, content);
+        } catch (Throwable ex) {
+            //已知的错误
+            if (ex instanceof ConvertException) {
+                return ex.getMessage();
+            }
+
+            //未知错误
+            logger.error("[MessageService] 转链失败，发生未知错误", ex);
+            return "转链失败，未知错误，请稍后重试或换个商品再试哦";
+        }
+    }
+
+    /**
+     * 转化
+     * @param fromUserName
+     * @param toUserName
+     * @param content
+     * @return
+     */
+    private String doConvert(String fromUserName, String toUserName, String content) {
         //如果是京东的链接
-        if (content.contains("jd")) {
+        if (content.contains("jd.com")) {
             String materialId = content;
             String subUnionId = "wx_" + fromUserName;
             Long positionId = Long.valueOf(Math.abs(subUnionId.hashCode()));
@@ -157,5 +220,6 @@ public class MessageServiceImpl implements MessageService {
             String newTkl = tklConvertService.convert(tkl, openId, null, tklType, "tb");
             return newTkl;
         }
+
     }
 }

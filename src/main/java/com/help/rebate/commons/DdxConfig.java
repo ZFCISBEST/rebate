@@ -44,4 +44,11 @@ public class DdxConfig {
      * 拼多多转链接口
      */
     public final static String PDD_URL_CONVERT_URL = "http://api.tbk.dingdanxia.com/pdd/url_convert";
+
+    /**
+     * 微信公众号信息
+     */
+    public static final String APPID = "wx9f4ab53be3e5e226";
+
+    public static final String APPSECRET = "6577304de85dff87836e918a672ab954";
 }

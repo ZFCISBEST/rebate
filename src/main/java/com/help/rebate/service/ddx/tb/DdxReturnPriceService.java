@@ -1,6 +1,7 @@
 package com.help.rebate.service.ddx.tb;
 
 import com.alibaba.fastjson.JSONObject;
+import com.help.rebate.service.exception.ConvertException;
 import com.help.rebate.utils.PropertyValueResolver;
 import lombok.Data;
 import org.slf4j.Logger;
@@ -64,40 +65,45 @@ public class DdxReturnPriceService {
      */
     public TklDO generateReturnPriceInfo(String tkl, String relationId, String specialId, String externalId,
                                          String pubSite, Double tempReturnRate){
-        if (tempReturnRate == null || tempReturnRate <= 0) {
-            tempReturnRate = 0.8;
+        try{
+            if (tempReturnRate == null || tempReturnRate <= 0) {
+                tempReturnRate = 0.8;
+            }
+
+            //解析淘口令
+            JSONObject jsonObject = ddxItemConverter.parseTkl(tkl, relationId, specialId, externalId, pubSite);
+            String longCouponTpwd = PropertyValueResolver.getProperty(jsonObject, "data.long_coupon_tpwd");
+            String maxCommissionRate = PropertyValueResolver.getProperty(jsonObject, "data.max_commission_rate", true);
+            if (maxCommissionRate == null || maxCommissionRate.equals("null")) {
+                maxCommissionRate = PropertyValueResolver.getProperty(jsonObject, "data.min_commission_rate");
+            }
+
+            String itemId = PropertyValueResolver.getProperty(jsonObject, "data.item_id") + "";
+            String coupon = PropertyValueResolver.getProperty(jsonObject, "data.coupon") + "";
+            String title = PropertyValueResolver.getProperty(jsonObject, "data.itemInfo.title");
+            String zkFinalPrice = PropertyValueResolver.getProperty(jsonObject, "data.itemInfo.zk_final_price") + "";
+            String qhFinalPrice = PropertyValueResolver.getProperty(jsonObject, "data.itemInfo.qh_final_price") + "";
+
+            //计算券后价
+            double returnPrice = Double.parseDouble(maxCommissionRate) * tempReturnRate * Double.parseDouble(qhFinalPrice) / 100;
+
+            //兼容ios14及其以上
+            String newCouponTpwd = longCouponTpwd;
+            if (Double.parseDouble(coupon) <= 0) {
+                String longItemTpwd = PropertyValueResolver.getProperty(jsonObject, "data.long_item_tpwd");
+                newCouponTpwd = longItemTpwd;
+            }
+
+            //根据模板生成新的淘口令
+            String content = template_simple.replace("$finalPrice", qhFinalPrice)
+                    .replace("$returnPrice", decimal.format(returnPrice))
+                    .replace("$pwd", newCouponTpwd);
+
+            return new TklDO(content, itemId);
+        }catch(Throwable e){
+            logger.warn("[DdxReturnPriceService] 淘宝转链失败，message:{}, toString:{}", e.getMessage(), e.toString());
+            throw new ConvertException("此商品转链失败 - " + e.getMessage());
         }
-
-        //解析淘口令
-        JSONObject jsonObject = ddxItemConverter.parseTkl(tkl, relationId, specialId, externalId, pubSite);
-        String longCouponTpwd = PropertyValueResolver.getProperty(jsonObject, "data.long_coupon_tpwd");
-        String maxCommissionRate = PropertyValueResolver.getProperty(jsonObject, "data.max_commission_rate", true);
-        if (maxCommissionRate == null || maxCommissionRate.equals("null")) {
-            maxCommissionRate = PropertyValueResolver.getProperty(jsonObject, "data.min_commission_rate");
-        }
-
-        String itemId = PropertyValueResolver.getProperty(jsonObject, "data.item_id") + "";
-        String coupon = PropertyValueResolver.getProperty(jsonObject, "data.coupon") + "";
-        String title = PropertyValueResolver.getProperty(jsonObject, "data.itemInfo.title");
-        String zkFinalPrice = PropertyValueResolver.getProperty(jsonObject, "data.itemInfo.zk_final_price") + "";
-        String qhFinalPrice = PropertyValueResolver.getProperty(jsonObject, "data.itemInfo.qh_final_price") + "";
-
-        //计算券后价
-        double returnPrice = Double.parseDouble(maxCommissionRate) * tempReturnRate * Double.parseDouble(qhFinalPrice) / 100;
-
-        //兼容ios14及其以上
-        String newCouponTpwd = longCouponTpwd;
-        if (Double.parseDouble(coupon) <= 0) {
-            String longItemTpwd = PropertyValueResolver.getProperty(jsonObject, "data.long_item_tpwd");
-            newCouponTpwd = longItemTpwd;
-        }
-
-        //根据模板生成新的淘口令
-        String content = template_simple.replace("$finalPrice", qhFinalPrice)
-                .replace("$returnPrice", decimal.format(returnPrice))
-                .replace("$pwd", newCouponTpwd);
-
-        return new TklDO(content, itemId);
     }
 
     /**

@@ -64,11 +64,4 @@ public class DdxItemConverter {
         String result = prettyHttpService.get(DdxConfig.TB_TKL_PRIVILEGES_URL, params);
         return JSON.parseObject(result);
     }
-
-    public static void main(String[] args) {
-        DdxItemConverter dtkItemConverter =new DdxItemConverter();
-        String tkl = "【淘宝】https://m.tb.cn/h.fmyfzyn?tk=fj7I241HxHn「HAVVA2021冬季新款针织连衣裙女高领宽松慵懒风法式毛衣裙子Q8590」\n" +
-                "点击链接直接打开";
-        dtkItemConverter.parseTkl(tkl,"1","1","1",null);
-    }
 }

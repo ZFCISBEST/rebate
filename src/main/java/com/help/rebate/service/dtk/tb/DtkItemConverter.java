@@ -32,31 +32,14 @@ public class DtkItemConverter {
     private PrettyHttpService prettyHttpService;
 
     /**
-     * 淘口令转商品id
+     * 根据淘口令，转链接获取返利淘口令
      * @param tkl
+     * @param relationId
+     * @param specialId
+     * @param externalId
+     * @param pubSite
      * @return
      */
-    public JSONObject parseTkl(String tkl) {
-        //基础参数
-        TreeMap<String,String> params = new TreeMap<String,String>();
-        params.put("appKey", DtkConfig.dtkAppkey);
-        params.put("content", tkl);
-        params.put("version", "v1.0.0");
-        params.put("sign", SignMD5Util.getSignStr(params,DtkConfig.dtkAppsecret));
-
-        String result = prettyHttpService.get(DtkConfig.DTK_PARSE_CONTENT, params);
-//        String result = ApiClient.sendReq(DtkConfig.DTK_PARSE_CONTENT, DtkConfig.dtkAppsecret, params);
-
-//        String appKey = DtkConfig.dtkAppkey;
-//        String appSecret = DtkConfig.dtkAppsecret;
-//        DtkApiClient client = DtkApiClient.getInstance(appKey,appSecret);
-//        DtkParseContentRequest request = new DtkParseContentRequest();
-//        request.setVersion("v1.0.0");
-//        request.setContent(tkl);
-//        DtkApiResponse<DtkParseContentResponse> execute = client.execute(request);
-        return JSON.parseObject(String.valueOf(result));
-    }
-
     public JSONObject getPrivilegeTkl(String tkl, String relationId, String specialId, String externalId, String pubSite){
         String goodsId = parseTkl(tkl).getJSONObject("data").getString("goodsId");
         //基础参数
@@ -64,6 +47,9 @@ public class DtkItemConverter {
         params.put("appKey", DtkConfig.dtkAppkey);
         params.put("goodsId", goodsId);
         params.put("version", "v1.3.1");
+
+        //推广位
+        params.put("pid", pubSite);
 
         //关于ID的参数
         if (!EmptyUtils.isEmpty(relationId)) {
@@ -78,6 +64,23 @@ public class DtkItemConverter {
 
         params.put("sign", SignMD5Util.getSignStr(params,DtkConfig.dtkAppsecret));
         String result = prettyHttpService.get(DtkConfig.DTK_GET_PRIVILEGE_TKL, params);
+        return JSON.parseObject(String.valueOf(result));
+    }
+
+    /**
+     * 根据淘口令，获取商品信息，包含商品ID
+     * @param tkl
+     * @return
+     */
+    public JSONObject parseTkl(String tkl) {
+        //基础参数
+        TreeMap<String,String> params = new TreeMap<String,String>();
+        params.put("appKey", DtkConfig.dtkAppkey);
+        params.put("content", tkl);
+        params.put("version", "v1.0.0");
+        params.put("sign", SignMD5Util.getSignStr(params,DtkConfig.dtkAppsecret));
+
+        String result = prettyHttpService.get(DtkConfig.DTK_PARSE_CONTENT, params);
         return JSON.parseObject(String.valueOf(result));
     }
 

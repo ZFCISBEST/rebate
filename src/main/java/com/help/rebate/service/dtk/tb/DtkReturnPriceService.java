@@ -4,11 +4,13 @@ import com.alibaba.fastjson.JSONObject;
 import com.help.rebate.service.dtk.tb.DtkItemConverter;
 import com.help.rebate.service.dtk.tb.DtkReturnPriceService;
 import com.help.rebate.service.exception.ConvertException;
+import com.help.rebate.utils.EmptyUtils;
 import com.help.rebate.utils.PropertyValueResolver;
 import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.text.DecimalFormat;
 
@@ -16,6 +18,7 @@ import java.text.DecimalFormat;
  * @author hokxi_gyl
  * * @date 2022/3/6
  */
+@Service
 public class DtkReturnPriceService {
 
     private static final Logger logger = LoggerFactory.getLogger(DtkReturnPriceService.class);
@@ -74,12 +77,8 @@ public class DtkReturnPriceService {
             JSONObject jsonObject = dtkItemConverter.getPrivilegeTkl(tkl, relationId, specialId, externalId, pubSite);
             String longCouponTpwd = PropertyValueResolver.getProperty(jsonObject, "data.longTpwd");
             String maxCommissionRate = PropertyValueResolver.getProperty(jsonObject, "data.maxCommissionRate", true);
-            String minCommissionRate = PropertyValueResolver.getProperty(jsonObject, "data.minCommissionRate", true);
             if (maxCommissionRate == null || maxCommissionRate.equals("null")) {
                 maxCommissionRate = PropertyValueResolver.getProperty(jsonObject, "data.minCommissionRate");
-            }
-            if (minCommissionRate == null || minCommissionRate.equals("null")) {
-                minCommissionRate = PropertyValueResolver.getProperty(jsonObject, "data.maxCommissionRate");
             }
 
             String itemId = PropertyValueResolver.getProperty(jsonObject, "data.itemId") + "";
@@ -89,10 +88,10 @@ public class DtkReturnPriceService {
             //计算预计返利
             double returnPrice = Double.parseDouble(maxCommissionRate) * tempReturnRate * Double.parseDouble(qhFinalPrice) / 100;
 
-            //兼容ios14及其以上
+            //兼容ios14及其以上 - 这里与订单侠不同，暂时没有可用字段用于判断
             String newCouponTpwd = longCouponTpwd;
-            if (Double.parseDouble(coupon) <= 0) {
-                String longItemTpwd = PropertyValueResolver.getProperty(jsonObject, "data.longTpwd");
+            if (EmptyUtils.isEmpty(coupon)) {
+                String longItemTpwd = PropertyValueResolver.getProperty(jsonObject, "data.shortUrl");
                 newCouponTpwd = longItemTpwd;
             }
 

@@ -1,9 +1,6 @@
 package com.help.rebate.web.controller.wx;
 
-import com.alibaba.fastjson.JSONObject;
-import com.help.rebate.commons.DdxConfig;
 import com.help.rebate.commons.PrettyHttpService;
-import com.help.rebate.commons.WxHttpService;
 import com.help.rebate.service.wx.MessageServiceImpl;
 import com.help.rebate.service.wx.WxCheckSignatureService;
 import io.swagger.annotations.Api;
@@ -11,15 +8,12 @@ import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.HashMap;
-import java.util.Map;
 
 @Api("微信对接接口")
 @RestController
@@ -67,7 +61,7 @@ public class SignatureController {
     }
 
 
-    public static String accessToken() {
+    /*public static String accessToken() {
         String accessToken = null;
         String requestUrl = "https://api.weixin.qq.com/cgi-bin/token"
                 + "?grant_type=client_credential&appid=" + DdxConfig.APPID +
@@ -164,7 +158,7 @@ public class SignatureController {
             }
         }
         return result;
-    }
+    }*/
 
     @ApiOperation("微信TEXT消息回复")
     @RequestMapping(value = "/token.html", method = RequestMethod.POST)

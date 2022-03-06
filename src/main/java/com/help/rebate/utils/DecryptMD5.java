@@ -1,4 +1,4 @@
-package com.help.rebate.commons;
+package com.help.rebate.utils;
 
 
 import com.sun.xml.internal.fastinfoset.util.CharArray;

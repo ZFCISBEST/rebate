@@ -69,6 +69,7 @@ public class MessageServiceImpl implements MessageService {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
         // 发送方帐号（open_id）
         String fromUserName = map.get("FromUserName");
         // 公众帐号
@@ -80,7 +81,6 @@ public class MessageServiceImpl implements MessageService {
 
 
         if(msgType.equals("event")) {
-
             if(map.get("Event").equals("subscribe")) {
                 // 订阅
                 TextMessage text = new TextMessage();
@@ -95,6 +95,7 @@ public class MessageServiceImpl implements MessageService {
             } else if (map.get("Event").equals("CLICK")) {
                 String eventKey = map.get("EventKey");// 事件KEY值，与创建自定义菜单时指定的KEY值对应
                 if (eventKey.equals("V001_CHECK_MONEY")) {
+                    //查看余额
                     TextMessage text = new TextMessage();
                     text.setContent("待开发查看余额功能");
                     text.setToUserName(fromUserName);
@@ -106,7 +107,7 @@ public class MessageServiceImpl implements MessageService {
 
                     logger.info("returnOther="+replyMessage);
                 } else if (eventKey.equals("V001_GET_MONEY")) {
-                    // 订阅
+                    // 发送红包
                     TextMessage text = new TextMessage();
                     text.setContent("待开发领取红包功能。");
                     text.setToUserName(fromUserName);
@@ -116,7 +117,19 @@ public class MessageServiceImpl implements MessageService {
                     replyMessage = MsgUtil.textMessageToXML(text);
 
                     logger.info("returnOther="+replyMessage);
+                } else if (eventKey.equals("V001_VIP")) {
+                    // 绑定会员
+                    TextMessage text = new TextMessage();
+                    text.setContent("待开发绑定会员功能。");
+                    text.setToUserName(fromUserName);
+                    text.setFromUserName(toUserName);
+                    text.setCreateTime(new Date().getTime());
+                    text.setMsgType("text");
+                    replyMessage = MsgUtil.textMessageToXML(text);
+
+                    logger.info("returnOther="+replyMessage);
                 }
+
             }
         }
         else  if (msgType.equals("text")) {

@@ -33,28 +33,6 @@ public class PrettyHttpService {
     @Autowired
     private RestTemplate restTemplate;
 
-    /**
-     * get请求
-     * @param url
-     * @param paramMap
-     * @return
-     */
-    public String get(String url, TreeMap<String,String> paramMap) {
-        //请求
-        String param = convertUrlParam(paramMap);
-        String newUrl = url + "?" + param;
-        ResponseEntity<String> responseEntity = restTemplate.getForEntity(newUrl, String.class, paramMap);
-
-        //判定是否正确
-        int statusCodeValue = responseEntity.getStatusCodeValue();
-        if (statusCodeValue == 200) {
-            return responseEntity.getBody();
-        }
-
-        //否则抛出异常
-        throw new RuntimeException(responseEntity.getStatusCode().getReasonPhrase());
-    }
-
     public String get(String url, Map<String, Object> paramMap) {
         //请求
         String param = convertUrlParam(paramMap);
@@ -101,15 +79,6 @@ public class PrettyHttpService {
     private String convertUrlParam(Map<String, Object> paramMap) {
         List<String> params = new ArrayList<String>();
         for (Map.Entry<String, Object> keyValue : paramMap.entrySet()) {
-            params.add(keyValue.getKey() + "=" + "{" + keyValue.getKey() + "}");
-        }
-
-        String param = params.stream().collect(Collectors.joining("&"));
-        return param;
-    }
-    private String convertUrlParam(TreeMap<String,String> paramMap) {
-        List<String> params = new ArrayList<String>();
-        for (Map.Entry<String,String> keyValue : paramMap.entrySet()) {
             params.add(keyValue.getKey() + "=" + "{" + keyValue.getKey() + "}");
         }
 

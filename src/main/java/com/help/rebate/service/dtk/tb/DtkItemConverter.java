@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -43,7 +42,7 @@ public class DtkItemConverter {
     public JSONObject getPrivilegeTkl(String tkl, String relationId, String specialId, String externalId, String pubSite){
         String goodsId = parseTkl(tkl).getJSONObject("data").getString("goodsId");
         //基础参数
-        TreeMap<String,String> params = new TreeMap<String,String>();
+        Map<String,Object> params = new TreeMap<>();
         params.put("appKey", DtkConfig.dtkAppkey);
         params.put("goodsId", goodsId);
         params.put("version", "v1.3.1");
@@ -74,7 +73,7 @@ public class DtkItemConverter {
      */
     public JSONObject parseTkl(String tkl) {
         //基础参数
-        TreeMap<String,String> params = new TreeMap<String,String>();
+        Map<String,Object> params = new TreeMap<>();
         params.put("appKey", DtkConfig.dtkAppkey);
         params.put("content", tkl);
         params.put("version", "v1.0.0");

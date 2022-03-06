@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.help.rebate.commons.DdxConfig;
 import com.help.rebate.commons.PrettyHttpService;
+import com.help.rebate.service.dtk.tb.DtkItemConverter;
 import com.help.rebate.utils.EmptyUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,5 +65,10 @@ public class DdxItemConverter {
         return JSON.parseObject(result);
     }
 
-
+    public static void main(String[] args) {
+        DdxItemConverter dtkItemConverter =new DdxItemConverter();
+        String tkl = "【淘宝】https://m.tb.cn/h.fmyfzyn?tk=fj7I241HxHn「HAVVA2021冬季新款针织连衣裙女高领宽松慵懒风法式毛衣裙子Q8590」\n" +
+                "点击链接直接打开";
+        dtkItemConverter.parseTkl(tkl,"1","1","1",null);
+    }
 }

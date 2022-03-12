@@ -51,14 +51,11 @@ public class DtkItemConverter {
         params.put("pid", pubSite);
 
         //关于ID的参数
-        if (!EmptyUtils.isEmpty(relationId)) {
-            params.put("relation_id", relationId);
-        }
         if (!EmptyUtils.isEmpty(specialId)) {
-            params.put("special_id", specialId);
+            params.put("specialId", specialId);
         }
         if (!EmptyUtils.isEmpty(externalId)) {
-            params.put("external_id", externalId);
+            params.put("externalId", externalId);
         }
 
         params.put("sign", SignMD5Util.getSignStr(params,DtkConfig.dtkAppsecret));

@@ -162,20 +162,6 @@ public class FixedOrderSyncTask {
                         continue;
                     }
 
-//                    //参数构建
-//                    Map<String, Object> params = new HashMap<String, Object>();
-//                    params.put("apikey", DdxConfig.ddxApiKey);
-//                    params.put("start_time", TimeUtil.format(startTime));
-//                    params.put("end_time", TimeUtil.format(endTime));
-//                    params.put("query_type", queryTypes[j]);
-//                    params.put("order_scene", orderScenes[i]);
-//
-//                    if (positionIndex != null) {
-//                        params.put("position_index", positionIndex);
-//                    }
-//                    params.put("page_no", pageNo);
-//                    params.put("page_size", pageSize);
-
                     //参数构建
                     Map<String, Object> params = new HashMap<String, Object>();
                     params.put("appKey", DtkConfig.dtkAppkey);
@@ -193,11 +179,8 @@ public class FixedOrderSyncTask {
 
                     params.put("sign", SignMD5Util.getSignStr(params,DtkConfig.dtkAppsecret));
                     //请求数据
-//                    String response = prettyHttpService.get(DdxConfig.TB_TKL_ORDER_DETAILS_URL, params);
                     String response = prettyHttpService.get(DtkConfig.DTK_TB_ORDER_DETAILS_URL, params);
                     JSONObject jsonObject = JSON.parseObject(String.valueOf(response));
-//                    DtkOrderDetail dtkOrderDetail = new DtkOrderDetail();
-//                    JSONObject jsonObject = dtkOrderDetail.getOrderDetail(startTime,endTime,queryTypes[j],orderScenes[i],positionIndex,pageNo,pageSize);
 
                     //判定
                     String code = PropertyValueResolver.getProperty(jsonObject, "code") + "";
@@ -233,7 +216,7 @@ public class FixedOrderSyncTask {
      * @return
      */
     private String saveOrUpdateToOrderDetail(JSONObject responseObj) {
-//        JSONArray jsonArray = responseObj.getJSONArray("data");//订单侠
+        //JSONArray jsonArray = responseObj.getJSONArray("data");//订单侠
         JSONArray jsonArray = responseObj.getJSONObject("data").getJSONObject("results").getJSONArray("publisher_order_dto");//大淘客
         if (jsonArray == null || jsonArray.size() == 0) {
             return "0";
@@ -357,9 +340,11 @@ public class FixedOrderSyncTask {
         orderDetail.setAlscPid(orderItem.getString("alsc_pid"));
         orderDetail.setServiceFeeDtoList("");
         if (orderItem.containsKey("lx_rid")){   //大淘客接口没有返回lx_rid
-            orderDetail.setLxRid(orderItem.getString("lx_rid"));}
+            orderDetail.setLxRid(orderItem.getString("lx_rid"));
+        }
         if (orderItem.containsKey("is_lx")){    //大淘客接口没有返回is_lx
-            orderDetail.setIsLx(orderItem.getString("is_lx"));}
+            orderDetail.setIsLx(orderItem.getString("is_lx"));
+        }
         orderDetail.setStatus(0);
         return orderDetail;
     }

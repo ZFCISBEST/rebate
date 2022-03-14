@@ -1,8 +1,5 @@
 package com.help.rebate.utils;
 
-
-import com.sun.xml.internal.fastinfoset.util.CharArray;
-
 import java.security.MessageDigest;
 
 public class DecryptMD5 {

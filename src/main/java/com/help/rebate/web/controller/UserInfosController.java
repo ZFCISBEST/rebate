@@ -15,6 +15,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.ServletInputStream;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.BufferedReader;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +37,12 @@ public class UserInfosController {
 
     @Autowired
     private UserInfosService userInfosService;
+
+    @Autowired
+    private HttpServletRequest httpServletRequest;
+
+    @Autowired
+    private HttpServletResponse httpServletResponse;
 
     @ApiOperation("创建新用户")
     @RequestMapping("/create")
@@ -106,6 +117,50 @@ public class UserInfosController {
             return SafeServiceResponse.success(result);
         }catch(Exception e){
             logger.error("fail to create user[/tbk/user/list/all]", e);
+            return SafeServiceResponse.fail(e.toString());
+        }
+    }
+
+    @ApiOperation("订单侠回调的接口 https://www.dingdanxia.com/doc/184/27")
+    @RequestMapping("/callBackByDdx")
+    public SafeServiceResponse publisherSaveExclusive(@ApiParam(name = "note", value = "生成连接时的唯一标识") @RequestParam(required = true) String note,
+                                                      @ApiParam(name = "callback_data", value = "回调内容") @RequestParam(required = false) String callback_data) {
+        try{
+            SafeServiceResponse.startBiz();
+
+            //直接读取内容
+            logger.info("回调内容：");
+            logger.info("note：" +note);
+            logger.info("callback_data：" + callback_data);
+
+            //返回
+            return SafeServiceResponse.success(true);
+        }catch(Exception e){
+            logger.error("fail to create user[/tbk/user/callBackByDdx]", e);
+            return SafeServiceResponse.fail(e.toString());
+        }
+    }
+
+    @ApiOperation("订单侠回调的接口 https://www.dingdanxia.com/doc/184/27")
+    @RequestMapping("/callBackByDdx2")
+    public SafeServiceResponse publisherSaveExclusive2(HttpServletRequest httpServletRequest) {
+        try{
+            SafeServiceResponse.startBiz();
+
+            Enumeration<String> parameterNames = httpServletRequest.getParameterNames();
+            while (parameterNames.hasMoreElements()) {
+                String name = parameterNames.nextElement();
+                String value = httpServletRequest.getParameter(name);
+                System.out.println("===>" + name + ": " + value);
+            }
+
+            //直接读取内容
+            logger.info("回调内容,rushang");
+
+            //返回
+            return SafeServiceResponse.success(true);
+        }catch(Exception e){
+            logger.error("fail to create user[/tbk/user/callBackByDdx2]", e);
             return SafeServiceResponse.fail(e.toString());
         }
     }

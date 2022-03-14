@@ -261,7 +261,8 @@ public class FixedOrderSyncTask {
                 updateFlag = true;
             }
 
-            //执行更新
+            //执行更新 - 直接全部更新 - todo 测试一下
+            updateFlag = true;
             if (updateFlag) {
                 newOrderDetail.setId(orderDetail.getId());
                 newOrderDetail.setGmtModified(new Date());

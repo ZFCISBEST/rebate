@@ -207,6 +207,9 @@ public class TklConvertService {
             criteria.andPubsiteCombinationEqualTo(pubSiteCombination);
         }
 
+        //我们只对7天内转链的商品负责 - 7 * 24 * 3600 * 1000
+        criteria.andGmtCreatedGreaterThanOrEqualTo(new Date(System.currentTimeMillis() - 604800000));
+
         criteria.andStatusEqualTo(0);
         List<TklConvertHistory> tklConvertHistories = tklConvertHistoryDao.selectByExample(historyExample);
         return tklConvertHistories;
@@ -243,6 +246,10 @@ public class TklConvertService {
      */
     @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRED)
     public UserInfos getOrCreateUserInfos(String openId, String externalId, String dataFrom) {
+        //两个不能同时为空
+        Checks.isTrue(!EmptyUtils.isEmpty(openId) || !EmptyUtils.isEmpty(externalId), "openId和externalId不能同时为空");
+
+        //查询用户是否存在
         UserInfosExample userInfosExample = new UserInfosExample();
         userInfosExample.setLimit(1);
         UserInfosExample.Criteria criteria = userInfosExample.createCriteria();
@@ -259,9 +266,6 @@ public class TklConvertService {
         if (!EmptyUtils.isEmpty(userInfos)) {
             return userInfos.get(0);
         }
-
-        //两个不能同时为空
-        Checks.isTrue(!EmptyUtils.isEmpty(openId) || !EmptyUtils.isEmpty(externalId), "openId和externalId不能同时为空");
 
         //不存在，执行插入操作
         UserInfos infos = new UserInfos();

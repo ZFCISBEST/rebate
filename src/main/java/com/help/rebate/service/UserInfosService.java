@@ -174,7 +174,12 @@ public class UserInfosService {
         UserInfosExample userInfosExample = new UserInfosExample();
         userInfosExample.setLimit(1);
         UserInfosExample.Criteria criteria = userInfosExample.createCriteria();
-        criteria.andExternalIdEqualTo(externalId);
+        if (!EmptyUtils.isEmpty(specialId)) {
+            criteria.andExternalIdEqualTo(specialId);
+        }
+        if (!EmptyUtils.isEmpty(externalId)) {
+            criteria.andExternalIdEqualTo(externalId);
+        }
         criteria.andDataFromEqualTo("tb");
         List<UserInfos> userInfos = userInfosDao.selectByExample(userInfosExample);
 

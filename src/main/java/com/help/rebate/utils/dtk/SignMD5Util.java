@@ -36,6 +36,29 @@ public class SignMD5Util {
         return sign(sb.toString(), secretKey);
     }
 
+    /**
+     * 获取签名的util
+     * @param map 请求参数
+     * @param secretKey 密钥
+     * @return
+     */
+    public static String getSignStrNew(Map<String,Object> map, String secretKey){
+
+        if (map.size() == 0 ){
+            return "";
+        }
+
+        StringBuffer sb = new StringBuffer();
+        sb.append("appKey=");
+        sb.append(map.get("appKey"));
+        sb.append("&timer=");
+        sb.append(map.get("timer"));
+        sb.append("&nonce=");
+        sb.append(map.get("nonce"));
+
+        return sign(sb.toString(), secretKey);
+    }
+
     public static String sign(String content, String key)
     {
         String signStr = "";
@@ -55,7 +78,7 @@ public class SignMD5Util {
     public final static String MD5(String s) {
         char hexDigits[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
         try {
-            byte[] btInput = s.getBytes();
+            byte[] btInput = s.getBytes("UTF-8");
             MessageDigest mdInst = MessageDigest.getInstance("MD5");
             mdInst.update(btInput);
             byte[] md = mdInst.digest();
@@ -74,7 +97,5 @@ public class SignMD5Util {
             return null;
         }
     }
-
-
 }
 

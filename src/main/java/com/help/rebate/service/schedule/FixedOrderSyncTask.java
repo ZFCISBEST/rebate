@@ -15,6 +15,7 @@ import com.help.rebate.service.dtk.tb.DtkOrderDetail;
 import com.help.rebate.utils.EmptyUtils;
 import com.help.rebate.utils.PropertyValueResolver;
 import com.help.rebate.utils.TimeUtil;
+import com.help.rebate.utils.dtk.ApiClient;
 import com.help.rebate.utils.dtk.SignMD5Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -177,14 +178,13 @@ public class FixedOrderSyncTask {
                     params.put("pageNo", pageNo);
                     params.put("pageSize", pageSize);
 
-                    params.put("sign", SignMD5Util.getSignStr(params,DtkConfig.dtkAppsecret));
                     //请求数据
-                    String response = prettyHttpService.get(DtkConfig.DTK_TB_ORDER_DETAILS_URL, params);
+                    String response = ApiClient.sendReqNew(DtkConfig.DTK_TB_ORDER_DETAILS_URL, DtkConfig.dtkAppsecret, params);
                     JSONObject jsonObject = JSON.parseObject(String.valueOf(response));
 
                     //判定
                     String code = PropertyValueResolver.getProperty(jsonObject, "code") + "";
-                    if (!"200".equals(code)) {
+                    if (!"0".equals(code)) {
                         throw new IllegalStateException("获取远程数据报错，详细错误：" + PropertyValueResolver.getProperty(jsonObject, "msg"));
                     }
 
@@ -194,9 +194,9 @@ public class FixedOrderSyncTask {
                             TimeUtil.format(startTime), TimeUtil.format(endTime), positionIndex, orderScenes[i], queryTypes[j]);
 
                     //看下是否还有数据
-                    hasNext = jsonObject.getBoolean("has_next");
+                    hasNext = jsonObject.getJSONObject("data").getBoolean("has_next");
                     if (hasNext) {
-                        positionIndex = jsonObject.getString("position_index");
+                        positionIndex = jsonObject.getJSONObject("data").getString("position_index");
                     }
                 }
             }
@@ -293,7 +293,7 @@ public class FixedOrderSyncTask {
         orderDetail.setClickTime(orderItem.getDate("click_time"));
         orderDetail.setTkCreateTime(orderItem.getDate("tk_create_time"));
         orderDetail.setTbPaidTime(orderItem.getDate("tb_paid_time"));
-        orderDetail.setTkPaidTime(orderItem.getDate("tb_paid_time"));
+        orderDetail.setTkPaidTime(orderItem.getDate("tk_paid_time"));
         orderDetail.setAlipayTotalPrice(orderItem.getString("alipay_total_price"));
         orderDetail.setPayPrice(orderItem.getString("pay_price"));
         orderDetail.setModifiedTime(orderItem.getString("modified_time"));
@@ -303,7 +303,7 @@ public class FixedOrderSyncTask {
         orderDetail.setFlowSource(orderItem.getString("flow_source"));
         orderDetail.setTerminalType(orderItem.getString("terminal_type"));
         orderDetail.setTkEarningTime(orderItem.getDate("tk_earning_time"));
-        orderDetail.setTkOrderRole(orderItem.getInteger("tk_ordertk_order_role"));
+        orderDetail.setTkOrderRole(orderItem.getInteger("tk_order_role"));
         orderDetail.setTotalCommissionRate(orderItem.getString("total_commission_rate"));
         orderDetail.setIncomeRate(orderItem.getString("income_rate"));
         orderDetail.setPubShareRate(orderItem.getString("pub_share_rate"));
@@ -326,7 +326,7 @@ public class FixedOrderSyncTask {
         orderDetail.setAdzoneName(orderItem.getString("adzone_name"));
         orderDetail.setSpecialId(orderItem.getString("special_id"));
         orderDetail.setRelationId(orderItem.getString("relation_id"));
-        orderDetail.setItemCategoryName(orderItem.getString("category_name"));
+        orderDetail.setItemCategoryName(orderItem.getString("item_category_name"));
         orderDetail.setSellerNick(orderItem.getString("seller_nick"));
         orderDetail.setSellerShopTitle(orderItem.getString("seller_shop_title"));
         orderDetail.setItemId(orderItem.getString("item_id"));
@@ -334,8 +334,10 @@ public class FixedOrderSyncTask {
         orderDetail.setItemPrice(orderItem.getString("item_price"));
         orderDetail.setItemLink(orderItem.getString("item_link"));
         orderDetail.setItemNum(orderItem.getInteger("item_num"));
-        orderDetail.setTkDepositTime(orderItem.getDate("tk_deposit_time"));
-        orderDetail.setTbDepositTime(orderItem.getDate("tb_deposit_time"));
+        //orderDetail.setTkDepositTime(orderItem.getDate("tk_deposit_time"));
+        //orderDetail.setTbDepositTime(orderItem.getDate("tb_deposit_time"));
+        orderDetail.setTkDepositTime(TimeUtil.parseDate(orderItem.getString("tk_deposit_time")));
+        orderDetail.setTbDepositTime(TimeUtil.parseDate(orderItem.getString("tb_deposit_time")));
         orderDetail.setDepositPrice(orderItem.getString("deposit_price"));
         orderDetail.setAlscId(orderItem.getString("alsc_id"));
         orderDetail.setAlscPid(orderItem.getString("alsc_pid"));

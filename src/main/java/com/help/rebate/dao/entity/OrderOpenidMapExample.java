@@ -1085,6 +1085,136 @@ public class OrderOpenidMapExample {
             return (Criteria) this;
         }
 
+        public Criteria andRefundTagIsNull() {
+            addCriterion("refund_tag is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundTagIsNotNull() {
+            addCriterion("refund_tag is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundTagEqualTo(Integer value) {
+            addCriterion("refund_tag =", value, "refundTag");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundTagNotEqualTo(Integer value) {
+            addCriterion("refund_tag <>", value, "refundTag");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundTagGreaterThan(Integer value) {
+            addCriterion("refund_tag >", value, "refundTag");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundTagGreaterThanOrEqualTo(Integer value) {
+            addCriterion("refund_tag >=", value, "refundTag");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundTagLessThan(Integer value) {
+            addCriterion("refund_tag <", value, "refundTag");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundTagLessThanOrEqualTo(Integer value) {
+            addCriterion("refund_tag <=", value, "refundTag");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundTagIn(List<Integer> values) {
+            addCriterion("refund_tag in", values, "refundTag");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundTagNotIn(List<Integer> values) {
+            addCriterion("refund_tag not in", values, "refundTag");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundTagBetween(Integer value1, Integer value2) {
+            addCriterion("refund_tag between", value1, value2, "refundTag");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundTagNotBetween(Integer value1, Integer value2) {
+            addCriterion("refund_tag not between", value1, value2, "refundTag");
+            return (Criteria) this;
+        }
+
+        public Criteria andMapTypeIsNull() {
+            addCriterion("map_type is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andMapTypeIsNotNull() {
+            addCriterion("map_type is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andMapTypeEqualTo(String value) {
+            addCriterion("map_type =", value, "mapType");
+            return (Criteria) this;
+        }
+
+        public Criteria andMapTypeNotEqualTo(String value) {
+            addCriterion("map_type <>", value, "mapType");
+            return (Criteria) this;
+        }
+
+        public Criteria andMapTypeGreaterThan(String value) {
+            addCriterion("map_type >", value, "mapType");
+            return (Criteria) this;
+        }
+
+        public Criteria andMapTypeGreaterThanOrEqualTo(String value) {
+            addCriterion("map_type >=", value, "mapType");
+            return (Criteria) this;
+        }
+
+        public Criteria andMapTypeLessThan(String value) {
+            addCriterion("map_type <", value, "mapType");
+            return (Criteria) this;
+        }
+
+        public Criteria andMapTypeLessThanOrEqualTo(String value) {
+            addCriterion("map_type <=", value, "mapType");
+            return (Criteria) this;
+        }
+
+        public Criteria andMapTypeLike(String value) {
+            addCriterion("map_type like", value, "mapType");
+            return (Criteria) this;
+        }
+
+        public Criteria andMapTypeNotLike(String value) {
+            addCriterion("map_type not like", value, "mapType");
+            return (Criteria) this;
+        }
+
+        public Criteria andMapTypeIn(List<String> values) {
+            addCriterion("map_type in", values, "mapType");
+            return (Criteria) this;
+        }
+
+        public Criteria andMapTypeNotIn(List<String> values) {
+            addCriterion("map_type not in", values, "mapType");
+            return (Criteria) this;
+        }
+
+        public Criteria andMapTypeBetween(String value1, String value2) {
+            addCriterion("map_type between", value1, value2, "mapType");
+            return (Criteria) this;
+        }
+
+        public Criteria andMapTypeNotBetween(String value1, String value2) {
+            addCriterion("map_type not between", value1, value2, "mapType");
+            return (Criteria) this;
+        }
+
         public Criteria andStatusIsNull() {
             addCriterion("`status` is null");
             return (Criteria) this;
@@ -1095,62 +1225,52 @@ public class OrderOpenidMapExample {
             return (Criteria) this;
         }
 
-        public Criteria andStatusEqualTo(String value) {
+        public Criteria andStatusEqualTo(Integer value) {
             addCriterion("`status` =", value, "status");
             return (Criteria) this;
         }
 
-        public Criteria andStatusNotEqualTo(String value) {
+        public Criteria andStatusNotEqualTo(Integer value) {
             addCriterion("`status` <>", value, "status");
             return (Criteria) this;
         }
 
-        public Criteria andStatusGreaterThan(String value) {
+        public Criteria andStatusGreaterThan(Integer value) {
             addCriterion("`status` >", value, "status");
             return (Criteria) this;
         }
 
-        public Criteria andStatusGreaterThanOrEqualTo(String value) {
+        public Criteria andStatusGreaterThanOrEqualTo(Integer value) {
             addCriterion("`status` >=", value, "status");
             return (Criteria) this;
         }
 
-        public Criteria andStatusLessThan(String value) {
+        public Criteria andStatusLessThan(Integer value) {
             addCriterion("`status` <", value, "status");
             return (Criteria) this;
         }
 
-        public Criteria andStatusLessThanOrEqualTo(String value) {
+        public Criteria andStatusLessThanOrEqualTo(Integer value) {
             addCriterion("`status` <=", value, "status");
             return (Criteria) this;
         }
 
-        public Criteria andStatusLike(String value) {
-            addCriterion("`status` like", value, "status");
-            return (Criteria) this;
-        }
-
-        public Criteria andStatusNotLike(String value) {
-            addCriterion("`status` not like", value, "status");
-            return (Criteria) this;
-        }
-
-        public Criteria andStatusIn(List<String> values) {
+        public Criteria andStatusIn(List<Integer> values) {
             addCriterion("`status` in", values, "status");
             return (Criteria) this;
         }
 
-        public Criteria andStatusNotIn(List<String> values) {
+        public Criteria andStatusNotIn(List<Integer> values) {
             addCriterion("`status` not in", values, "status");
             return (Criteria) this;
         }
 
-        public Criteria andStatusBetween(String value1, String value2) {
+        public Criteria andStatusBetween(Integer value1, Integer value2) {
             addCriterion("`status` between", value1, value2, "status");
             return (Criteria) this;
         }
 
-        public Criteria andStatusNotBetween(String value1, String value2) {
+        public Criteria andStatusNotBetween(Integer value1, Integer value2) {
             addCriterion("`status` not between", value1, value2, "status");
             return (Criteria) this;
         }

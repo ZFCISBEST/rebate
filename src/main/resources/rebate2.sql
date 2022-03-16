@@ -58,9 +58,13 @@ CREATE TABLE `order_openid_map` (
   `act_commission_fee` varchar(16) DEFAULT NULL COMMENT '实际返利费',
   `order_status` varchar(16) DEFAULT NULL COMMENT '订单状态 - 付款、已收货、已结算',
   `commission_status` varchar(16) DEFAULT NULL COMMENT '待结算、已结算、已关闭',
-  `status` varchar(45) DEFAULT NULL,
+  `refund_tag` int(11) DEFAULT '0' COMMENT '维权标签，0 含义为非维权 1 含义为维权订单',
+  `map_type` varchar(45) DEFAULT NULL COMMENT '映射类型，pubsite(推广位绑定), specialid(会员ID绑定), extend(扩展而来，通过parent订单扩展的其他购买商品，可能也转过码)，pubsite_specialid(既存在推广位，又有specialid是会员，此时可建立与opened的映射关系)',
+  `status` int(11) DEFAULT NULL COMMENT '0表示未删除，-1表示删除',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='订单关联映射表';
+
+
 
 CREATE TABLE `commission_account` (
   `id` int(11) NOT NULL AUTO_INCREMENT,

@@ -85,7 +85,23 @@ public class OrderOpenidMap implements Serializable {
     @ApiModelProperty(value="待结算、已结算、已关闭")
     private String commissionStatus;
 
-    private String status;
+    /**
+     * 维权标签，0 含义为非维权 1 含义为维权订单
+     */
+    @ApiModelProperty(value="维权标签，0 含义为非维权 1 含义为维权订单")
+    private Integer refundTag;
+
+    /**
+     * 映射类型，pubsite(推广位绑定), specialid(会员ID绑定), extend(扩展而来，通过parent订单扩展的其他购买商品，可能也转过码)，pubsite_specialid(既存在推广位，又有specialid是会员，此时可建立与opened的映射关系)
+     */
+    @ApiModelProperty(value="映射类型，pubsite(推广位绑定), specialid(会员ID绑定), extend(扩展而来，通过parent订单扩展的其他购买商品，可能也转过码)，pubsite_specialid(既存在推广位，又有specialid是会员，此时可建立与opened的映射关系)")
+    private String mapType;
+
+    /**
+     * 0表示未删除，-1表示删除
+     */
+    @ApiModelProperty(value="0表示未删除，-1表示删除")
+    private Integer status;
 
     private static final long serialVersionUID = 1L;
 
@@ -115,6 +131,8 @@ public class OrderOpenidMap implements Serializable {
             && (this.getActCommissionFee() == null ? other.getActCommissionFee() == null : this.getActCommissionFee().equals(other.getActCommissionFee()))
             && (this.getOrderStatus() == null ? other.getOrderStatus() == null : this.getOrderStatus().equals(other.getOrderStatus()))
             && (this.getCommissionStatus() == null ? other.getCommissionStatus() == null : this.getCommissionStatus().equals(other.getCommissionStatus()))
+            && (this.getRefundTag() == null ? other.getRefundTag() == null : this.getRefundTag().equals(other.getRefundTag()))
+            && (this.getMapType() == null ? other.getMapType() == null : this.getMapType().equals(other.getMapType()))
             && (this.getStatus() == null ? other.getStatus() == null : this.getStatus().equals(other.getStatus()));
     }
 
@@ -136,6 +154,8 @@ public class OrderOpenidMap implements Serializable {
         result = prime * result + ((getActCommissionFee() == null) ? 0 : getActCommissionFee().hashCode());
         result = prime * result + ((getOrderStatus() == null) ? 0 : getOrderStatus().hashCode());
         result = prime * result + ((getCommissionStatus() == null) ? 0 : getCommissionStatus().hashCode());
+        result = prime * result + ((getRefundTag() == null) ? 0 : getRefundTag().hashCode());
+        result = prime * result + ((getMapType() == null) ? 0 : getMapType().hashCode());
         result = prime * result + ((getStatus() == null) ? 0 : getStatus().hashCode());
         return result;
     }
@@ -160,6 +180,8 @@ public class OrderOpenidMap implements Serializable {
         sb.append(", actCommissionFee=").append(actCommissionFee);
         sb.append(", orderStatus=").append(orderStatus);
         sb.append(", commissionStatus=").append(commissionStatus);
+        sb.append(", refundTag=").append(refundTag);
+        sb.append(", mapType=").append(mapType);
         sb.append(", status=").append(status);
         sb.append(", serialVersionUID=").append(serialVersionUID);
         sb.append("]");

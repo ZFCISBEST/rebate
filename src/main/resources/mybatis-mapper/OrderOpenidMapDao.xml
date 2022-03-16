@@ -16,7 +16,9 @@
     <result column="act_commission_fee" jdbcType="VARCHAR" property="actCommissionFee" />
     <result column="order_status" jdbcType="VARCHAR" property="orderStatus" />
     <result column="commission_status" jdbcType="VARCHAR" property="commissionStatus" />
-    <result column="status" jdbcType="VARCHAR" property="status" />
+    <result column="refund_tag" jdbcType="INTEGER" property="refundTag" />
+    <result column="map_type" jdbcType="VARCHAR" property="mapType" />
+    <result column="status" jdbcType="INTEGER" property="status" />
   </resultMap>
   <sql id="Example_Where_Clause">
     <where>
@@ -79,7 +81,7 @@
   <sql id="Base_Column_List">
     id, gmt_created, gmt_modified, trade_id, parent_trade_id, open_id, external_id, special_id, 
     relation_id, item_id, pre_commission_fee, act_commission_fee, order_status, commission_status, 
-    `status`
+    refund_tag, map_type, `status`
   </sql>
   <select id="selectByExample" parameterType="com.help.rebate.dao.entity.OrderOpenidMapExample" resultMap="BaseResultMap">
     select
@@ -127,12 +129,14 @@
       parent_trade_id, open_id, external_id, 
       special_id, relation_id, item_id, 
       pre_commission_fee, act_commission_fee, order_status, 
-      commission_status, `status`)
+      commission_status, refund_tag, map_type, 
+      `status`)
     values (#{gmtCreated,jdbcType=TIMESTAMP}, #{gmtModified,jdbcType=TIMESTAMP}, #{tradeId,jdbcType=VARCHAR}, 
       #{parentTradeId,jdbcType=VARCHAR}, #{openId,jdbcType=VARCHAR}, #{externalId,jdbcType=VARCHAR}, 
       #{specialId,jdbcType=VARCHAR}, #{relationId,jdbcType=VARCHAR}, #{itemId,jdbcType=VARCHAR}, 
       #{preCommissionFee,jdbcType=VARCHAR}, #{actCommissionFee,jdbcType=VARCHAR}, #{orderStatus,jdbcType=VARCHAR}, 
-      #{commissionStatus,jdbcType=VARCHAR}, #{status,jdbcType=VARCHAR})
+      #{commissionStatus,jdbcType=VARCHAR}, #{refundTag,jdbcType=INTEGER}, #{mapType,jdbcType=VARCHAR}, 
+      #{status,jdbcType=INTEGER})
   </insert>
   <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.help.rebate.dao.entity.OrderOpenidMap" useGeneratedKeys="true">
     insert into order_openid_map
@@ -175,6 +179,12 @@
       </if>
       <if test="commissionStatus != null">
         commission_status,
+      </if>
+      <if test="refundTag != null">
+        refund_tag,
+      </if>
+      <if test="mapType != null">
+        map_type,
       </if>
       <if test="status != null">
         `status`,
@@ -220,8 +230,14 @@
       <if test="commissionStatus != null">
         #{commissionStatus,jdbcType=VARCHAR},
       </if>
+      <if test="refundTag != null">
+        #{refundTag,jdbcType=INTEGER},
+      </if>
+      <if test="mapType != null">
+        #{mapType,jdbcType=VARCHAR},
+      </if>
       <if test="status != null">
-        #{status,jdbcType=VARCHAR},
+        #{status,jdbcType=INTEGER},
       </if>
     </trim>
   </insert>
@@ -276,8 +292,14 @@
       <if test="record.commissionStatus != null">
         commission_status = #{record.commissionStatus,jdbcType=VARCHAR},
       </if>
+      <if test="record.refundTag != null">
+        refund_tag = #{record.refundTag,jdbcType=INTEGER},
+      </if>
+      <if test="record.mapType != null">
+        map_type = #{record.mapType,jdbcType=VARCHAR},
+      </if>
       <if test="record.status != null">
-        `status` = #{record.status,jdbcType=VARCHAR},
+        `status` = #{record.status,jdbcType=INTEGER},
       </if>
     </set>
     <if test="_parameter != null">
@@ -300,7 +322,9 @@
       act_commission_fee = #{record.actCommissionFee,jdbcType=VARCHAR},
       order_status = #{record.orderStatus,jdbcType=VARCHAR},
       commission_status = #{record.commissionStatus,jdbcType=VARCHAR},
-      `status` = #{record.status,jdbcType=VARCHAR}
+      refund_tag = #{record.refundTag,jdbcType=INTEGER},
+      map_type = #{record.mapType,jdbcType=VARCHAR},
+      `status` = #{record.status,jdbcType=INTEGER}
     <if test="_parameter != null">
       <include refid="Update_By_Example_Where_Clause" />
     </if>
@@ -347,8 +371,14 @@
       <if test="commissionStatus != null">
         commission_status = #{commissionStatus,jdbcType=VARCHAR},
       </if>
+      <if test="refundTag != null">
+        refund_tag = #{refundTag,jdbcType=INTEGER},
+      </if>
+      <if test="mapType != null">
+        map_type = #{mapType,jdbcType=VARCHAR},
+      </if>
       <if test="status != null">
-        `status` = #{status,jdbcType=VARCHAR},
+        `status` = #{status,jdbcType=INTEGER},
       </if>
     </set>
     where id = #{id,jdbcType=INTEGER}
@@ -368,7 +398,9 @@
       act_commission_fee = #{actCommissionFee,jdbcType=VARCHAR},
       order_status = #{orderStatus,jdbcType=VARCHAR},
       commission_status = #{commissionStatus,jdbcType=VARCHAR},
-      `status` = #{status,jdbcType=VARCHAR}
+      refund_tag = #{refundTag,jdbcType=INTEGER},
+      map_type = #{mapType,jdbcType=VARCHAR},
+      `status` = #{status,jdbcType=INTEGER}
     where id = #{id,jdbcType=INTEGER}
   </update>
 </mapper>

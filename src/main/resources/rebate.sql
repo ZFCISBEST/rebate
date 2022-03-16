@@ -89,6 +89,12 @@ CREATE TABLE `rebate`.`order_openid_map` (
 ENGINE = InnoDB
 COMMENT = '订单关联映射表';
 
+ALTER TABLE `rebate`.`order_openid_map`
+CHANGE COLUMN `status` `status` INT NULL DEFAULT NULL COMMENT '0表示未删除，-1表示删除' ,
+ADD COLUMN `map_type` VARCHAR(45) NULL COMMENT '映射类型，pubsite(推广位绑定), specialid(会员ID绑定), extend(扩展而来，通过parent订单扩展的其他购买商品，可能也转过码)，pubsite_specialid(既存在推广位，又有specialid是会员，此时可建立与opened的映射关系)' AFTER `commission_status`;
+ADD COLUMN `refund_tag` INT NULL DEFAULT 0 COMMENT '维权标签，0 含义为非维权 1 含义为维权订单' AFTER `commission_status`;
+
+
 CREATE TABLE `rebate`.`commission_account` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `gmt_created` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,

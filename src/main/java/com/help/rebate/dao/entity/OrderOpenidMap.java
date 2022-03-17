@@ -62,27 +62,33 @@ public class OrderOpenidMap implements Serializable {
     private String itemId;
 
     /**
-     * 预估返利费
+     * 付款预估收入=付款金额*提成。指买家付款金额为基数，预估您可能获得的收入。因买家退款等原因，可能与结算预估收入不一致
      */
-    @ApiModelProperty(value="预估返利费")
-    private String preCommissionFee;
+    @ApiModelProperty(value="付款预估收入=付款金额*提成。指买家付款金额为基数，预估您可能获得的收入。因买家退款等原因，可能与结算预估收入不一致")
+    private String pubSharePreFee;
 
     /**
-     * 实际返利费
+     * 结算预估收入=结算金额*提成。以买家确认收货的付款金额为基数，预估您可能获得的收入。因买家退款、您违规推广等原因，可能与您最终收入不一致。最终收入以月结后您实际收到的为准
      */
-    @ApiModelProperty(value="实际返利费")
-    private String actCommissionFee;
+    @ApiModelProperty(value="结算预估收入=结算金额*提成。以买家确认收货的付款金额为基数，预估您可能获得的收入。因买家退款、您违规推广等原因，可能与您最终收入不一致。最终收入以月结后您实际收到的为准")
+    private String pubShareFee;
 
     /**
-     * 订单状态 - 付款、已收货、已结算
+     * 技术服务费=结算金额*收入比率*技术服务费率。推广者赚取佣金后支付给阿里妈妈的技术服务费用
      */
-    @ApiModelProperty(value="订单状态 - 付款、已收货、已结算")
-    private String orderStatus;
+    @ApiModelProperty(value="技术服务费=结算金额*收入比率*技术服务费率。推广者赚取佣金后支付给阿里妈妈的技术服务费用")
+    private String alimamaShareFee;
 
     /**
-     * 待结算、已结算、已关闭
+     * 订单状态 - 12-付款，13-关闭，14-确认收货，3-结算成功
      */
-    @ApiModelProperty(value="待结算、已结算、已关闭")
+    @ApiModelProperty(value="订单状态 - 12-付款，13-关闭，14-确认收货，3-结算成功")
+    private Integer orderStatus;
+
+    /**
+     * 给用户的结算状态 - 待结算、已结算、已关闭
+     */
+    @ApiModelProperty(value="给用户的结算状态 - 待结算、已结算、已关闭")
     private String commissionStatus;
 
     /**
@@ -127,8 +133,9 @@ public class OrderOpenidMap implements Serializable {
             && (this.getSpecialId() == null ? other.getSpecialId() == null : this.getSpecialId().equals(other.getSpecialId()))
             && (this.getRelationId() == null ? other.getRelationId() == null : this.getRelationId().equals(other.getRelationId()))
             && (this.getItemId() == null ? other.getItemId() == null : this.getItemId().equals(other.getItemId()))
-            && (this.getPreCommissionFee() == null ? other.getPreCommissionFee() == null : this.getPreCommissionFee().equals(other.getPreCommissionFee()))
-            && (this.getActCommissionFee() == null ? other.getActCommissionFee() == null : this.getActCommissionFee().equals(other.getActCommissionFee()))
+            && (this.getPubSharePreFee() == null ? other.getPubSharePreFee() == null : this.getPubSharePreFee().equals(other.getPubSharePreFee()))
+            && (this.getPubShareFee() == null ? other.getPubShareFee() == null : this.getPubShareFee().equals(other.getPubShareFee()))
+            && (this.getAlimamaShareFee() == null ? other.getAlimamaShareFee() == null : this.getAlimamaShareFee().equals(other.getAlimamaShareFee()))
             && (this.getOrderStatus() == null ? other.getOrderStatus() == null : this.getOrderStatus().equals(other.getOrderStatus()))
             && (this.getCommissionStatus() == null ? other.getCommissionStatus() == null : this.getCommissionStatus().equals(other.getCommissionStatus()))
             && (this.getRefundTag() == null ? other.getRefundTag() == null : this.getRefundTag().equals(other.getRefundTag()))
@@ -150,8 +157,9 @@ public class OrderOpenidMap implements Serializable {
         result = prime * result + ((getSpecialId() == null) ? 0 : getSpecialId().hashCode());
         result = prime * result + ((getRelationId() == null) ? 0 : getRelationId().hashCode());
         result = prime * result + ((getItemId() == null) ? 0 : getItemId().hashCode());
-        result = prime * result + ((getPreCommissionFee() == null) ? 0 : getPreCommissionFee().hashCode());
-        result = prime * result + ((getActCommissionFee() == null) ? 0 : getActCommissionFee().hashCode());
+        result = prime * result + ((getPubSharePreFee() == null) ? 0 : getPubSharePreFee().hashCode());
+        result = prime * result + ((getPubShareFee() == null) ? 0 : getPubShareFee().hashCode());
+        result = prime * result + ((getAlimamaShareFee() == null) ? 0 : getAlimamaShareFee().hashCode());
         result = prime * result + ((getOrderStatus() == null) ? 0 : getOrderStatus().hashCode());
         result = prime * result + ((getCommissionStatus() == null) ? 0 : getCommissionStatus().hashCode());
         result = prime * result + ((getRefundTag() == null) ? 0 : getRefundTag().hashCode());
@@ -176,8 +184,9 @@ public class OrderOpenidMap implements Serializable {
         sb.append(", specialId=").append(specialId);
         sb.append(", relationId=").append(relationId);
         sb.append(", itemId=").append(itemId);
-        sb.append(", preCommissionFee=").append(preCommissionFee);
-        sb.append(", actCommissionFee=").append(actCommissionFee);
+        sb.append(", pubSharePreFee=").append(pubSharePreFee);
+        sb.append(", pubShareFee=").append(pubShareFee);
+        sb.append(", alimamaShareFee=").append(alimamaShareFee);
         sb.append(", orderStatus=").append(orderStatus);
         sb.append(", commissionStatus=").append(commissionStatus);
         sb.append(", refundTag=").append(refundTag);

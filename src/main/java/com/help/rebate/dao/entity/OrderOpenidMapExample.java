@@ -805,143 +805,213 @@ public class OrderOpenidMapExample {
             return (Criteria) this;
         }
 
-        public Criteria andPreCommissionFeeIsNull() {
-            addCriterion("pre_commission_fee is null");
+        public Criteria andPubSharePreFeeIsNull() {
+            addCriterion("pub_share_pre_fee is null");
             return (Criteria) this;
         }
 
-        public Criteria andPreCommissionFeeIsNotNull() {
-            addCriterion("pre_commission_fee is not null");
+        public Criteria andPubSharePreFeeIsNotNull() {
+            addCriterion("pub_share_pre_fee is not null");
             return (Criteria) this;
         }
 
-        public Criteria andPreCommissionFeeEqualTo(String value) {
-            addCriterion("pre_commission_fee =", value, "preCommissionFee");
+        public Criteria andPubSharePreFeeEqualTo(String value) {
+            addCriterion("pub_share_pre_fee =", value, "pubSharePreFee");
             return (Criteria) this;
         }
 
-        public Criteria andPreCommissionFeeNotEqualTo(String value) {
-            addCriterion("pre_commission_fee <>", value, "preCommissionFee");
+        public Criteria andPubSharePreFeeNotEqualTo(String value) {
+            addCriterion("pub_share_pre_fee <>", value, "pubSharePreFee");
             return (Criteria) this;
         }
 
-        public Criteria andPreCommissionFeeGreaterThan(String value) {
-            addCriterion("pre_commission_fee >", value, "preCommissionFee");
+        public Criteria andPubSharePreFeeGreaterThan(String value) {
+            addCriterion("pub_share_pre_fee >", value, "pubSharePreFee");
             return (Criteria) this;
         }
 
-        public Criteria andPreCommissionFeeGreaterThanOrEqualTo(String value) {
-            addCriterion("pre_commission_fee >=", value, "preCommissionFee");
+        public Criteria andPubSharePreFeeGreaterThanOrEqualTo(String value) {
+            addCriterion("pub_share_pre_fee >=", value, "pubSharePreFee");
             return (Criteria) this;
         }
 
-        public Criteria andPreCommissionFeeLessThan(String value) {
-            addCriterion("pre_commission_fee <", value, "preCommissionFee");
+        public Criteria andPubSharePreFeeLessThan(String value) {
+            addCriterion("pub_share_pre_fee <", value, "pubSharePreFee");
             return (Criteria) this;
         }
 
-        public Criteria andPreCommissionFeeLessThanOrEqualTo(String value) {
-            addCriterion("pre_commission_fee <=", value, "preCommissionFee");
+        public Criteria andPubSharePreFeeLessThanOrEqualTo(String value) {
+            addCriterion("pub_share_pre_fee <=", value, "pubSharePreFee");
             return (Criteria) this;
         }
 
-        public Criteria andPreCommissionFeeLike(String value) {
-            addCriterion("pre_commission_fee like", value, "preCommissionFee");
+        public Criteria andPubSharePreFeeLike(String value) {
+            addCriterion("pub_share_pre_fee like", value, "pubSharePreFee");
             return (Criteria) this;
         }
 
-        public Criteria andPreCommissionFeeNotLike(String value) {
-            addCriterion("pre_commission_fee not like", value, "preCommissionFee");
+        public Criteria andPubSharePreFeeNotLike(String value) {
+            addCriterion("pub_share_pre_fee not like", value, "pubSharePreFee");
             return (Criteria) this;
         }
 
-        public Criteria andPreCommissionFeeIn(List<String> values) {
-            addCriterion("pre_commission_fee in", values, "preCommissionFee");
+        public Criteria andPubSharePreFeeIn(List<String> values) {
+            addCriterion("pub_share_pre_fee in", values, "pubSharePreFee");
             return (Criteria) this;
         }
 
-        public Criteria andPreCommissionFeeNotIn(List<String> values) {
-            addCriterion("pre_commission_fee not in", values, "preCommissionFee");
+        public Criteria andPubSharePreFeeNotIn(List<String> values) {
+            addCriterion("pub_share_pre_fee not in", values, "pubSharePreFee");
             return (Criteria) this;
         }
 
-        public Criteria andPreCommissionFeeBetween(String value1, String value2) {
-            addCriterion("pre_commission_fee between", value1, value2, "preCommissionFee");
+        public Criteria andPubSharePreFeeBetween(String value1, String value2) {
+            addCriterion("pub_share_pre_fee between", value1, value2, "pubSharePreFee");
             return (Criteria) this;
         }
 
-        public Criteria andPreCommissionFeeNotBetween(String value1, String value2) {
-            addCriterion("pre_commission_fee not between", value1, value2, "preCommissionFee");
+        public Criteria andPubSharePreFeeNotBetween(String value1, String value2) {
+            addCriterion("pub_share_pre_fee not between", value1, value2, "pubSharePreFee");
             return (Criteria) this;
         }
 
-        public Criteria andActCommissionFeeIsNull() {
-            addCriterion("act_commission_fee is null");
+        public Criteria andPubShareFeeIsNull() {
+            addCriterion("pub_share_fee is null");
             return (Criteria) this;
         }
 
-        public Criteria andActCommissionFeeIsNotNull() {
-            addCriterion("act_commission_fee is not null");
+        public Criteria andPubShareFeeIsNotNull() {
+            addCriterion("pub_share_fee is not null");
             return (Criteria) this;
         }
 
-        public Criteria andActCommissionFeeEqualTo(String value) {
-            addCriterion("act_commission_fee =", value, "actCommissionFee");
+        public Criteria andPubShareFeeEqualTo(String value) {
+            addCriterion("pub_share_fee =", value, "pubShareFee");
             return (Criteria) this;
         }
 
-        public Criteria andActCommissionFeeNotEqualTo(String value) {
-            addCriterion("act_commission_fee <>", value, "actCommissionFee");
+        public Criteria andPubShareFeeNotEqualTo(String value) {
+            addCriterion("pub_share_fee <>", value, "pubShareFee");
             return (Criteria) this;
         }
 
-        public Criteria andActCommissionFeeGreaterThan(String value) {
-            addCriterion("act_commission_fee >", value, "actCommissionFee");
+        public Criteria andPubShareFeeGreaterThan(String value) {
+            addCriterion("pub_share_fee >", value, "pubShareFee");
             return (Criteria) this;
         }
 
-        public Criteria andActCommissionFeeGreaterThanOrEqualTo(String value) {
-            addCriterion("act_commission_fee >=", value, "actCommissionFee");
+        public Criteria andPubShareFeeGreaterThanOrEqualTo(String value) {
+            addCriterion("pub_share_fee >=", value, "pubShareFee");
             return (Criteria) this;
         }
 
-        public Criteria andActCommissionFeeLessThan(String value) {
-            addCriterion("act_commission_fee <", value, "actCommissionFee");
+        public Criteria andPubShareFeeLessThan(String value) {
+            addCriterion("pub_share_fee <", value, "pubShareFee");
             return (Criteria) this;
         }
 
-        public Criteria andActCommissionFeeLessThanOrEqualTo(String value) {
-            addCriterion("act_commission_fee <=", value, "actCommissionFee");
+        public Criteria andPubShareFeeLessThanOrEqualTo(String value) {
+            addCriterion("pub_share_fee <=", value, "pubShareFee");
             return (Criteria) this;
         }
 
-        public Criteria andActCommissionFeeLike(String value) {
-            addCriterion("act_commission_fee like", value, "actCommissionFee");
+        public Criteria andPubShareFeeLike(String value) {
+            addCriterion("pub_share_fee like", value, "pubShareFee");
             return (Criteria) this;
         }
 
-        public Criteria andActCommissionFeeNotLike(String value) {
-            addCriterion("act_commission_fee not like", value, "actCommissionFee");
+        public Criteria andPubShareFeeNotLike(String value) {
+            addCriterion("pub_share_fee not like", value, "pubShareFee");
             return (Criteria) this;
         }
 
-        public Criteria andActCommissionFeeIn(List<String> values) {
-            addCriterion("act_commission_fee in", values, "actCommissionFee");
+        public Criteria andPubShareFeeIn(List<String> values) {
+            addCriterion("pub_share_fee in", values, "pubShareFee");
             return (Criteria) this;
         }
 
-        public Criteria andActCommissionFeeNotIn(List<String> values) {
-            addCriterion("act_commission_fee not in", values, "actCommissionFee");
+        public Criteria andPubShareFeeNotIn(List<String> values) {
+            addCriterion("pub_share_fee not in", values, "pubShareFee");
             return (Criteria) this;
         }
 
-        public Criteria andActCommissionFeeBetween(String value1, String value2) {
-            addCriterion("act_commission_fee between", value1, value2, "actCommissionFee");
+        public Criteria andPubShareFeeBetween(String value1, String value2) {
+            addCriterion("pub_share_fee between", value1, value2, "pubShareFee");
             return (Criteria) this;
         }
 
-        public Criteria andActCommissionFeeNotBetween(String value1, String value2) {
-            addCriterion("act_commission_fee not between", value1, value2, "actCommissionFee");
+        public Criteria andPubShareFeeNotBetween(String value1, String value2) {
+            addCriterion("pub_share_fee not between", value1, value2, "pubShareFee");
+            return (Criteria) this;
+        }
+
+        public Criteria andAlimamaShareFeeIsNull() {
+            addCriterion("alimama_share_fee is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andAlimamaShareFeeIsNotNull() {
+            addCriterion("alimama_share_fee is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andAlimamaShareFeeEqualTo(String value) {
+            addCriterion("alimama_share_fee =", value, "alimamaShareFee");
+            return (Criteria) this;
+        }
+
+        public Criteria andAlimamaShareFeeNotEqualTo(String value) {
+            addCriterion("alimama_share_fee <>", value, "alimamaShareFee");
+            return (Criteria) this;
+        }
+
+        public Criteria andAlimamaShareFeeGreaterThan(String value) {
+            addCriterion("alimama_share_fee >", value, "alimamaShareFee");
+            return (Criteria) this;
+        }
+
+        public Criteria andAlimamaShareFeeGreaterThanOrEqualTo(String value) {
+            addCriterion("alimama_share_fee >=", value, "alimamaShareFee");
+            return (Criteria) this;
+        }
+
+        public Criteria andAlimamaShareFeeLessThan(String value) {
+            addCriterion("alimama_share_fee <", value, "alimamaShareFee");
+            return (Criteria) this;
+        }
+
+        public Criteria andAlimamaShareFeeLessThanOrEqualTo(String value) {
+            addCriterion("alimama_share_fee <=", value, "alimamaShareFee");
+            return (Criteria) this;
+        }
+
+        public Criteria andAlimamaShareFeeLike(String value) {
+            addCriterion("alimama_share_fee like", value, "alimamaShareFee");
+            return (Criteria) this;
+        }
+
+        public Criteria andAlimamaShareFeeNotLike(String value) {
+            addCriterion("alimama_share_fee not like", value, "alimamaShareFee");
+            return (Criteria) this;
+        }
+
+        public Criteria andAlimamaShareFeeIn(List<String> values) {
+            addCriterion("alimama_share_fee in", values, "alimamaShareFee");
+            return (Criteria) this;
+        }
+
+        public Criteria andAlimamaShareFeeNotIn(List<String> values) {
+            addCriterion("alimama_share_fee not in", values, "alimamaShareFee");
+            return (Criteria) this;
+        }
+
+        public Criteria andAlimamaShareFeeBetween(String value1, String value2) {
+            addCriterion("alimama_share_fee between", value1, value2, "alimamaShareFee");
+            return (Criteria) this;
+        }
+
+        public Criteria andAlimamaShareFeeNotBetween(String value1, String value2) {
+            addCriterion("alimama_share_fee not between", value1, value2, "alimamaShareFee");
             return (Criteria) this;
         }
 
@@ -955,62 +1025,52 @@ public class OrderOpenidMapExample {
             return (Criteria) this;
         }
 
-        public Criteria andOrderStatusEqualTo(String value) {
+        public Criteria andOrderStatusEqualTo(Integer value) {
             addCriterion("order_status =", value, "orderStatus");
             return (Criteria) this;
         }
 
-        public Criteria andOrderStatusNotEqualTo(String value) {
+        public Criteria andOrderStatusNotEqualTo(Integer value) {
             addCriterion("order_status <>", value, "orderStatus");
             return (Criteria) this;
         }
 
-        public Criteria andOrderStatusGreaterThan(String value) {
+        public Criteria andOrderStatusGreaterThan(Integer value) {
             addCriterion("order_status >", value, "orderStatus");
             return (Criteria) this;
         }
 
-        public Criteria andOrderStatusGreaterThanOrEqualTo(String value) {
+        public Criteria andOrderStatusGreaterThanOrEqualTo(Integer value) {
             addCriterion("order_status >=", value, "orderStatus");
             return (Criteria) this;
         }
 
-        public Criteria andOrderStatusLessThan(String value) {
+        public Criteria andOrderStatusLessThan(Integer value) {
             addCriterion("order_status <", value, "orderStatus");
             return (Criteria) this;
         }
 
-        public Criteria andOrderStatusLessThanOrEqualTo(String value) {
+        public Criteria andOrderStatusLessThanOrEqualTo(Integer value) {
             addCriterion("order_status <=", value, "orderStatus");
             return (Criteria) this;
         }
 
-        public Criteria andOrderStatusLike(String value) {
-            addCriterion("order_status like", value, "orderStatus");
-            return (Criteria) this;
-        }
-
-        public Criteria andOrderStatusNotLike(String value) {
-            addCriterion("order_status not like", value, "orderStatus");
-            return (Criteria) this;
-        }
-
-        public Criteria andOrderStatusIn(List<String> values) {
+        public Criteria andOrderStatusIn(List<Integer> values) {
             addCriterion("order_status in", values, "orderStatus");
             return (Criteria) this;
         }
 
-        public Criteria andOrderStatusNotIn(List<String> values) {
+        public Criteria andOrderStatusNotIn(List<Integer> values) {
             addCriterion("order_status not in", values, "orderStatus");
             return (Criteria) this;
         }
 
-        public Criteria andOrderStatusBetween(String value1, String value2) {
+        public Criteria andOrderStatusBetween(Integer value1, Integer value2) {
             addCriterion("order_status between", value1, value2, "orderStatus");
             return (Criteria) this;
         }
 
-        public Criteria andOrderStatusNotBetween(String value1, String value2) {
+        public Criteria andOrderStatusNotBetween(Integer value1, Integer value2) {
             addCriterion("order_status not between", value1, value2, "orderStatus");
             return (Criteria) this;
         }

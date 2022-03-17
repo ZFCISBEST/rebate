@@ -15,7 +15,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -69,7 +71,7 @@ public class OrderBindService {
      * @param tradeIds 可传可不传
      * @return
      */
-    public String bindByTradeId(String parentTradeId, String... tradeIds) {
+    public void bindByTradeId(String parentTradeId, String... tradeIds) {
         //首先查询订单
         List<OrderDetail> orderDetailList = orderService.selectByTradeId(parentTradeId, null);
         Map<String, OrderDetail> tradeId2OrderDetailMap = orderDetailList.stream().collect(Collectors.toMap(a -> a.getTradeId(), a -> a));
@@ -85,7 +87,7 @@ public class OrderBindService {
         //如果已经存在了，那么说明已经绑定过，这样可以直接复用原来的信息将剩下的数据绑定完毕
         if (!EmptyUtils.isEmpty(orderOpenidMapList)) {
             createOrderOpenidMapBy(orderOpenidMapList.get(0), tradeId2OrderDetailMap);
-            return null;
+            return;
         }
 
         //所有的都没有绑定过
@@ -99,7 +101,7 @@ public class OrderBindService {
             bindBySpecialId(orderDetailList);
         }
 
-        return null;
+        return;
     }
 
     /**
@@ -108,11 +110,58 @@ public class OrderBindService {
      * 如果我们平台给用户的状态已经结算，或者关闭，那么不用更新
      * 每次更新的时候，主要更新一下其他字段（如预期返利）
      * 应该多个状态，就是如果实际已经返利给用户了，但是订单状态发生了商家维权，造成我们自己资损，需要记录下来实际给用户反了多少，后面要补回来
+     *
      * @param orderOpenidMap
      * @param orderDetail
      */
     private void updateOrderOpenidMapIfNeeded(OrderOpenidMap orderOpenidMap, OrderDetail orderDetail) {
+        //维权标识 0 含义为非维权 1 含义为维权订单
+        Integer refundTag = orderDetail.getRefundTag();
+        //付款预估收入 - 是总的哦
+        String pubSharePreFee = orderDetail.getPubSharePreFee();
+        //结算预估收入 - 是总的哦
+        String pubShareFee = orderDetail.getPubShareFee();
 
+        //支付给阿里妈妈的费用
+        String alimamaShareFee = orderDetail.getAlimamaShareFee();
+
+        //当前状态 - 12-付款，13-关闭，14-确认收货，3-结算成功
+        Integer tkStatus = orderDetail.getTkStatus();
+
+        //上次的状态
+        int lastTkStatus = orderOpenidMap.getOrderStatus();
+
+        //判定 - 相同状态，不更新，订单已经关闭的也不更新
+        if (tkStatus == lastTkStatus || lastTkStatus == 13) {
+            return;
+        }
+
+        //判定 - 如果新状态为3，旧状态不是，那么更新
+        boolean updateFlag = false;
+        if (lastTkStatus != 3 && tkStatus == 3) {
+            updateFlag = true;
+        }
+        //判定 - 如果旧状态是付款、确认收货，或者新状态为关闭，那么更新
+        else if (lastTkStatus == 12 && (tkStatus == 13 || tkStatus == 14 || tkStatus == 3)) {
+            updateFlag = true;
+        }
+        else if (lastTkStatus == 14 && (tkStatus == 13 || tkStatus == 3)) {
+            updateFlag = true;
+        }
+
+        //是否更新
+        if (updateFlag) {
+            orderOpenidMap.setOrderStatus(tkStatus);
+
+            //结算时，应该给用户返利多少
+            orderOpenidMap.setPubSharePreFee(pubSharePreFee);
+            orderOpenidMap.setPubShareFee(pubShareFee);
+            orderOpenidMap.setAlimamaShareFee(alimamaShareFee);
+
+            //修改时间
+            orderOpenidMap.setGmtModified(new Date(System.currentTimeMillis()));
+            orderOpenidMapService.update(orderOpenidMap);
+        }
     }
 
     /**

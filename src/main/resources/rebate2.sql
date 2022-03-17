@@ -54,17 +54,16 @@ CREATE TABLE `order_openid_map` (
   `special_id` varchar(16) DEFAULT NULL COMMENT '关联的会员ID，如果有的话',
   `relation_id` varchar(32) DEFAULT NULL COMMENT '关联的渠道ID，如果有的话（虚拟的也可以）',
   `item_id` varchar(16) DEFAULT NULL COMMENT '商品的ID',
-  `pre_commission_fee` varchar(16) DEFAULT NULL COMMENT '预估返利费',
-  `act_commission_fee` varchar(16) DEFAULT NULL COMMENT '实际返利费',
-  `order_status` varchar(16) DEFAULT NULL COMMENT '订单状态 - 付款、已收货、已结算',
-  `commission_status` varchar(16) DEFAULT NULL COMMENT '待结算、已结算、已关闭',
+  `pub_share_pre_fee` varchar(16) DEFAULT NULL COMMENT '付款预估收入=付款金额*提成。指买家付款金额为基数，预估您可能获得的收入。因买家退款等原因，可能与结算预估收入不一致',
+  `pub_share_fee` varchar(16) DEFAULT NULL COMMENT '结算预估收入=结算金额*提成。以买家确认收货的付款金额为基数，预估您可能获得的收入。因买家退款、您违规推广等原因，可能与您最终收入不一致。最终收入以月结后您实际收到的为准',
+  `alimama_share_fee` varchar(16) DEFAULT NULL COMMENT '技术服务费=结算金额*收入比率*技术服务费率。推广者赚取佣金后支付给阿里妈妈的技术服务费用',
+  `order_status` int(11) DEFAULT NULL COMMENT '订单状态 - 12-付款，13-关闭，14-确认收货，3-结算成功',
+  `commission_status` varchar(16) DEFAULT NULL COMMENT '给用户的结算状态 - 待结算、已结算、已关闭',
   `refund_tag` int(11) DEFAULT '0' COMMENT '维权标签，0 含义为非维权 1 含义为维权订单',
   `map_type` varchar(45) DEFAULT NULL COMMENT '映射类型，pubsite(推广位绑定), specialid(会员ID绑定), extend(扩展而来，通过parent订单扩展的其他购买商品，可能也转过码)，pubsite_specialid(既存在推广位，又有specialid是会员，此时可建立与opened的映射关系)',
   `status` int(11) DEFAULT NULL COMMENT '0表示未删除，-1表示删除',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='订单关联映射表';
-
-
 
 CREATE TABLE `commission_account` (
   `id` int(11) NOT NULL AUTO_INCREMENT,

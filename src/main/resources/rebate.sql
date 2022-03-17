@@ -93,6 +93,12 @@ ALTER TABLE `rebate`.`order_openid_map`
 CHANGE COLUMN `status` `status` INT NULL DEFAULT NULL COMMENT '0表示未删除，-1表示删除' ,
 ADD COLUMN `map_type` VARCHAR(45) NULL COMMENT '映射类型，pubsite(推广位绑定), specialid(会员ID绑定), extend(扩展而来，通过parent订单扩展的其他购买商品，可能也转过码)，pubsite_specialid(既存在推广位，又有specialid是会员，此时可建立与opened的映射关系)' AFTER `commission_status`;
 ADD COLUMN `refund_tag` INT NULL DEFAULT 0 COMMENT '维权标签，0 含义为非维权 1 含义为维权订单' AFTER `commission_status`;
+ALTER TABLE `rebate`.`order_openid_map`
+CHANGE COLUMN `pre_commission_fee` `pub_share_pre_fee` VARCHAR(16) NULL DEFAULT NULL COMMENT '付款预估收入=付款金额*提成。指买家付款金额为基数，预估您可能获得的收入。因买家退款等原因，可能与结算预估收入不一致' ,
+CHANGE COLUMN `act_commission_fee` `pub_share_fee` VARCHAR(16) NULL DEFAULT NULL COMMENT '结算预估收入=结算金额*提成。以买家确认收货的付款金额为基数，预估您可能获得的收入。因买家退款、您违规推广等原因，可能与您最终收入不一致。最终收入以月结后您实际收到的为准' ,
+CHANGE COLUMN `order_status` `order_status` INT NULL DEFAULT NULL COMMENT '订单状态 - 12-付款，13-关闭，14-确认收货，3-结算成功' ,
+CHANGE COLUMN `commission_status` `commission_status` VARCHAR(16) NULL DEFAULT NULL COMMENT '给用户的结算状态 - 待结算、已结算、已关闭' ,
+ADD COLUMN `alimama_share_fee` VARCHAR(16) NULL COMMENT '技术服务费=结算金额*收入比率*技术服务费率。推广者赚取佣金后支付给阿里妈妈的技术服务费用' AFTER `pub_share_fee`;
 
 
 CREATE TABLE `rebate`.`commission_account` (

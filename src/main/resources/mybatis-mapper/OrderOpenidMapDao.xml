@@ -12,9 +12,10 @@
     <result column="special_id" jdbcType="VARCHAR" property="specialId" />
     <result column="relation_id" jdbcType="VARCHAR" property="relationId" />
     <result column="item_id" jdbcType="VARCHAR" property="itemId" />
-    <result column="pre_commission_fee" jdbcType="VARCHAR" property="preCommissionFee" />
-    <result column="act_commission_fee" jdbcType="VARCHAR" property="actCommissionFee" />
-    <result column="order_status" jdbcType="VARCHAR" property="orderStatus" />
+    <result column="pub_share_pre_fee" jdbcType="VARCHAR" property="pubSharePreFee" />
+    <result column="pub_share_fee" jdbcType="VARCHAR" property="pubShareFee" />
+    <result column="alimama_share_fee" jdbcType="VARCHAR" property="alimamaShareFee" />
+    <result column="order_status" jdbcType="INTEGER" property="orderStatus" />
     <result column="commission_status" jdbcType="VARCHAR" property="commissionStatus" />
     <result column="refund_tag" jdbcType="INTEGER" property="refundTag" />
     <result column="map_type" jdbcType="VARCHAR" property="mapType" />
@@ -80,8 +81,8 @@
   </sql>
   <sql id="Base_Column_List">
     id, gmt_created, gmt_modified, trade_id, parent_trade_id, open_id, external_id, special_id, 
-    relation_id, item_id, pre_commission_fee, act_commission_fee, order_status, commission_status, 
-    refund_tag, map_type, `status`
+    relation_id, item_id, pub_share_pre_fee, pub_share_fee, alimama_share_fee, order_status, 
+    commission_status, refund_tag, map_type, `status`
   </sql>
   <select id="selectByExample" parameterType="com.help.rebate.dao.entity.OrderOpenidMapExample" resultMap="BaseResultMap">
     select
@@ -128,15 +129,15 @@
     insert into order_openid_map (gmt_created, gmt_modified, trade_id, 
       parent_trade_id, open_id, external_id, 
       special_id, relation_id, item_id, 
-      pre_commission_fee, act_commission_fee, order_status, 
-      commission_status, refund_tag, map_type, 
-      `status`)
+      pub_share_pre_fee, pub_share_fee, alimama_share_fee, 
+      order_status, commission_status, refund_tag, 
+      map_type, `status`)
     values (#{gmtCreated,jdbcType=TIMESTAMP}, #{gmtModified,jdbcType=TIMESTAMP}, #{tradeId,jdbcType=VARCHAR}, 
       #{parentTradeId,jdbcType=VARCHAR}, #{openId,jdbcType=VARCHAR}, #{externalId,jdbcType=VARCHAR}, 
       #{specialId,jdbcType=VARCHAR}, #{relationId,jdbcType=VARCHAR}, #{itemId,jdbcType=VARCHAR}, 
-      #{preCommissionFee,jdbcType=VARCHAR}, #{actCommissionFee,jdbcType=VARCHAR}, #{orderStatus,jdbcType=VARCHAR}, 
-      #{commissionStatus,jdbcType=VARCHAR}, #{refundTag,jdbcType=INTEGER}, #{mapType,jdbcType=VARCHAR}, 
-      #{status,jdbcType=INTEGER})
+      #{pubSharePreFee,jdbcType=VARCHAR}, #{pubShareFee,jdbcType=VARCHAR}, #{alimamaShareFee,jdbcType=VARCHAR}, 
+      #{orderStatus,jdbcType=INTEGER}, #{commissionStatus,jdbcType=VARCHAR}, #{refundTag,jdbcType=INTEGER}, 
+      #{mapType,jdbcType=VARCHAR}, #{status,jdbcType=INTEGER})
   </insert>
   <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.help.rebate.dao.entity.OrderOpenidMap" useGeneratedKeys="true">
     insert into order_openid_map
@@ -168,11 +169,14 @@
       <if test="itemId != null">
         item_id,
       </if>
-      <if test="preCommissionFee != null">
-        pre_commission_fee,
+      <if test="pubSharePreFee != null">
+        pub_share_pre_fee,
       </if>
-      <if test="actCommissionFee != null">
-        act_commission_fee,
+      <if test="pubShareFee != null">
+        pub_share_fee,
+      </if>
+      <if test="alimamaShareFee != null">
+        alimama_share_fee,
       </if>
       <if test="orderStatus != null">
         order_status,
@@ -218,14 +222,17 @@
       <if test="itemId != null">
         #{itemId,jdbcType=VARCHAR},
       </if>
-      <if test="preCommissionFee != null">
-        #{preCommissionFee,jdbcType=VARCHAR},
+      <if test="pubSharePreFee != null">
+        #{pubSharePreFee,jdbcType=VARCHAR},
       </if>
-      <if test="actCommissionFee != null">
-        #{actCommissionFee,jdbcType=VARCHAR},
+      <if test="pubShareFee != null">
+        #{pubShareFee,jdbcType=VARCHAR},
+      </if>
+      <if test="alimamaShareFee != null">
+        #{alimamaShareFee,jdbcType=VARCHAR},
       </if>
       <if test="orderStatus != null">
-        #{orderStatus,jdbcType=VARCHAR},
+        #{orderStatus,jdbcType=INTEGER},
       </if>
       <if test="commissionStatus != null">
         #{commissionStatus,jdbcType=VARCHAR},
@@ -280,14 +287,17 @@
       <if test="record.itemId != null">
         item_id = #{record.itemId,jdbcType=VARCHAR},
       </if>
-      <if test="record.preCommissionFee != null">
-        pre_commission_fee = #{record.preCommissionFee,jdbcType=VARCHAR},
+      <if test="record.pubSharePreFee != null">
+        pub_share_pre_fee = #{record.pubSharePreFee,jdbcType=VARCHAR},
       </if>
-      <if test="record.actCommissionFee != null">
-        act_commission_fee = #{record.actCommissionFee,jdbcType=VARCHAR},
+      <if test="record.pubShareFee != null">
+        pub_share_fee = #{record.pubShareFee,jdbcType=VARCHAR},
+      </if>
+      <if test="record.alimamaShareFee != null">
+        alimama_share_fee = #{record.alimamaShareFee,jdbcType=VARCHAR},
       </if>
       <if test="record.orderStatus != null">
-        order_status = #{record.orderStatus,jdbcType=VARCHAR},
+        order_status = #{record.orderStatus,jdbcType=INTEGER},
       </if>
       <if test="record.commissionStatus != null">
         commission_status = #{record.commissionStatus,jdbcType=VARCHAR},
@@ -318,9 +328,10 @@
       special_id = #{record.specialId,jdbcType=VARCHAR},
       relation_id = #{record.relationId,jdbcType=VARCHAR},
       item_id = #{record.itemId,jdbcType=VARCHAR},
-      pre_commission_fee = #{record.preCommissionFee,jdbcType=VARCHAR},
-      act_commission_fee = #{record.actCommissionFee,jdbcType=VARCHAR},
-      order_status = #{record.orderStatus,jdbcType=VARCHAR},
+      pub_share_pre_fee = #{record.pubSharePreFee,jdbcType=VARCHAR},
+      pub_share_fee = #{record.pubShareFee,jdbcType=VARCHAR},
+      alimama_share_fee = #{record.alimamaShareFee,jdbcType=VARCHAR},
+      order_status = #{record.orderStatus,jdbcType=INTEGER},
       commission_status = #{record.commissionStatus,jdbcType=VARCHAR},
       refund_tag = #{record.refundTag,jdbcType=INTEGER},
       map_type = #{record.mapType,jdbcType=VARCHAR},
@@ -359,14 +370,17 @@
       <if test="itemId != null">
         item_id = #{itemId,jdbcType=VARCHAR},
       </if>
-      <if test="preCommissionFee != null">
-        pre_commission_fee = #{preCommissionFee,jdbcType=VARCHAR},
+      <if test="pubSharePreFee != null">
+        pub_share_pre_fee = #{pubSharePreFee,jdbcType=VARCHAR},
       </if>
-      <if test="actCommissionFee != null">
-        act_commission_fee = #{actCommissionFee,jdbcType=VARCHAR},
+      <if test="pubShareFee != null">
+        pub_share_fee = #{pubShareFee,jdbcType=VARCHAR},
+      </if>
+      <if test="alimamaShareFee != null">
+        alimama_share_fee = #{alimamaShareFee,jdbcType=VARCHAR},
       </if>
       <if test="orderStatus != null">
-        order_status = #{orderStatus,jdbcType=VARCHAR},
+        order_status = #{orderStatus,jdbcType=INTEGER},
       </if>
       <if test="commissionStatus != null">
         commission_status = #{commissionStatus,jdbcType=VARCHAR},
@@ -394,9 +408,10 @@
       special_id = #{specialId,jdbcType=VARCHAR},
       relation_id = #{relationId,jdbcType=VARCHAR},
       item_id = #{itemId,jdbcType=VARCHAR},
-      pre_commission_fee = #{preCommissionFee,jdbcType=VARCHAR},
-      act_commission_fee = #{actCommissionFee,jdbcType=VARCHAR},
-      order_status = #{orderStatus,jdbcType=VARCHAR},
+      pub_share_pre_fee = #{pubSharePreFee,jdbcType=VARCHAR},
+      pub_share_fee = #{pubShareFee,jdbcType=VARCHAR},
+      alimama_share_fee = #{alimamaShareFee,jdbcType=VARCHAR},
+      order_status = #{orderStatus,jdbcType=INTEGER},
       commission_status = #{commissionStatus,jdbcType=VARCHAR},
       refund_tag = #{refundTag,jdbcType=INTEGER},
       map_type = #{mapType,jdbcType=VARCHAR},

@@ -3,11 +3,9 @@ package com.help.rebate.service;
 import com.help.rebate.dao.OrderDetailDao;
 import com.help.rebate.dao.OrderOpenidMapDao;
 import com.help.rebate.dao.TklConvertHistoryDao;
-import com.help.rebate.dao.entity.OrderDetail;
-import com.help.rebate.dao.entity.OrderDetailExample;
-import com.help.rebate.dao.entity.OrderOpenidMap;
-import com.help.rebate.dao.entity.TklConvertHistory;
+import com.help.rebate.dao.entity.*;
 import com.help.rebate.service.schedule.FixedOrderSyncTask;
+import com.help.rebate.utils.Checks;
 import com.help.rebate.utils.EmptyUtils;
 import com.help.rebate.utils.TimeUtil;
 import org.slf4j.Logger;
@@ -16,10 +14,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -37,10 +32,6 @@ public class OrderBindService {
      */
     @Resource
     private OrderDetailDao orderDetailDao;
-
-    /**
-     * 订单服务
-     */
     @Resource
     private OrderService orderService;
 
@@ -49,6 +40,8 @@ public class OrderBindService {
      */
     @Resource
     private TklConvertHistoryDao tklConvertHistoryDao;
+    @Resource
+    private TklConvertHistoryService tklConvertHistoryService;
 
     /**
      * 用户信息服务，主要用于对用户信息表的更新操作
@@ -63,6 +56,18 @@ public class OrderBindService {
     private OrderOpenidMapDao orderOpenidMapDao;
     @Resource
     private OrderOpenidMapService orderOpenidMapService;
+
+    /**
+     * 用户通过前端，直接发送过来的，期望绑定的订单
+     * 如果按照订单，没有查到，那么给用户报相应提示，这里不做任何缓存，提示用户稍后再试，因为可能还没来得及订单同步，或者订单输入错误了
+     * @param parentTradeId
+     * @param openId
+     * @param specialId 额外给出的信息，用于将openid和specialid做强制映射
+     * @param externalId 额外给出的信息，用于将openid和externalid做强制映射
+     */
+    public void bindByTradeId(String parentTradeId, String openId, String specialId, String externalId) {
+
+    }
 
 
     /**
@@ -85,7 +90,7 @@ public class OrderBindService {
         }
 
         //如果已经存在了，那么说明已经绑定过，这样可以直接复用原来的信息将剩下的数据绑定完毕
-        if (!EmptyUtils.isEmpty(orderOpenidMapList)) {
+        if (!EmptyUtils.isEmpty(orderOpenidMapList) && tradeId2OrderDetailMap.size() > 0) {
             createOrderOpenidMapBy(orderOpenidMapList.get(0), tradeId2OrderDetailMap);
             return;
         }
@@ -166,18 +171,131 @@ public class OrderBindService {
 
     /**
      * 根据给定的绑定关系，将已知的其他订单绑定到相同的用户信息上
+     * 已知的用户绑定条件
+     * 1、绑定到openid上，这个是主流的
+     * 2、绑定到special上，这个是小众的
+     * 3、绑定到openid和special上，这个就是正好可以关联上
      * @param orderOpenidMap
      * @param tradeId2OrderDetailMap
      */
     private void createOrderOpenidMapBy(OrderOpenidMap orderOpenidMap, Map<String, OrderDetail> tradeId2OrderDetailMap) {
+        //循环每个订单，插入到绑定表中去
+        Collection<OrderDetail> allOrderDetails = tradeId2OrderDetailMap.values();
+        for (OrderDetail orderDetail : allOrderDetails) {
+            OrderOpenidMap newOrderOpenidMap = new OrderOpenidMap();
+            newOrderOpenidMap.setGmtCreated(new Date());
+            newOrderOpenidMap.setGmtModified(new Date());
+            newOrderOpenidMap.setTradeId(orderDetail.getTradeId());
+            newOrderOpenidMap.setParentTradeId(orderDetail.getParentTradeId());
+            newOrderOpenidMap.setOpenId(orderOpenidMap.getOpenId());
+            newOrderOpenidMap.setExternalId(orderOpenidMap.getExternalId());
+            newOrderOpenidMap.setSpecialId(orderOpenidMap.getSpecialId());
+            newOrderOpenidMap.setRelationId(orderOpenidMap.getRelationId());
+            newOrderOpenidMap.setItemId(orderDetail.getItemId());
+            newOrderOpenidMap.setPubSharePreFee(orderDetail.getPubSharePreFee());
+            newOrderOpenidMap.setPubShareFee(orderDetail.getPubShareFee());
+            newOrderOpenidMap.setAlimamaShareFee(orderDetail.getAlimamaShareFee());
+            newOrderOpenidMap.setOrderStatus(orderDetail.getTkStatus());
+            newOrderOpenidMap.setCommissionStatus("待结算");
+            newOrderOpenidMap.setRefundTag(orderDetail.getRefundTag());
+            newOrderOpenidMap.setMapType("extend");
+            newOrderOpenidMap.setStatus(0);
 
+            //插入数据库
+            int affectedNum = orderOpenidMapService.save(newOrderOpenidMap);
+            Checks.isTrue(affectedNum == 1, "插入失败 - tradeId=" + orderDetail.getTradeId());
+        }
     }
 
     /**
      * 普通用户，通过推广位和商品的ID去查询转链记录表，看是否转过
+     * 通过这个方法的绑定，一定不是会员，就是那种普通的订单而已
      * @param orderDetailList
      */
     private void bindByPubSite(List<OrderDetail> orderDetailList) {
+        //查询几天内的数据
+        int days = 7;
+
+        //首先需要明确，有的没有转链接，而是跟随父订单过来的，所以如果查不到，需要循环，都查找一遍
+        Map<Integer, List<String>> convertNum2ItemsMap = new HashMap<Integer, List<String>>(16, 1);
+        Map<String, List<TklConvertHistory>> item2ConvertHistoryMap = new HashMap<>(16, 1);
+        for (OrderDetail orderDetail : orderDetailList) {
+            //商品ID
+            String itemId = orderDetail.getItemId();
+
+            //推广位
+            String pubId = orderDetail.getPubId();
+            String siteId = orderDetail.getSiteId();
+            String adzoneId = orderDetail.getAdzoneId();
+            String pubSite = String.format("mm_%s_%s_%s", pubId, siteId, adzoneId);
+
+            //起止时间
+            Date clickTime = orderDetail.getClickTime();
+            Date startTime = new Date(clickTime.getTime() - days * 24 * 3600000);
+            Date endTime = clickTime;
+
+            //查询看看，是否有转链接记录
+            List<TklConvertHistory> tklConvertHistories = tklConvertHistoryService.selectByItemId(itemId, pubSite, startTime, endTime);
+            item2ConvertHistoryMap.put(itemId, tklConvertHistories);
+            if (!EmptyUtils.isEmpty(tklConvertHistories)) {
+                List<String> itemIds = convertNum2ItemsMap.getOrDefault(tklConvertHistories.size(), new ArrayList<>());
+                itemIds.add(itemId);
+                convertNum2ItemsMap.put(tklConvertHistories.size(), itemIds);
+            }
+            else {
+                List<String> itemIds = convertNum2ItemsMap.getOrDefault(0, new ArrayList<>());
+                itemIds.add(itemId);
+                convertNum2ItemsMap.put(0, itemIds);
+            }
+        }
+
+        //convertNum2ItemsMap判定，看看里面有没有只有一个的
+        List<String> itemIds = convertNum2ItemsMap.get(1);
+        if (itemIds == null) {
+            //说明，要么有歧义，要么没有记录，这里需要记录一下日志
+            logger.warn("[order-bind] fail to bind by tradeParentId[{}]", orderDetailList.get(0).getParentTradeId());
+            return;
+        }
+
+        //存在，那么同一绑定到一起
+        String matchItemId = itemIds.get(0);
+        TklConvertHistory tklConvertHistory = item2ConvertHistoryMap.get(matchItemId).get(0);
+        String openId = tklConvertHistory.getOpenId();
+
+        //根据openid查询用户信息
+        UserInfos userInfos = userInfosService.selectByOpenId(openId);
+        for (OrderDetail orderDetail : orderDetailList) {
+            OrderOpenidMap newOrderOpenidMap = new OrderOpenidMap();
+            newOrderOpenidMap.setGmtCreated(new Date());
+            newOrderOpenidMap.setGmtModified(new Date());
+            newOrderOpenidMap.setTradeId(orderDetail.getTradeId());
+            newOrderOpenidMap.setParentTradeId(orderDetail.getParentTradeId());
+            newOrderOpenidMap.setOpenId(openId);
+            newOrderOpenidMap.setExternalId(userInfos.getExternalId());
+            newOrderOpenidMap.setSpecialId(userInfos.getSpecialId());
+            newOrderOpenidMap.setRelationId(userInfos.getRelationId());
+            newOrderOpenidMap.setItemId(orderDetail.getItemId());
+            newOrderOpenidMap.setPubSharePreFee(orderDetail.getPubSharePreFee());
+            newOrderOpenidMap.setPubShareFee(orderDetail.getPubShareFee());
+            newOrderOpenidMap.setAlimamaShareFee(orderDetail.getAlimamaShareFee());
+            newOrderOpenidMap.setOrderStatus(orderDetail.getTkStatus());
+            newOrderOpenidMap.setCommissionStatus("待结算");
+            newOrderOpenidMap.setRefundTag(orderDetail.getRefundTag());
+
+            //用作匹配的那个id
+            if (matchItemId.equals(orderDetail.getItemId())) {
+                newOrderOpenidMap.setMapType("pubsite");
+            }
+            else {
+                newOrderOpenidMap.setMapType("extend");
+            }
+
+            newOrderOpenidMap.setStatus(0);
+
+            //插入数据库
+            int affectedNum = orderOpenidMapService.save(newOrderOpenidMap);
+            Checks.isTrue(affectedNum == 1, "插入失败 - tradeId=" + orderDetail.getTradeId());
+        }
 
     }
 

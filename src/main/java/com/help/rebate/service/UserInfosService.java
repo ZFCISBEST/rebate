@@ -4,6 +4,8 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.help.rebate.dao.UserInfosDao;
+import com.help.rebate.dao.entity.TklConvertHistory;
+import com.help.rebate.dao.entity.TklConvertHistoryExample;
 import com.help.rebate.dao.entity.UserInfos;
 import com.help.rebate.dao.entity.UserInfosExample;
 import com.help.rebate.service.ddx.tb.DdxInviteCodeManager;
@@ -210,5 +212,24 @@ public class UserInfosService {
         int affectedCnt = userInfosDao.updateByPrimaryKey(infos);
         Checks.isTrue(affectedCnt == 1, "更新用户信息失败 - " + JSON.toJSONString(infos));
         return affectedCnt;
+    }
+
+    /**
+     * 查询用户信息
+     * @param openId
+     * @return
+     */
+    public UserInfos selectByOpenId(String openId) {
+        UserInfosExample userInfosExample = new UserInfosExample();
+        userInfosExample.setLimit(1);
+        UserInfosExample.Criteria criteria = userInfosExample.createCriteria();
+
+        if (!EmptyUtils.isEmpty(openId)) {
+            criteria.andOpenIdEqualTo(openId);
+        }
+
+        //查询 - 按理应该都存在的
+        List<UserInfos> userInfos = userInfosDao.selectByExample(userInfosExample);
+        return userInfos.get(0);
     }
 }

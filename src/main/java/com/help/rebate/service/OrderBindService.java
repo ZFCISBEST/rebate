@@ -62,8 +62,8 @@ public class OrderBindService {
      * 如果按照订单，没有查到，那么给用户报相应提示，这里不做任何缓存，提示用户稍后再试，因为可能还没来得及订单同步，或者订单输入错误了
      * @param parentTradeId
      * @param openId
-     * @param specialId 额外给出的信息，用于将openid和specialid做强制映射
-     * @param externalId 额外给出的信息，用于将openid和externalid做强制映射
+     * @param specialId 额外给出的信息，用于将openid和specialid做强制映射，这个只是给管理员使用
+     * @param externalId 额外给出的信息，用于将openid和externalid做强制映射，这个只是给管理员用
      */
     public void bindByTradeId(String parentTradeId, String openId, String specialId, String externalId) {
 
@@ -213,6 +213,130 @@ public class OrderBindService {
      * @param orderDetailList
      */
     private void bindByPubSite(List<OrderDetail> orderDetailList) {
+        BindOpenidInfo openidInfo = resolveBindOpenidInfo(orderDetailList);
+        if (openidInfo == null) {
+            return;
+        }
+
+        //根据openid查询用户信息
+        UserInfos userInfos = userInfosService.selectByOpenId(openidInfo.getOpenid());
+        for (OrderDetail orderDetail : orderDetailList) {
+            OrderOpenidMap newOrderOpenidMap = new OrderOpenidMap();
+            newOrderOpenidMap.setGmtCreated(new Date());
+            newOrderOpenidMap.setGmtModified(new Date());
+            newOrderOpenidMap.setTradeId(orderDetail.getTradeId());
+            newOrderOpenidMap.setParentTradeId(orderDetail.getParentTradeId());
+            newOrderOpenidMap.setOpenId(openidInfo.getOpenid());
+            newOrderOpenidMap.setExternalId(userInfos.getExternalId());
+            newOrderOpenidMap.setSpecialId(userInfos.getSpecialId());
+            newOrderOpenidMap.setRelationId(userInfos.getRelationId());
+            newOrderOpenidMap.setItemId(orderDetail.getItemId());
+            newOrderOpenidMap.setPubSharePreFee(orderDetail.getPubSharePreFee());
+            newOrderOpenidMap.setPubShareFee(orderDetail.getPubShareFee());
+            newOrderOpenidMap.setAlimamaShareFee(orderDetail.getAlimamaShareFee());
+            newOrderOpenidMap.setOrderStatus(orderDetail.getTkStatus());
+            newOrderOpenidMap.setCommissionStatus("待结算");
+            newOrderOpenidMap.setRefundTag(orderDetail.getRefundTag());
+
+            //用作匹配的那个id
+            if (openidInfo.getItemIds().contains(orderDetail.getItemId())) {
+                newOrderOpenidMap.setMapType("pubsite");
+            }
+            else {
+                newOrderOpenidMap.setMapType("extend");
+            }
+
+            newOrderOpenidMap.setStatus(0);
+
+            //插入数据库
+            int affectedNum = orderOpenidMapService.save(newOrderOpenidMap);
+            Checks.isTrue(affectedNum == 1, "插入失败 - tradeId=" + orderDetail.getTradeId());
+        }
+
+    }
+
+    /**
+     * 会员用户，通过specialId进行绑定
+     * @param orderDetailList
+     */
+    private void bindBySpecialId(List<OrderDetail> orderDetailList) {
+        //第一种，这里的所有商品，至少有被转链过，那么查出来，那么这种情况，是可以建立openid和specialid的关系并存入用户表的
+        BindOpenidInfo openidInfo = resolveBindOpenidInfo(orderDetailList);
+        if (openidInfo != null) {
+            //起始这里有个问题，如果转码是A通过微信转的，但是发给了B去买，B正好是会员，此时是不可以将openId和specialId识别为一对的
+            //所以此时，就将mapType记录一下，openId-specialId
+            String specialIdByOrderDetail = orderDetailList.get(0).getSpecialId();
+            UserInfos userInfosBySpecialId = userInfosService.selectBySpecialId(specialIdByOrderDetail);
+
+            //判定一下
+            UserInfos userInfos = userInfosService.selectByOpenId(openidInfo.getOpenid());
+            String specialIdByUserInfo = userInfos.getSpecialId();
+
+            //存储
+            for (OrderDetail orderDetail : orderDetailList) {
+                OrderOpenidMap newOrderOpenidMap = new OrderOpenidMap();
+                newOrderOpenidMap.setGmtCreated(new Date());
+                newOrderOpenidMap.setGmtModified(new Date());
+                newOrderOpenidMap.setTradeId(orderDetail.getTradeId());
+                newOrderOpenidMap.setParentTradeId(orderDetail.getParentTradeId());
+                newOrderOpenidMap.setOpenId(userInfos.getOpenId());
+                newOrderOpenidMap.setExternalId(userInfosBySpecialId.getExternalId());
+                newOrderOpenidMap.setSpecialId(userInfosBySpecialId.getSpecialId());
+                newOrderOpenidMap.setRelationId(userInfosBySpecialId.getRelationId());
+                newOrderOpenidMap.setItemId(orderDetail.getItemId());
+                newOrderOpenidMap.setPubSharePreFee(orderDetail.getPubSharePreFee());
+                newOrderOpenidMap.setPubShareFee(orderDetail.getPubShareFee());
+                newOrderOpenidMap.setAlimamaShareFee(orderDetail.getAlimamaShareFee());
+                newOrderOpenidMap.setOrderStatus(orderDetail.getTkStatus());
+                newOrderOpenidMap.setCommissionStatus("待结算");
+                newOrderOpenidMap.setRefundTag(orderDetail.getRefundTag());
+                newOrderOpenidMap.setMapType("openId-specialId");
+
+                newOrderOpenidMap.setStatus(0);
+
+                //插入数据库
+                int affectedNum = orderOpenidMapService.save(newOrderOpenidMap);
+                Checks.isTrue(affectedNum == 1, "插入失败 - tradeId=" + orderDetail.getTradeId());
+            }
+
+            return;
+        }
+
+        //第二种，这里所有的商品，都没有被转链过，那么只能存入specialid字段，其他openid这些数据不填写，mapType就是specialid，表示只是会员
+        UserInfos userInfos = userInfosService.selectBySpecialId(orderDetailList.get(0).getSpecialId());
+        for (OrderDetail orderDetail : orderDetailList) {
+            OrderOpenidMap newOrderOpenidMap = new OrderOpenidMap();
+            newOrderOpenidMap.setGmtCreated(new Date());
+            newOrderOpenidMap.setGmtModified(new Date());
+            newOrderOpenidMap.setTradeId(orderDetail.getTradeId());
+            newOrderOpenidMap.setParentTradeId(orderDetail.getParentTradeId());
+            newOrderOpenidMap.setOpenId(userInfos.getOpenId());
+            newOrderOpenidMap.setExternalId(userInfos.getExternalId());
+            newOrderOpenidMap.setSpecialId(userInfos.getSpecialId());
+            newOrderOpenidMap.setRelationId(userInfos.getRelationId());
+            newOrderOpenidMap.setItemId(orderDetail.getItemId());
+            newOrderOpenidMap.setPubSharePreFee(orderDetail.getPubSharePreFee());
+            newOrderOpenidMap.setPubShareFee(orderDetail.getPubShareFee());
+            newOrderOpenidMap.setAlimamaShareFee(orderDetail.getAlimamaShareFee());
+            newOrderOpenidMap.setOrderStatus(orderDetail.getTkStatus());
+            newOrderOpenidMap.setCommissionStatus("待结算");
+            newOrderOpenidMap.setRefundTag(orderDetail.getRefundTag());
+            newOrderOpenidMap.setMapType("specialId");
+
+            newOrderOpenidMap.setStatus(0);
+
+            //插入数据库
+            int affectedNum = orderOpenidMapService.save(newOrderOpenidMap);
+            Checks.isTrue(affectedNum == 1, "插入失败 - tradeId=" + orderDetail.getTradeId());
+        }
+    }
+
+    /**
+     * 根据这个用户购买的所有订单，去确定，是那个微信用户在转码和购买
+     * @param orderDetailList
+     * @return
+     */
+    private BindOpenidInfo resolveBindOpenidInfo(List<OrderDetail> orderDetailList) {
         //查询几天内的数据
         int days = 7;
 
@@ -254,59 +378,47 @@ public class OrderBindService {
         if (itemIds == null) {
             //说明，要么有歧义，要么没有记录，这里需要记录一下日志
             logger.warn("[order-bind] fail to bind by tradeParentId[{}]", orderDetailList.get(0).getParentTradeId());
-            return;
+            return null;
         }
 
         //存在，那么同一绑定到一起
         String matchItemId = itemIds.get(0);
         TklConvertHistory tklConvertHistory = item2ConvertHistoryMap.get(matchItemId).get(0);
         String openId = tklConvertHistory.getOpenId();
-
-        //根据openid查询用户信息
-        UserInfos userInfos = userInfosService.selectByOpenId(openId);
-        for (OrderDetail orderDetail : orderDetailList) {
-            OrderOpenidMap newOrderOpenidMap = new OrderOpenidMap();
-            newOrderOpenidMap.setGmtCreated(new Date());
-            newOrderOpenidMap.setGmtModified(new Date());
-            newOrderOpenidMap.setTradeId(orderDetail.getTradeId());
-            newOrderOpenidMap.setParentTradeId(orderDetail.getParentTradeId());
-            newOrderOpenidMap.setOpenId(openId);
-            newOrderOpenidMap.setExternalId(userInfos.getExternalId());
-            newOrderOpenidMap.setSpecialId(userInfos.getSpecialId());
-            newOrderOpenidMap.setRelationId(userInfos.getRelationId());
-            newOrderOpenidMap.setItemId(orderDetail.getItemId());
-            newOrderOpenidMap.setPubSharePreFee(orderDetail.getPubSharePreFee());
-            newOrderOpenidMap.setPubShareFee(orderDetail.getPubShareFee());
-            newOrderOpenidMap.setAlimamaShareFee(orderDetail.getAlimamaShareFee());
-            newOrderOpenidMap.setOrderStatus(orderDetail.getTkStatus());
-            newOrderOpenidMap.setCommissionStatus("待结算");
-            newOrderOpenidMap.setRefundTag(orderDetail.getRefundTag());
-
-            //用作匹配的那个id
-            if (matchItemId.equals(orderDetail.getItemId())) {
-                newOrderOpenidMap.setMapType("pubsite");
-            }
-            else {
-                newOrderOpenidMap.setMapType("extend");
-            }
-
-            newOrderOpenidMap.setStatus(0);
-
-            //插入数据库
-            int affectedNum = orderOpenidMapService.save(newOrderOpenidMap);
-            Checks.isTrue(affectedNum == 1, "插入失败 - tradeId=" + orderDetail.getTradeId());
-        }
-
+        BindOpenidInfo openidInfo = BindOpenidInfo.build(openId, itemIds);
+        return openidInfo;
     }
 
     /**
-     * 会员用户，通过specialId进行绑定
-     * @param orderDetailList
+     * 按照推广位，查找的绑定信息
      */
-    private void bindBySpecialId(List<OrderDetail> orderDetailList) {
-        //第一种，这里的所有商品，至少有被转链过，那么查出来，那么这种情况，是可以建立openid和specialid的关系并存入用户表的
+    public static class BindOpenidInfo {
+        private List<String> itemIds;
+        private String openid;
 
-        //第二种，这里所有的商品，都没有被转链过，那么只能存入specialid字段，其他openid这些数据不填写，mapType就是specialid，表示只是会员
+        public BindOpenidInfo(String openid, List<String> itemIds) {
+            this.itemIds = itemIds;
+            this.openid = openid;
+        }
 
+        public static BindOpenidInfo build(String openid, List<String> itemIds) {
+            return new BindOpenidInfo(openid, itemIds);
+        }
+
+        public List<String> getItemIds() {
+            return itemIds;
+        }
+
+        public void setItemIds(List<String> itemIds) {
+            this.itemIds = itemIds;
+        }
+
+        public String getOpenid() {
+            return openid;
+        }
+
+        public void setOpenid(String openid) {
+            this.openid = openid;
+        }
     }
 }

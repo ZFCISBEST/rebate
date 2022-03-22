@@ -232,4 +232,23 @@ public class UserInfosService {
         List<UserInfos> userInfos = userInfosDao.selectByExample(userInfosExample);
         return userInfos.get(0);
     }
+
+    /**
+     * 查询用户信息
+     * @param specialId
+     * @return
+     */
+    public UserInfos selectBySpecialId(String specialId) {
+        UserInfosExample userInfosExample = new UserInfosExample();
+        userInfosExample.setLimit(1);
+        UserInfosExample.Criteria criteria = userInfosExample.createCriteria();
+
+        if (!EmptyUtils.isEmpty(specialId)) {
+            criteria.andSpecialIdEqualTo(specialId);
+        }
+
+        //查询 - 按理应该都存在的
+        List<UserInfos> userInfos = userInfosDao.selectByExample(userInfosExample);
+        return userInfos.get(0);
+    }
 }

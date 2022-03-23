@@ -251,4 +251,15 @@ public class UserInfosService {
         List<UserInfos> userInfos = userInfosDao.selectByExample(userInfosExample);
         return userInfos.get(0);
     }
+
+    /**
+     * 更新用户信息
+     * @param userInfos
+     * @return
+     */
+    public int update(UserInfos userInfos) {
+        userInfos.setGmtModified(new Date(System.currentTimeMillis()));
+        int affectedCnt = userInfosDao.updateByPrimaryKeySelective(userInfos);
+        return affectedCnt;
+    }
 }

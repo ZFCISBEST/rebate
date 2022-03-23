@@ -64,9 +64,66 @@ public class OrderBindService {
      * @param openId
      * @param specialId 额外给出的信息，用于将openid和specialid做强制映射，这个只是给管理员使用
      * @param externalId 额外给出的信息，用于将openid和externalid做强制映射，这个只是给管理员用
+     * @return 商品名称列表
      */
-    public void bindByTradeId(String parentTradeId, String openId, String specialId, String externalId) {
+    public List<String> bindByTradeId(String parentTradeId, String openId, String specialId, String externalId) {
+        //获取用户数据
+        UserInfos userInfos = userInfosService.selectByOpenId(openId);
+        Checks.isNotNull(userInfos, "openid不存在");
 
+        //新的special和旧的不相同
+        String infosSpecialId = userInfos.getSpecialId();
+        String infosExternalId = userInfos.getExternalId();
+        Checks.isTrue(EmptyUtils.isEmpty(specialId) || EmptyUtils.isEmpty(infosSpecialId) || specialId.equals(infosSpecialId), "special已经存在，并且与给定的不相同");
+        Checks.isTrue(EmptyUtils.isEmpty(externalId) || EmptyUtils.isEmpty(infosExternalId) || specialId.equals(infosExternalId), "special已经存在，并且与给定的不相同");
+
+        //更新数据库
+        boolean needUpdate = false;
+        if (!EmptyUtils.isEmpty(specialId)) {
+            needUpdate = true;
+            userInfos.setSpecialId(specialId);
+        }
+        if (!EmptyUtils.isEmpty(externalId)) {
+            needUpdate = true;
+            userInfos.setExternalId(externalId);
+        }
+        if (needUpdate) {
+            int affectedCnt = userInfosService.update(userInfos);
+            Checks.isTrue(affectedCnt == 1, "更新用户信息失败");
+        }
+
+        //干正事，绑定
+        //首先查询订单
+        List<OrderDetail> orderDetailList = orderService.selectByTradeId(parentTradeId, null);
+        Checks.isNotEmpty(orderDetailList, "当前订单不存在，请稍后重试或确定是否通过本平台获取的购买链接");
+        for (OrderDetail orderDetail : orderDetailList) {
+            OrderOpenidMap newOrderOpenidMap = new OrderOpenidMap();
+            newOrderOpenidMap.setGmtCreated(new Date());
+            newOrderOpenidMap.setGmtModified(new Date());
+            newOrderOpenidMap.setTradeId(orderDetail.getTradeId());
+            newOrderOpenidMap.setParentTradeId(orderDetail.getParentTradeId());
+            newOrderOpenidMap.setOpenId(userInfos.getOpenId());
+            newOrderOpenidMap.setExternalId(userInfos.getExternalId());
+            newOrderOpenidMap.setSpecialId(userInfos.getSpecialId());
+            newOrderOpenidMap.setRelationId(userInfos.getRelationId());
+            newOrderOpenidMap.setItemId(orderDetail.getItemId());
+            newOrderOpenidMap.setPubSharePreFee(orderDetail.getPubSharePreFee());
+            newOrderOpenidMap.setPubShareFee(orderDetail.getPubShareFee());
+            newOrderOpenidMap.setAlimamaShareFee(orderDetail.getAlimamaShareFee());
+            newOrderOpenidMap.setOrderStatus(orderDetail.getTkStatus());
+            newOrderOpenidMap.setCommissionStatus("待结算");
+            newOrderOpenidMap.setRefundTag(orderDetail.getRefundTag());
+
+            newOrderOpenidMap.setMapType("by-tradeId");
+            newOrderOpenidMap.setStatus(0);
+
+            //插入数据库
+            int affectedNum = orderOpenidMapService.save(newOrderOpenidMap);
+            Checks.isTrue(affectedNum == 1, "插入失败 - tradeId=" + orderDetail.getTradeId());
+        }
+
+        //获取商品名称返回
+        return orderDetailList.stream().map(a -> a.getItemTitle()).collect(Collectors.toList());
     }
 
 

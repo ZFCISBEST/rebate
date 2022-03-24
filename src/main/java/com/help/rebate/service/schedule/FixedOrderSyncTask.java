@@ -141,7 +141,7 @@ public class FixedOrderSyncTask {
         //重构订单场景
         int[] orderScenes = new int[]{orderScene};
         if (orderScene == 0) {
-            orderScenes = new int[]{1, 2, 3};
+            orderScenes = new int[]{1, 3};
         }
 
         //重构查询场景

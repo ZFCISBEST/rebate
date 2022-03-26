@@ -114,7 +114,7 @@ public class OrderBindService {
             newOrderOpenidMap.setCommissionStatus("待结算");
             newOrderOpenidMap.setRefundTag(orderDetail.getRefundTag());
 
-            newOrderOpenidMap.setMapType("by-tradeId");
+            newOrderOpenidMap.setMapType(MapType.specified_openid_tradeparentid.getLabel());
             newOrderOpenidMap.setStatus(0);
 
             //插入数据库
@@ -255,7 +255,7 @@ public class OrderBindService {
             newOrderOpenidMap.setOrderStatus(orderDetail.getTkStatus());
             newOrderOpenidMap.setCommissionStatus("待结算");
             newOrderOpenidMap.setRefundTag(orderDetail.getRefundTag());
-            newOrderOpenidMap.setMapType("extend");
+            newOrderOpenidMap.setMapType(MapType.tradeparentid_extend.getLabel());
             newOrderOpenidMap.setStatus(0);
 
             //插入数据库
@@ -297,10 +297,10 @@ public class OrderBindService {
 
             //用作匹配的那个id
             if (openidInfo.getItemIds().contains(orderDetail.getItemId())) {
-                newOrderOpenidMap.setMapType("pubsite");
+                newOrderOpenidMap.setMapType(MapType.pubsite.getLabel());
             }
             else {
-                newOrderOpenidMap.setMapType("extend");
+                newOrderOpenidMap.setMapType(MapType.one_item_pubsite_extend.getLabel());
             }
 
             newOrderOpenidMap.setStatus(0);
@@ -347,7 +347,7 @@ public class OrderBindService {
                 newOrderOpenidMap.setOrderStatus(orderDetail.getTkStatus());
                 newOrderOpenidMap.setCommissionStatus("待结算");
                 newOrderOpenidMap.setRefundTag(orderDetail.getRefundTag());
-                newOrderOpenidMap.setMapType("openId-specialId");
+                newOrderOpenidMap.setMapType(MapType.specialid_with_pubsite.getLabel());
 
                 newOrderOpenidMap.setStatus(0);
 
@@ -378,7 +378,7 @@ public class OrderBindService {
             newOrderOpenidMap.setOrderStatus(orderDetail.getTkStatus());
             newOrderOpenidMap.setCommissionStatus("待结算");
             newOrderOpenidMap.setRefundTag(orderDetail.getRefundTag());
-            newOrderOpenidMap.setMapType("specialId");
+            newOrderOpenidMap.setMapType(MapType.specialid.getLabel());
 
             newOrderOpenidMap.setStatus(0);
 
@@ -476,6 +476,39 @@ public class OrderBindService {
 
         public void setOpenid(String openid) {
             this.openid = openid;
+        }
+    }
+
+    /**
+     * 订单绑定的映射类型
+     */
+    public enum MapType {
+        //显式绑定，通过指定交易单号和openid，使其绑定到一起；
+        specified_openid_tradeparentid("specified_openid_tradeparentid"),
+
+        //有商品已经绑定了，通过父单id，将其他的子单绑定到相同的用于信息身上
+        tradeparentid_extend("tradeparentid_extend"),
+
+        //单纯通过推广位，绑定openid和订单号的关系
+        pubsite("pubsite"),
+
+        //通过一个商品的转链用的推广为信息，将其他的都帮挡到一个用户openid上
+        one_item_pubsite_extend("one_item_pubsite_extend"),
+
+        //是会员，转过码，以special信息为准，查找用户信息，并存到映射表中去。
+        specialid_with_pubsite("specialid_with_pubsite"),
+
+        //无转码，但是作为会员，独立将当担绑定到specialid上
+        specialid("specialid");
+
+        private String label;
+
+        MapType(String label) {
+            this.label = label;
+        }
+
+        public String getLabel() {
+            return label;
         }
     }
 }

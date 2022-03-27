@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 订单映射数据服务
@@ -61,6 +62,33 @@ public class OrderOpenidMapService {
     }
 
     /**
+     * 通过交易单号、openId和specialId一起查询，是否已经绑定
+     * @param tradeParentId
+     * @param openId
+     * @param specialId
+     * @return
+     */
+    public List<OrderOpenidMap> selectBy(String tradeParentId, String openId, String specialId) {
+        OrderOpenidMapExample orderOpenidMapExample = new OrderOpenidMapExample();
+        orderOpenidMapExample.setLimit(50);
+        OrderOpenidMapExample.Criteria criteria = orderOpenidMapExample.createCriteria();
+
+        if (!EmptyUtils.isEmpty(tradeParentId)) {
+            criteria.andParentTradeIdEqualTo(tradeParentId);
+        }
+        if (!EmptyUtils.isEmpty(openId)) {
+            criteria.andOpenIdEqualTo(openId);
+        }
+        if (!EmptyUtils.isEmpty(specialId)) {
+            criteria.andSpecialIdEqualTo(specialId);
+        }
+
+        //查询
+        List<OrderOpenidMap> orderDetails = orderOpenidMapDao.selectByExample(orderOpenidMapExample);
+        return orderDetails;
+    }
+
+    /**
      *
      * 通过交易单号查询
      * @param parentTradeId
@@ -69,7 +97,7 @@ public class OrderOpenidMapService {
      */
     public List<OrderOpenidMap> selectByTradeId(String parentTradeId, String tradeId) {
         OrderOpenidMapExample orderOpenidMapExample = new OrderOpenidMapExample();
-        orderOpenidMapExample.setLimit(20);
+        orderOpenidMapExample.setLimit(50);
         OrderOpenidMapExample.Criteria criteria = orderOpenidMapExample.createCriteria();
 
         if (!EmptyUtils.isEmpty(parentTradeId)) {

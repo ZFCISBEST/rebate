@@ -67,6 +67,23 @@ public class OrderBindService {
      * @return 商品名称列表
      */
     public List<String> bindByTradeId(String parentTradeId, String openId, String specialId, String externalId) {
+        //首先看看，是不是已经绑定过了
+        List<OrderOpenidMap> orderOpenidMapList = orderOpenidMapService.selectByTradeId(parentTradeId, null);
+        if (!EmptyUtils.isEmpty(orderOpenidMapList)) {
+            //that means: has bind already
+            OrderOpenidMap orderOpenidMap = orderOpenidMapList.get(0);
+            String oldOpenId = orderOpenidMap.getOpenId();
+            String oldSpecialId = orderOpenidMap.getSpecialId();
+            String oldExternalId = orderOpenidMap.getExternalId();
+            Checks.isTrue(openId!=null && openId.equals(oldOpenId), "已绑定的openId与当前提供的openId不一致");
+            Checks.isTrue(specialId==null || specialId.equals(oldSpecialId), "已绑定的specialId与当前提供的specialId不一致");
+            Checks.isTrue(externalId==null || externalId.equals(oldExternalId), "已绑定的externalId与当前提供的externalId不一致");
+
+            //返回已经绑定的信息
+            List<String> itemIdList = orderOpenidMapList.stream().map(a -> a.getItemId()).collect(Collectors.toList());
+            return itemIdList;
+        }
+
         //获取用户数据
         UserInfos userInfos = userInfosService.selectByOpenId(openId);
         Checks.isNotNull(userInfos, "openid不存在");

@@ -49,6 +49,16 @@ public class DdxConfig {
      * 微信公众号信息
      */
     public static final String APPID = "wx9f4ab53be3e5e226";
-
+    public static final String KEY = "cicrnibqgmxvfhghfp|yaovlrgecq|xy";
+    public static final String ID = "2728557:66";
     public static final String APPSECRET = "6577304de85dff87836e918a672ab954";
+
+    public static final String SENDNAME = "优惠";
+    public static final Integer TOTALNUMBER = 1;
+    public static final String IP = "118.31.113.224";
+    public static final String WISHING = "年年有余";
+
+    public static final String ACTNAME = "元亭担详";
+    public static final String REMARK = "恭喜发财";
+    public static final String SCENEID = "PRODUCT_1";
 }

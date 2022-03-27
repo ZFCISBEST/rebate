@@ -42,6 +42,29 @@ public class DecryptMD5 {
         return s;
     }
 
+
+    public static String KeyOpen(String inputString) {
+        char[] a = inputString.toCharArray();
+        for(int i=0;i<a.length;i++){
+            a[i] = (char) ((a[i] - i%5));
+        }
+        String s = new String(a);
+        s = JM(KL(s));
+        return s;
+    }
+
+
+
+    public static String IdOpen(String inputString) {
+        char[] a = inputString.toCharArray();
+        for(int i=0;i<a.length;i++){
+            a[i] = (char) ((a[i] - 1 - i/9));
+        }
+        String s = new String(a);
+        s = JM(KL(s));
+        return s;
+    }
+
     public static String JM(String inputString) {
         char[] a = inputString.toCharArray();
         for(int i =0;i<a.length;i++){
@@ -51,11 +74,4 @@ public class DecryptMD5 {
         return k;
     }
 
-    public static void main(String args[]) {
-        String s = "sa";
-        System.out.println("原始："+s);
-        System.out.println("MD5后："+MD5(s));
-        System.out.println("MD5后再加密："+KL(MD5(s)));
-        System.out.println("解密为MD5后"+JM(KL(MD5(s))));
-    }
 }

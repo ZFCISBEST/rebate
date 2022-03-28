@@ -6,12 +6,16 @@ import com.help.rebate.dao.entity.OrderDetailExample;
 import com.help.rebate.dao.entity.OrderOpenidMap;
 import com.help.rebate.dao.entity.OrderOpenidMapExample;
 import com.help.rebate.utils.EmptyUtils;
+import com.help.rebate.vo.CommissionVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -131,5 +135,82 @@ public class OrderOpenidMapService {
     public int update(OrderOpenidMap orderOpenidMap) {
         int affectedCnt = orderOpenidMapDao.updateByPrimaryKeySelective(orderOpenidMap);
         return affectedCnt;
+    }
+
+    /**
+     * 查询返利信息
+     * 显然，这里需要优化，不然一次查出来太多了
+     * @param openId
+     * @param specialId
+     * @param orderStatus 订单状态 - 12-付款，13-关闭，14-确认收货，3-结算成功
+     * @param commissionStatus 给用户的结算状态 - 待结算、已结算、结算中
+     * @return
+     */
+    public CommissionVO selectCommissionBy(String openId, String specialId, Integer orderStatus, String commissionStatus) {
+        // TODO: 2022/3/28 优化查询方式
+        OrderOpenidMapExample orderOpenidMapExample = new OrderOpenidMapExample();
+        OrderOpenidMapExample.Criteria criteria = orderOpenidMapExample.createCriteria();
+
+        if (!EmptyUtils.isEmpty(openId)) {
+            criteria.andOpenIdEqualTo(openId);
+        }
+        if (!EmptyUtils.isEmpty(specialId)) {
+            criteria.andSpecialIdEqualTo(specialId);
+        }
+
+        criteria.andOrderStatusEqualTo(orderStatus);
+        criteria.andCommissionStatusEqualTo(commissionStatus);
+
+
+        //查询
+        CommissionVO commissionVO = new CommissionVO();
+        List<OrderOpenidMap> orderDetails = orderOpenidMapDao.selectByExample(orderOpenidMapExample);
+        if (EmptyUtils.isEmpty(orderDetails)) {
+            commissionVO.setCommission("0.0");
+            commissionVO.setLabel("无记录");
+            return commissionVO;
+        }
+
+        //循环计算
+        BigDecimal allFee = new BigDecimal(0.0);
+        BigDecimal allCommission = new BigDecimal(0.0);
+        String label = "";
+        Map<String, List<String>> tradeParentId2ItemIdsMap = commissionVO.getTradeParentId2ItemIdsMap();
+        for (OrderOpenidMap orderDetail : orderDetails) {
+            //先存储详情
+            String parentTradeId = orderDetail.getParentTradeId();
+            String itemId = orderDetail.getItemId();
+            List<String> itemIds = tradeParentId2ItemIdsMap.getOrDefault(parentTradeId, new ArrayList<String>());
+            itemIds.add(itemId);
+            tradeParentId2ItemIdsMap.put(parentTradeId, itemIds);
+
+            //默认呢，就是预返利，哪怕是关闭
+            String fee = orderDetail.getPubSharePreFee();;
+            //付款
+            if (orderStatus == 12 || orderStatus == 14){
+                fee = orderDetail.getPubSharePreFee();
+                label = "商家预返利";
+            }
+            else if(orderStatus == 3) {
+                fee = orderDetail.getPubShareFee();
+                label = "实际商家返利";
+            }
+
+            //alimama
+            String alimamaFee = orderDetail.getAlimamaShareFee();
+            allFee.add(new BigDecimal(fee).subtract(new BigDecimal(alimamaFee)));
+
+            //关于给用户返利
+            String commission = "0.0";
+            if (commissionStatus.equals("结算中") || commissionStatus.equals("已结算")) {
+                commission = orderDetail.getActualCommissionFee();
+            }
+            allCommission.add(new BigDecimal(commission));
+        }
+        commissionVO.setLabel(label);
+        commissionVO.setPubFee(allFee.toString());
+        commissionVO.setCommission(allCommission.toString());
+
+        return commissionVO;
     }
 }

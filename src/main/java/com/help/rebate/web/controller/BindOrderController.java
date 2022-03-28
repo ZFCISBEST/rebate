@@ -6,6 +6,7 @@ import com.help.rebate.service.OrderOpenidMapService;
 import com.help.rebate.service.UserInfosService;
 import com.help.rebate.utils.Checks;
 import com.help.rebate.utils.EmptyUtils;
+import com.help.rebate.vo.CommissionVO;
 import com.help.rebate.web.response.SafeServiceResponse;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -91,6 +92,31 @@ public class BindOrderController {
             return SafeServiceResponse.success("已经绑定");
         }catch(Exception e){
             logger.error("fail to bind order by tradeId[/tbk/order/bind/query_bind_info]", e);
+            return SafeServiceResponse.fail(e.toString());
+        }
+    }
+
+    @ApiOperation("查询返利的汇总信息")
+    @RequestMapping("/query_commission")
+    public SafeServiceResponse queryCommissionByStatus(@ApiParam(name = "openId", value = "微信openId") @RequestParam(required = true) String openId,
+                                                   @ApiParam(name = "specialId", value = "淘宝联盟私域会员ID") @RequestParam(required = false) String specialId,
+                                                   @ApiParam(name = "orderStatus", value = "订单状态 - 12-付款，13-关闭，14-确认收货，3-结算成功") @RequestParam(required = true) Integer orderStatus,
+                                                   @ApiParam(name = "commissionStatus", value = "给用户的结算状态 - 待结算、已结算、结算中") @RequestParam(required = true) String commissionStatus) {
+        try{
+            SafeServiceResponse.startBiz();
+
+            //校验
+            Checks.isTrue(orderStatus >= 12 && orderStatus <= 14 || orderStatus == 3, "订单状态只能是12、13、14、3");
+            Checks.isTrue(commissionStatus.equals("待结算") || commissionStatus.equals("已结算") || commissionStatus.equals("结算中"), "返利状态只能是[待结算、已结算、结算中]");
+
+
+            //查询
+            CommissionVO commissionVO = orderOpenidMapService.selectCommissionBy(openId, specialId, orderStatus, commissionStatus);
+
+            //返回
+            return SafeServiceResponse.success(commissionVO);
+        }catch(Exception e){
+            logger.error("fail to bind order by tradeId[/tbk/order/bind/query_commission]", e);
             return SafeServiceResponse.fail(e.toString());
         }
     }

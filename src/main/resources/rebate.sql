@@ -83,7 +83,7 @@ CREATE TABLE `rebate`.`order_openid_map` (
   `pre_commission_fee` VARCHAR(16) NULL COMMENT '预估返利费',
   `act_commission_fee` VARCHAR(16) NULL COMMENT '实际返利费',
   `order_status` VARCHAR(16) NULL COMMENT '订单状态 - 付款、已收货、已结算',
-  `commission_status` VARCHAR(16) NULL COMMENT '待结算、已结算、已关闭',
+  `commission_status` VARCHAR(16) NULL COMMENT '待结算、已结算、结算中',
   `status` VARCHAR(45) NULL DEFAULT NULL,
   PRIMARY KEY (`id`))
 ENGINE = InnoDB
@@ -97,8 +97,12 @@ ALTER TABLE `rebate`.`order_openid_map`
 CHANGE COLUMN `pre_commission_fee` `pub_share_pre_fee` VARCHAR(16) NULL DEFAULT NULL COMMENT '付款预估收入=付款金额*提成。指买家付款金额为基数，预估您可能获得的收入。因买家退款等原因，可能与结算预估收入不一致' ,
 CHANGE COLUMN `act_commission_fee` `pub_share_fee` VARCHAR(16) NULL DEFAULT NULL COMMENT '结算预估收入=结算金额*提成。以买家确认收货的付款金额为基数，预估您可能获得的收入。因买家退款、您违规推广等原因，可能与您最终收入不一致。最终收入以月结后您实际收到的为准' ,
 CHANGE COLUMN `order_status` `order_status` INT NULL DEFAULT NULL COMMENT '订单状态 - 12-付款，13-关闭，14-确认收货，3-结算成功' ,
-CHANGE COLUMN `commission_status` `commission_status` VARCHAR(16) NULL DEFAULT NULL COMMENT '给用户的结算状态 - 待结算、已结算、已关闭' ,
+CHANGE COLUMN `commission_status` `commission_status` VARCHAR(16) NULL DEFAULT NULL COMMENT '给用户的结算状态 - 待结算、已结算、结算中' ,
 ADD COLUMN `alimama_share_fee` VARCHAR(16) NULL COMMENT '技术服务费=结算金额*收入比率*技术服务费率。推广者赚取佣金后支付给阿里妈妈的技术服务费用' AFTER `pub_share_fee`;
+
+ALTER TABLE `rebate`.`order_openid_map`
+ADD COLUMN `actual_commission_fee` VARCHAR(16) NULL COMMENT '实际给用户返利的费用，可能返利以后，发生了维权' AFTER `order_status`,
+ADD COLUMN `refund_fee` VARCHAR(16) NULL COMMENT '维权以后，返回给商家的金额。此字段用于后期重新计算损益情况' AFTER `refund_tag`;
 
 
 CREATE TABLE `rebate`.`commission_account` (

@@ -16,8 +16,10 @@
     <result column="pub_share_fee" jdbcType="VARCHAR" property="pubShareFee" />
     <result column="alimama_share_fee" jdbcType="VARCHAR" property="alimamaShareFee" />
     <result column="order_status" jdbcType="INTEGER" property="orderStatus" />
+    <result column="actual_commission_fee" jdbcType="VARCHAR" property="actualCommissionFee" />
     <result column="commission_status" jdbcType="VARCHAR" property="commissionStatus" />
     <result column="refund_tag" jdbcType="INTEGER" property="refundTag" />
+    <result column="refund_fee" jdbcType="VARCHAR" property="refundFee" />
     <result column="map_type" jdbcType="VARCHAR" property="mapType" />
     <result column="status" jdbcType="INTEGER" property="status" />
   </resultMap>
@@ -82,7 +84,7 @@
   <sql id="Base_Column_List">
     id, gmt_created, gmt_modified, trade_id, parent_trade_id, open_id, external_id, special_id, 
     relation_id, item_id, pub_share_pre_fee, pub_share_fee, alimama_share_fee, order_status, 
-    commission_status, refund_tag, map_type, `status`
+    actual_commission_fee, commission_status, refund_tag, refund_fee, map_type, `status`
   </sql>
   <select id="selectByExample" parameterType="com.help.rebate.dao.entity.OrderOpenidMapExample" resultMap="BaseResultMap">
     select
@@ -130,14 +132,16 @@
       parent_trade_id, open_id, external_id, 
       special_id, relation_id, item_id, 
       pub_share_pre_fee, pub_share_fee, alimama_share_fee, 
-      order_status, commission_status, refund_tag, 
-      map_type, `status`)
+      order_status, actual_commission_fee, commission_status, 
+      refund_tag, refund_fee, map_type, 
+      `status`)
     values (#{gmtCreated,jdbcType=TIMESTAMP}, #{gmtModified,jdbcType=TIMESTAMP}, #{tradeId,jdbcType=VARCHAR}, 
       #{parentTradeId,jdbcType=VARCHAR}, #{openId,jdbcType=VARCHAR}, #{externalId,jdbcType=VARCHAR}, 
       #{specialId,jdbcType=VARCHAR}, #{relationId,jdbcType=VARCHAR}, #{itemId,jdbcType=VARCHAR}, 
       #{pubSharePreFee,jdbcType=VARCHAR}, #{pubShareFee,jdbcType=VARCHAR}, #{alimamaShareFee,jdbcType=VARCHAR}, 
-      #{orderStatus,jdbcType=INTEGER}, #{commissionStatus,jdbcType=VARCHAR}, #{refundTag,jdbcType=INTEGER}, 
-      #{mapType,jdbcType=VARCHAR}, #{status,jdbcType=INTEGER})
+      #{orderStatus,jdbcType=INTEGER}, #{actualCommissionFee,jdbcType=VARCHAR}, #{commissionStatus,jdbcType=VARCHAR}, 
+      #{refundTag,jdbcType=INTEGER}, #{refundFee,jdbcType=VARCHAR}, #{mapType,jdbcType=VARCHAR}, 
+      #{status,jdbcType=INTEGER})
   </insert>
   <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.help.rebate.dao.entity.OrderOpenidMap" useGeneratedKeys="true">
     insert into order_openid_map
@@ -181,11 +185,17 @@
       <if test="orderStatus != null">
         order_status,
       </if>
+      <if test="actualCommissionFee != null">
+        actual_commission_fee,
+      </if>
       <if test="commissionStatus != null">
         commission_status,
       </if>
       <if test="refundTag != null">
         refund_tag,
+      </if>
+      <if test="refundFee != null">
+        refund_fee,
       </if>
       <if test="mapType != null">
         map_type,
@@ -234,11 +244,17 @@
       <if test="orderStatus != null">
         #{orderStatus,jdbcType=INTEGER},
       </if>
+      <if test="actualCommissionFee != null">
+        #{actualCommissionFee,jdbcType=VARCHAR},
+      </if>
       <if test="commissionStatus != null">
         #{commissionStatus,jdbcType=VARCHAR},
       </if>
       <if test="refundTag != null">
         #{refundTag,jdbcType=INTEGER},
+      </if>
+      <if test="refundFee != null">
+        #{refundFee,jdbcType=VARCHAR},
       </if>
       <if test="mapType != null">
         #{mapType,jdbcType=VARCHAR},
@@ -299,11 +315,17 @@
       <if test="record.orderStatus != null">
         order_status = #{record.orderStatus,jdbcType=INTEGER},
       </if>
+      <if test="record.actualCommissionFee != null">
+        actual_commission_fee = #{record.actualCommissionFee,jdbcType=VARCHAR},
+      </if>
       <if test="record.commissionStatus != null">
         commission_status = #{record.commissionStatus,jdbcType=VARCHAR},
       </if>
       <if test="record.refundTag != null">
         refund_tag = #{record.refundTag,jdbcType=INTEGER},
+      </if>
+      <if test="record.refundFee != null">
+        refund_fee = #{record.refundFee,jdbcType=VARCHAR},
       </if>
       <if test="record.mapType != null">
         map_type = #{record.mapType,jdbcType=VARCHAR},
@@ -332,8 +354,10 @@
       pub_share_fee = #{record.pubShareFee,jdbcType=VARCHAR},
       alimama_share_fee = #{record.alimamaShareFee,jdbcType=VARCHAR},
       order_status = #{record.orderStatus,jdbcType=INTEGER},
+      actual_commission_fee = #{record.actualCommissionFee,jdbcType=VARCHAR},
       commission_status = #{record.commissionStatus,jdbcType=VARCHAR},
       refund_tag = #{record.refundTag,jdbcType=INTEGER},
+      refund_fee = #{record.refundFee,jdbcType=VARCHAR},
       map_type = #{record.mapType,jdbcType=VARCHAR},
       `status` = #{record.status,jdbcType=INTEGER}
     <if test="_parameter != null">
@@ -382,11 +406,17 @@
       <if test="orderStatus != null">
         order_status = #{orderStatus,jdbcType=INTEGER},
       </if>
+      <if test="actualCommissionFee != null">
+        actual_commission_fee = #{actualCommissionFee,jdbcType=VARCHAR},
+      </if>
       <if test="commissionStatus != null">
         commission_status = #{commissionStatus,jdbcType=VARCHAR},
       </if>
       <if test="refundTag != null">
         refund_tag = #{refundTag,jdbcType=INTEGER},
+      </if>
+      <if test="refundFee != null">
+        refund_fee = #{refundFee,jdbcType=VARCHAR},
       </if>
       <if test="mapType != null">
         map_type = #{mapType,jdbcType=VARCHAR},
@@ -412,8 +442,10 @@
       pub_share_fee = #{pubShareFee,jdbcType=VARCHAR},
       alimama_share_fee = #{alimamaShareFee,jdbcType=VARCHAR},
       order_status = #{orderStatus,jdbcType=INTEGER},
+      actual_commission_fee = #{actualCommissionFee,jdbcType=VARCHAR},
       commission_status = #{commissionStatus,jdbcType=VARCHAR},
       refund_tag = #{refundTag,jdbcType=INTEGER},
+      refund_fee = #{refundFee,jdbcType=VARCHAR},
       map_type = #{mapType,jdbcType=VARCHAR},
       `status` = #{status,jdbcType=INTEGER}
     where id = #{id,jdbcType=INTEGER}

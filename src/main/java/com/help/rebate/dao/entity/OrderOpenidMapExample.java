@@ -1075,6 +1075,76 @@ public class OrderOpenidMapExample {
             return (Criteria) this;
         }
 
+        public Criteria andActualCommissionFeeIsNull() {
+            addCriterion("actual_commission_fee is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andActualCommissionFeeIsNotNull() {
+            addCriterion("actual_commission_fee is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andActualCommissionFeeEqualTo(String value) {
+            addCriterion("actual_commission_fee =", value, "actualCommissionFee");
+            return (Criteria) this;
+        }
+
+        public Criteria andActualCommissionFeeNotEqualTo(String value) {
+            addCriterion("actual_commission_fee <>", value, "actualCommissionFee");
+            return (Criteria) this;
+        }
+
+        public Criteria andActualCommissionFeeGreaterThan(String value) {
+            addCriterion("actual_commission_fee >", value, "actualCommissionFee");
+            return (Criteria) this;
+        }
+
+        public Criteria andActualCommissionFeeGreaterThanOrEqualTo(String value) {
+            addCriterion("actual_commission_fee >=", value, "actualCommissionFee");
+            return (Criteria) this;
+        }
+
+        public Criteria andActualCommissionFeeLessThan(String value) {
+            addCriterion("actual_commission_fee <", value, "actualCommissionFee");
+            return (Criteria) this;
+        }
+
+        public Criteria andActualCommissionFeeLessThanOrEqualTo(String value) {
+            addCriterion("actual_commission_fee <=", value, "actualCommissionFee");
+            return (Criteria) this;
+        }
+
+        public Criteria andActualCommissionFeeLike(String value) {
+            addCriterion("actual_commission_fee like", value, "actualCommissionFee");
+            return (Criteria) this;
+        }
+
+        public Criteria andActualCommissionFeeNotLike(String value) {
+            addCriterion("actual_commission_fee not like", value, "actualCommissionFee");
+            return (Criteria) this;
+        }
+
+        public Criteria andActualCommissionFeeIn(List<String> values) {
+            addCriterion("actual_commission_fee in", values, "actualCommissionFee");
+            return (Criteria) this;
+        }
+
+        public Criteria andActualCommissionFeeNotIn(List<String> values) {
+            addCriterion("actual_commission_fee not in", values, "actualCommissionFee");
+            return (Criteria) this;
+        }
+
+        public Criteria andActualCommissionFeeBetween(String value1, String value2) {
+            addCriterion("actual_commission_fee between", value1, value2, "actualCommissionFee");
+            return (Criteria) this;
+        }
+
+        public Criteria andActualCommissionFeeNotBetween(String value1, String value2) {
+            addCriterion("actual_commission_fee not between", value1, value2, "actualCommissionFee");
+            return (Criteria) this;
+        }
+
         public Criteria andCommissionStatusIsNull() {
             addCriterion("commission_status is null");
             return (Criteria) this;
@@ -1202,6 +1272,76 @@ public class OrderOpenidMapExample {
 
         public Criteria andRefundTagNotBetween(Integer value1, Integer value2) {
             addCriterion("refund_tag not between", value1, value2, "refundTag");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundFeeIsNull() {
+            addCriterion("refund_fee is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundFeeIsNotNull() {
+            addCriterion("refund_fee is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundFeeEqualTo(String value) {
+            addCriterion("refund_fee =", value, "refundFee");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundFeeNotEqualTo(String value) {
+            addCriterion("refund_fee <>", value, "refundFee");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundFeeGreaterThan(String value) {
+            addCriterion("refund_fee >", value, "refundFee");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundFeeGreaterThanOrEqualTo(String value) {
+            addCriterion("refund_fee >=", value, "refundFee");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundFeeLessThan(String value) {
+            addCriterion("refund_fee <", value, "refundFee");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundFeeLessThanOrEqualTo(String value) {
+            addCriterion("refund_fee <=", value, "refundFee");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundFeeLike(String value) {
+            addCriterion("refund_fee like", value, "refundFee");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundFeeNotLike(String value) {
+            addCriterion("refund_fee not like", value, "refundFee");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundFeeIn(List<String> values) {
+            addCriterion("refund_fee in", values, "refundFee");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundFeeNotIn(List<String> values) {
+            addCriterion("refund_fee not in", values, "refundFee");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundFeeBetween(String value1, String value2) {
+            addCriterion("refund_fee between", value1, value2, "refundFee");
+            return (Criteria) this;
+        }
+
+        public Criteria andRefundFeeNotBetween(String value1, String value2) {
+            addCriterion("refund_fee not between", value1, value2, "refundFee");
             return (Criteria) this;
         }
 

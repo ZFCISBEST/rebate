@@ -8,6 +8,8 @@ import com.help.rebate.service.schedule.FixedOrderSyncTask;
 import com.help.rebate.utils.Checks;
 import com.help.rebate.utils.EmptyUtils;
 import com.help.rebate.utils.TimeUtil;
+import com.help.rebate.vo.OrderBindResultVO;
+import com.help.rebate.vo.PickCommissionVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -56,6 +58,41 @@ public class OrderBindService {
     private OrderOpenidMapDao orderOpenidMapDao;
     @Resource
     private OrderOpenidMapService orderOpenidMapService;
+
+    /**
+     * 模拟提现的流程
+     * @param openId
+     * @param specialId
+     * @param mockStatus
+     * @return
+     */
+    public PickCommissionVO mockPickMoney(String openId, String specialId, String mockStatus) {
+        return null;
+    }
+
+    /**
+     * 指定起始时间，周期性调度，执行订单绑定
+     * @param orderBindTime
+     * @param minuteStep
+     * @param running
+     * @return
+     */
+    public boolean syncBindOrderByTimeStart(String orderBindTime, Long minuteStep, Boolean running) {
+        return false;
+    }
+
+    /**
+     * 指定一段时间，执行订单绑定
+     * @param openId 微信openId，用于圈定范围，可不指定
+     * @param specialId 淘宝联盟私域会员ID，用于圈定范围，可不指定
+     * @param orderBindTime
+     * @param minuteStep
+     * @return
+     */
+    public List<OrderBindResultVO> bindByTimeRange(String openId, String specialId, String orderBindTime, Long minuteStep) {
+
+        return null;
+    }
 
     /**
      * 用户通过前端，直接发送过来的，期望绑定的订单

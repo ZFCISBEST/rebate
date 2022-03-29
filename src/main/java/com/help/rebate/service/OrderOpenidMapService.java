@@ -7,6 +7,7 @@ import com.help.rebate.dao.entity.OrderOpenidMap;
 import com.help.rebate.dao.entity.OrderOpenidMapExample;
 import com.help.rebate.utils.EmptyUtils;
 import com.help.rebate.vo.CommissionVO;
+import com.help.rebate.vo.OrderBindResultVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;

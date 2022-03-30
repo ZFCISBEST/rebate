@@ -61,10 +61,10 @@ public class BindOrderController {
             //Checks.isTrue(openId != null || specialId != null, "openId和specialID不能同时为空");
 
             //插入
-            List<String> itemTitleList = orderBindService.bindByTradeId(tradeParentId, openId, specialId, null);
+            OrderBindResultVO orderBindResultVO = orderBindService.bindByTradeId(tradeParentId, openId, specialId, null);
 
             //返回
-            return SafeServiceResponse.success(itemTitleList);
+            return SafeServiceResponse.success(orderBindResultVO);
         }catch(Exception e){
             logger.error("fail to bind order by tradeId[/tbk/order/bind/by_trade_id]", e);
             return SafeServiceResponse.fail(e.toString());

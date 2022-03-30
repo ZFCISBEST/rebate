@@ -4,7 +4,6 @@ import com.help.rebate.dao.OrderDetailDao;
 import com.help.rebate.dao.OrderOpenidMapDao;
 import com.help.rebate.dao.TklConvertHistoryDao;
 import com.help.rebate.dao.entity.*;
-import com.help.rebate.service.schedule.FixedOrderSyncTask;
 import com.help.rebate.utils.Checks;
 import com.help.rebate.utils.EmptyUtils;
 import com.help.rebate.utils.TimeUtil;
@@ -15,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -72,12 +70,15 @@ public class OrderBindService {
 
     /**
      * 指定起始时间，周期性调度，执行订单绑定
-     * @param orderBindTime
+     * @param orderBindTime 这个时间，应该是订单的更新时间
      * @param minuteStep
      * @param running
      * @return
      */
     public boolean syncBindOrderByTimeStart(String orderBindTime, Long minuteStep, Boolean running) {
+
+
+
         return false;
     }
 
@@ -90,8 +91,61 @@ public class OrderBindService {
      * @return
      */
     public List<OrderBindResultVO> bindByTimeRange(String openId, String specialId, String orderBindTime, Long minuteStep) {
+        //确定时间范围
+        Date startTime = TimeUtil.parseDate(orderBindTime);
+        long endTimestamp = startTime.getTime() + minuteStep * 60 * 1000;
+        long currentTimeMillis = System.currentTimeMillis();
+        if (endTimestamp > currentTimeMillis) {
+            endTimestamp = currentTimeMillis;
+        }
+        String endTime = TimeUtil.format(endTimestamp);
 
-        return null;
+        //查询
+        OrderDetailExample example = new OrderDetailExample();
+        OrderDetailExample.Criteria criteria = example.createCriteria();
+        criteria.andModifiedTimeGreaterThanOrEqualTo(orderBindTime);
+        criteria.andModifiedTimeLessThanOrEqualTo(endTime);
+        if (!EmptyUtils.isEmpty(specialId)) {
+            criteria.andSpecialIdEqualTo(specialId);
+        }
+
+        //查询数量
+        long orderNum = orderDetailDao.countByExample(example);
+        if (orderNum == 0) {
+            return Collections.EMPTY_LIST;
+        }
+
+        //确定循环次数
+        Map<String, OrderBindResultVO> parentTradeId2OrderBindResultVOMap = new HashMap<String, OrderBindResultVO>(16);
+        long offset = 0;
+        while (offset < orderNum - 1) {
+            example.setOffset(offset);
+            example.setLimit(100);
+
+            //查询
+            List<OrderDetail> orderDetailList = orderDetailDao.selectByExample(example);
+
+            //判定
+            if (EmptyUtils.isEmpty(orderDetailList)) {
+                //增加offset
+                offset += 100;
+                continue;
+            }
+
+            //处理 - 有优化空间
+            List<String> allParentTradeIdList = orderDetailList.stream().map(a -> a.getParentTradeId()).distinct().collect(Collectors.toList());
+            for (String parentTradeId : allParentTradeIdList) {
+                OrderBindResultVO orderBindResultVO = bindByTradeId(parentTradeId, null);
+                parentTradeId2OrderBindResultVOMap.put(parentTradeId, orderBindResultVO);
+            }
+
+            //增加offset
+            offset += 100;
+        }
+
+
+        //结果返回
+        return parentTradeId2OrderBindResultVOMap.values().stream().collect(Collectors.toList());
     }
 
     /**
@@ -103,7 +157,9 @@ public class OrderBindService {
      * @param externalId 额外给出的信息，用于将openid和externalid做强制映射，这个只是给管理员用
      * @return 商品名称列表
      */
-    public List<String> bindByTradeId(String parentTradeId, String openId, String specialId, String externalId) {
+    public OrderBindResultVO bindByTradeId(String parentTradeId, String openId, String specialId, String externalId) {
+        OrderBindResultVO orderBindResultVO = new OrderBindResultVO();
+
         //首先看看，是不是已经绑定过了
         List<OrderOpenidMap> orderOpenidMapList = orderOpenidMapService.selectByTradeId(parentTradeId, null);
         if (!EmptyUtils.isEmpty(orderOpenidMapList)) {
@@ -117,8 +173,12 @@ public class OrderBindService {
             Checks.isTrue(externalId==null || externalId.equals(oldExternalId), "已绑定的externalId与当前提供的externalId不一致");
 
             //返回已经绑定的信息
+            orderBindResultVO.setOpenId(openId);
+            orderBindResultVO.setSpecialId(specialId);
+            orderBindResultVO.setTradeParentId(parentTradeId);
             List<String> itemIdList = orderOpenidMapList.stream().map(a -> a.getItemId()).collect(Collectors.toList());
-            return itemIdList;
+            orderBindResultVO.getTradeIdItemIdList().addAll(itemIdList);
+            return orderBindResultVO;
         }
 
         //获取用户数据
@@ -177,7 +237,12 @@ public class OrderBindService {
         }
 
         //获取商品名称返回
-        return orderDetailList.stream().map(a -> a.getItemTitle()).collect(Collectors.toList());
+        orderBindResultVO.setOpenId(openId);
+        orderBindResultVO.setSpecialId(specialId);
+        orderBindResultVO.setTradeParentId(parentTradeId);
+        List<String> itemIdList = orderOpenidMapList.stream().map(a -> a.getItemId()).collect(Collectors.toList());
+        orderBindResultVO.getTradeIdItemIdList().addAll(itemIdList);
+        return orderBindResultVO;
     }
 
 
@@ -187,7 +252,10 @@ public class OrderBindService {
      * @param tradeIds 可传可不传
      * @return
      */
-    public void bindByTradeId(String parentTradeId, String... tradeIds) {
+    public OrderBindResultVO bindByTradeId(String parentTradeId, String... tradeIds) {
+        OrderBindResultVO orderBindResultVO = new OrderBindResultVO();
+        orderBindResultVO.setTradeParentId(parentTradeId);
+
         //首先查询订单
         List<OrderDetail> orderDetailList = orderService.selectByTradeId(parentTradeId, null);
         Map<String, OrderDetail> tradeId2OrderDetailMap = orderDetailList.stream().collect(Collectors.toMap(a -> a.getTradeId(), a -> a));
@@ -197,13 +265,13 @@ public class OrderBindService {
 
         //如果已经存在了，那么先执行更新操作，如订单状态的演变等
         for (OrderOpenidMap orderOpenidMap : orderOpenidMapList) {
-            updateOrderOpenidMapIfNeeded(orderOpenidMap, tradeId2OrderDetailMap.remove(orderOpenidMap.getTradeId()));
+            updateOrderOpenidMapIfNeeded(orderOpenidMap, tradeId2OrderDetailMap.remove(orderOpenidMap.getTradeId()), orderBindResultVO);
         }
 
         //如果已经存在了，那么说明已经绑定过，这样可以直接复用原来的信息将剩下的数据绑定完毕
         if (!EmptyUtils.isEmpty(orderOpenidMapList) && tradeId2OrderDetailMap.size() > 0) {
-            createOrderOpenidMapBy(orderOpenidMapList.get(0), tradeId2OrderDetailMap);
-            return;
+            createOrderOpenidMapBy(orderOpenidMapList.get(0), tradeId2OrderDetailMap, orderBindResultVO);
+            return null;
         }
 
         //所有的都没有绑定过
@@ -211,13 +279,13 @@ public class OrderBindService {
         //按照普通用户的方式来处理
         if (EmptyUtils.isEmpty(specialId)) {
             //通过商品&推广位来绑定
-            bindByPubSite(orderDetailList);
+            bindByPubSite(orderDetailList, orderBindResultVO);
         }
         else {
-            bindBySpecialId(orderDetailList);
+            bindBySpecialId(orderDetailList, orderBindResultVO);
         }
 
-        return;
+        return orderBindResultVO;
     }
 
     /**
@@ -226,11 +294,11 @@ public class OrderBindService {
      * 如果我们平台给用户的状态已经结算，或者关闭，那么不用更新
      * 每次更新的时候，主要更新一下其他字段（如预期返利）
      * 应该多个状态，就是如果实际已经返利给用户了，但是订单状态发生了商家维权，造成我们自己资损，需要记录下来实际给用户反了多少，后面要补回来
-     *
-     * @param orderOpenidMap
+     *  @param orderOpenidMap
      * @param orderDetail
+     * @param orderBindResultVO
      */
-    private void updateOrderOpenidMapIfNeeded(OrderOpenidMap orderOpenidMap, OrderDetail orderDetail) {
+    private void updateOrderOpenidMapIfNeeded(OrderOpenidMap orderOpenidMap, OrderDetail orderDetail, OrderBindResultVO orderBindResultVO) {
         //维权标识 0 含义为非维权 1 含义为维权订单
         Integer refundTag = orderDetail.getRefundTag();
         //付款预估收入 - 是总的哦
@@ -278,6 +346,11 @@ public class OrderBindService {
             orderOpenidMap.setGmtModified(new Date(System.currentTimeMillis()));
             orderOpenidMapService.update(orderOpenidMap);
         }
+
+        //内容
+        orderBindResultVO.setOpenId(orderOpenidMap.getOpenId());
+        orderBindResultVO.setSpecialId(orderOpenidMap.getSpecialId());
+        orderBindResultVO.getTradeIdItemIdList().add(orderOpenidMap.getItemId());
     }
 
     /**
@@ -288,8 +361,9 @@ public class OrderBindService {
      * 3、绑定到openid和special上，这个就是正好可以关联上
      * @param orderOpenidMap
      * @param tradeId2OrderDetailMap
+     * @param orderBindResultVO
      */
-    private void createOrderOpenidMapBy(OrderOpenidMap orderOpenidMap, Map<String, OrderDetail> tradeId2OrderDetailMap) {
+    private void createOrderOpenidMapBy(OrderOpenidMap orderOpenidMap, Map<String, OrderDetail> tradeId2OrderDetailMap, OrderBindResultVO orderBindResultVO) {
         //循环每个订单，插入到绑定表中去
         Collection<OrderDetail> allOrderDetails = tradeId2OrderDetailMap.values();
         for (OrderDetail orderDetail : allOrderDetails) {
@@ -316,14 +390,20 @@ public class OrderBindService {
             int affectedNum = orderOpenidMapService.save(newOrderOpenidMap);
             Checks.isTrue(affectedNum == 1, "插入失败 - tradeId=" + orderDetail.getTradeId());
         }
+
+        //内容
+        orderBindResultVO.setOpenId(orderOpenidMap.getOpenId());
+        orderBindResultVO.setSpecialId(orderOpenidMap.getSpecialId());
+        orderBindResultVO.getTradeIdItemIdList().add(orderOpenidMap.getItemId());
     }
 
     /**
      * 普通用户，通过推广位和商品的ID去查询转链记录表，看是否转过
      * 通过这个方法的绑定，一定不是会员，就是那种普通的订单而已
      * @param orderDetailList
+     * @param orderBindResultVO
      */
-    private void bindByPubSite(List<OrderDetail> orderDetailList) {
+    private void bindByPubSite(List<OrderDetail> orderDetailList, OrderBindResultVO orderBindResultVO) {
         BindOpenidInfo openidInfo = resolveBindOpenidInfo(orderDetailList);
         if (openidInfo == null) {
             return;
@@ -362,6 +442,11 @@ public class OrderBindService {
             //插入数据库
             int affectedNum = orderOpenidMapService.save(newOrderOpenidMap);
             Checks.isTrue(affectedNum == 1, "插入失败 - tradeId=" + orderDetail.getTradeId());
+
+            //内容
+            orderBindResultVO.setOpenId(userInfos.getOpenId());
+            orderBindResultVO.setSpecialId(userInfos.getSpecialId());
+            orderBindResultVO.getTradeIdItemIdList().add(orderDetail.getItemId());
         }
 
     }
@@ -369,8 +454,9 @@ public class OrderBindService {
     /**
      * 会员用户，通过specialId进行绑定
      * @param orderDetailList
+     * @param orderBindResultVO
      */
-    private void bindBySpecialId(List<OrderDetail> orderDetailList) {
+    private void bindBySpecialId(List<OrderDetail> orderDetailList, OrderBindResultVO orderBindResultVO) {
         //第一种，这里的所有商品，至少有被转链过，那么查出来，那么这种情况，是可以建立openid和specialid的关系并存入用户表的
         BindOpenidInfo openidInfo = resolveBindOpenidInfo(orderDetailList);
         if (openidInfo != null) {
@@ -408,6 +494,11 @@ public class OrderBindService {
                 //插入数据库
                 int affectedNum = orderOpenidMapService.save(newOrderOpenidMap);
                 Checks.isTrue(affectedNum == 1, "插入失败 - tradeId=" + orderDetail.getTradeId());
+
+                //内容
+                orderBindResultVO.setOpenId(userInfos.getOpenId());
+                orderBindResultVO.setSpecialId(userInfos.getSpecialId());
+                orderBindResultVO.getTradeIdItemIdList().add(orderDetail.getItemId());
             }
 
             return;
@@ -439,6 +530,11 @@ public class OrderBindService {
             //插入数据库
             int affectedNum = orderOpenidMapService.save(newOrderOpenidMap);
             Checks.isTrue(affectedNum == 1, "插入失败 - tradeId=" + orderDetail.getTradeId());
+
+            //内容
+            orderBindResultVO.setOpenId(userInfos.getOpenId());
+            orderBindResultVO.setSpecialId(userInfos.getSpecialId());
+            orderBindResultVO.getTradeIdItemIdList().add(orderDetail.getItemId());
         }
     }
 

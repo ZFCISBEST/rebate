@@ -7,7 +7,6 @@ import com.help.rebate.utils.Checks;
 import com.help.rebate.utils.EmptyUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -37,7 +36,7 @@ public class TimeCursorPositionService {
      * @param orderScene
      * @param queryType
      */
-    public void saveOrUpdateTimeCursor(Date startTime, int secondStep, int orderScene, Integer queryType) {
+    public void saveOrUpdateTimeCursor(Date startTime, int secondStep, Integer orderScene, Integer queryType, TimeType timeType) {
         TimeCursorPositionExample example = new TimeCursorPositionExample();
         example.setLimit(1);
         TimeCursorPositionExample.Criteria criteria = example.createCriteria();
@@ -56,7 +55,7 @@ public class TimeCursorPositionService {
             timeCursorPosition.setStep(secondStep);
             timeCursorPosition.setQueryType(queryType);
             timeCursorPosition.setSubType(orderScene);
-            timeCursorPosition.setTimeType(0);
+            timeCursorPosition.setTimeType(timeType.getTimeType());
 
             int affectedCnt = timeCursorPositionDao.updateByPrimaryKey(timeCursorPosition);
             Checks.isTrue(affectedCnt == 1, "更新时间点为失败，无法同步");
@@ -72,7 +71,7 @@ public class TimeCursorPositionService {
             timeCursorPosition.setStep(secondStep);
             timeCursorPosition.setQueryType(queryType);
             timeCursorPosition.setSubType(orderScene);
-            timeCursorPosition.setTimeType(0);
+            timeCursorPosition.setTimeType(timeType.getTimeType());
             timeCursorPosition.setStatus(0);
 
             int affectedCnt = timeCursorPositionDao.insertSelective(timeCursorPosition);
@@ -82,13 +81,14 @@ public class TimeCursorPositionService {
 
     /**
      * 获取订单同步的时间点位
+     * @param timeType
      * @return
      */
-    public TimeCursorPosition fetchOrderSyncTimePosition() {
+    public TimeCursorPosition fetchOrderSyncTimePosition(TimeType timeType) {
         TimeCursorPositionExample example = new TimeCursorPositionExample();
         example.setLimit(1);
         TimeCursorPositionExample.Criteria criteria = example.createCriteria();
-        criteria.andTimeTypeEqualTo(0);
+        criteria.andTimeTypeEqualTo(timeType.getTimeType());
         criteria.andStatusEqualTo(0);
         List<TimeCursorPosition> timeCursorPositions = timeCursorPositionDao.selectByExample(example);
 
@@ -97,5 +97,23 @@ public class TimeCursorPositionService {
         }
 
         return timeCursorPositions.get(0);
+    }
+
+    public enum TimeType {
+        ORDER_SYNC(0),
+
+        ORDER_BIND_SYNC(1),
+
+        ORDER_JIESUAN(2);
+
+        private final int timeType;
+
+        TimeType(int timeType) {
+            this.timeType = timeType;
+        }
+
+        public int getTimeType() {
+            return timeType;
+        }
     }
 }

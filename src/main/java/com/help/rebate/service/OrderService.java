@@ -91,7 +91,7 @@ public class OrderService {
 
         //运行的话，更新时间游标数据库
         if (orderUpdateTime != null && minuteStep != null) {
-            TimeCursorPositionService.saveOrUpdateTimeCursor(TimeUtil.parseDate(orderUpdateTime), new Long(minuteStep * 60).intValue(), orderScene, queryType);
+            TimeCursorPositionService.saveOrUpdateTimeCursor(TimeUtil.parseDate(orderUpdateTime), new Long(minuteStep * 60).intValue(), orderScene, queryType, com.help.rebate.service.TimeCursorPositionService.TimeType.ORDER_SYNC);
         }
 
         //调用执行

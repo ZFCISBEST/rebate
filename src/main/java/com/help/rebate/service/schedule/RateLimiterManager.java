@@ -13,7 +13,6 @@ import java.util.concurrent.TimeUnit;
  * @author zfcisbest
  * @date 21/11/14
  */
-@Service
 public class RateLimiterManager {
     private static final Logger logger = LoggerFactory.getLogger(RateLimiterManager.class);
 

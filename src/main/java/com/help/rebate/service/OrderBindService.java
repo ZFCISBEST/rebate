@@ -4,6 +4,7 @@ import com.help.rebate.dao.OrderDetailDao;
 import com.help.rebate.dao.OrderOpenidMapDao;
 import com.help.rebate.dao.TklConvertHistoryDao;
 import com.help.rebate.dao.entity.*;
+import com.help.rebate.service.schedule.FixedOrderBindSyncTask;
 import com.help.rebate.utils.Checks;
 import com.help.rebate.utils.EmptyUtils;
 import com.help.rebate.utils.TimeUtil;
@@ -58,6 +59,18 @@ public class OrderBindService {
     private OrderOpenidMapService orderOpenidMapService;
 
     /**
+     * 订单绑定的自动同步任务
+     */
+    @Resource
+    private FixedOrderBindSyncTask fixedOrderBindSyncTask;
+
+    /**
+     * 时间游标记录
+     */
+    @Resource
+    private TimeCursorPositionService timeCursorPositionService;
+
+    /**
      * 模拟提现的流程
      * @param openId
      * @param specialId
@@ -76,10 +89,20 @@ public class OrderBindService {
      * @return
      */
     public boolean syncBindOrderByTimeStart(String orderBindTime, Long minuteStep, Boolean running) {
+        //如果不运行
+        if (!running) {
+            fixedOrderBindSyncTask.setRunning(false);
+            return true;
+        }
 
+        //运行的话，更新时间游标数据库
+        if (orderBindTime != null && minuteStep != null) {
+            timeCursorPositionService.saveOrUpdateTimeCursor(TimeUtil.parseDate(orderBindTime), new Long(minuteStep * 60).intValue(), null, null, TimeCursorPositionService.TimeType.ORDER_BIND_SYNC);
+        }
 
-
-        return false;
+        //调用执行
+        fixedOrderBindSyncTask.cleanContext(orderBindTime, minuteStep, running);
+        return true;
     }
 
     /**

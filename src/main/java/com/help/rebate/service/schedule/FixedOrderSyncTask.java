@@ -66,8 +66,7 @@ public class FixedOrderSyncTask {
     /**
      * 速度控制器
      */
-    @Resource
-    private RateLimiterManager rateLimiterManager;
+    private RateLimiterManager rateLimiterManager = new RateLimiterManager();
 
     /**
      * 订单服务
@@ -206,7 +205,7 @@ public class FixedOrderSyncTask {
         startTime = new Date(startTime.getTime() + secondStep * 1000);
         endTime = new Date(endTime.getTime() + secondStep * 1000);
         positionIndex = null;
-        timeCursorPositionService.saveOrUpdateTimeCursor(startTime, secondStep, orderScene, queryType);
+        timeCursorPositionService.saveOrUpdateTimeCursor(startTime, secondStep, orderScene, queryType, TimeCursorPositionService.TimeType.ORDER_SYNC);
     }
 
     /**
@@ -356,7 +355,7 @@ public class FixedOrderSyncTask {
      * 获取时间点位
      */
     private void fetchSyncTime() {
-        TimeCursorPosition timeCursorPosition = timeCursorPositionService.fetchOrderSyncTimePosition();
+        TimeCursorPosition timeCursorPosition = timeCursorPositionService.fetchOrderSyncTimePosition(TimeCursorPositionService.TimeType.ORDER_SYNC);
         if (timeCursorPosition == null) {
             return;
         }

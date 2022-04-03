@@ -104,6 +104,10 @@ ALTER TABLE `rebate`.`order_openid_map`
 ADD COLUMN `actual_commission_fee` VARCHAR(16) NULL COMMENT '实际给用户返利的费用，可能返利以后，发生了维权' AFTER `order_status`,
 ADD COLUMN `refund_fee` VARCHAR(16) NULL COMMENT '维权以后，返回给商家的金额。此字段用于后期重新计算损益情况' AFTER `refund_tag`;
 
+ALTER TABLE `rebate`.`order_openid_map`
+ADD COLUMN `current_pick_record_id` INT UNSIGNED NULL COMMENT '当前正在提现的批次记录ID，属于pick_money_record表的主键' AFTER `commission_status`;
+
+
 
 CREATE TABLE `rebate`.`commission_account` (
   `id` INT NOT NULL AUTO_INCREMENT,

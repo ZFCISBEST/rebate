@@ -74,10 +74,12 @@ public class OrderBindService {
      * 模拟提现的流程
      * @param openId
      * @param specialId
-     * @param mockStatus
+     * @param mockStatus 当前模拟的是哪种状态 - 触发提现、提现成功、提现失败、提现超时【预提取、提取中、提取失败、已提取】
      * @return
      */
     public PickCommissionVO mockPickMoney(String openId, String specialId, String mockStatus) {
+        //
+
         return null;
     }
 
@@ -114,6 +116,8 @@ public class OrderBindService {
      * @return
      */
     public List<OrderBindResultVO> bindByTimeRange(String openId, String specialId, String orderBindTime, Long minuteStep) {
+        //看一下openId，暂时不用
+
         //确定时间范围
         Date startTime = TimeUtil.parseDate(orderBindTime);
         long endTimestamp = startTime.getTime() + minuteStep * 60 * 1000;

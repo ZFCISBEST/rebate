@@ -98,6 +98,12 @@ public class OrderOpenidMap implements Serializable {
     private String commissionStatus;
 
     /**
+     * 当前正在提现的批次记录ID，属于pick_money_record表的主键
+     */
+    @ApiModelProperty(value="当前正在提现的批次记录ID，属于pick_money_record表的主键")
+    private Integer currentPickRecordId;
+
+    /**
      * 维权标签，0 含义为非维权 1 含义为维权订单
      */
     @ApiModelProperty(value="维权标签，0 含义为非维权 1 含义为维权订单")
@@ -151,6 +157,7 @@ public class OrderOpenidMap implements Serializable {
             && (this.getOrderStatus() == null ? other.getOrderStatus() == null : this.getOrderStatus().equals(other.getOrderStatus()))
             && (this.getActualCommissionFee() == null ? other.getActualCommissionFee() == null : this.getActualCommissionFee().equals(other.getActualCommissionFee()))
             && (this.getCommissionStatus() == null ? other.getCommissionStatus() == null : this.getCommissionStatus().equals(other.getCommissionStatus()))
+            && (this.getCurrentPickRecordId() == null ? other.getCurrentPickRecordId() == null : this.getCurrentPickRecordId().equals(other.getCurrentPickRecordId()))
             && (this.getRefundTag() == null ? other.getRefundTag() == null : this.getRefundTag().equals(other.getRefundTag()))
             && (this.getRefundFee() == null ? other.getRefundFee() == null : this.getRefundFee().equals(other.getRefundFee()))
             && (this.getMapType() == null ? other.getMapType() == null : this.getMapType().equals(other.getMapType()))
@@ -177,6 +184,7 @@ public class OrderOpenidMap implements Serializable {
         result = prime * result + ((getOrderStatus() == null) ? 0 : getOrderStatus().hashCode());
         result = prime * result + ((getActualCommissionFee() == null) ? 0 : getActualCommissionFee().hashCode());
         result = prime * result + ((getCommissionStatus() == null) ? 0 : getCommissionStatus().hashCode());
+        result = prime * result + ((getCurrentPickRecordId() == null) ? 0 : getCurrentPickRecordId().hashCode());
         result = prime * result + ((getRefundTag() == null) ? 0 : getRefundTag().hashCode());
         result = prime * result + ((getRefundFee() == null) ? 0 : getRefundFee().hashCode());
         result = prime * result + ((getMapType() == null) ? 0 : getMapType().hashCode());
@@ -206,6 +214,7 @@ public class OrderOpenidMap implements Serializable {
         sb.append(", orderStatus=").append(orderStatus);
         sb.append(", actualCommissionFee=").append(actualCommissionFee);
         sb.append(", commissionStatus=").append(commissionStatus);
+        sb.append(", currentPickRecordId=").append(currentPickRecordId);
         sb.append(", refundTag=").append(refundTag);
         sb.append(", refundFee=").append(refundFee);
         sb.append(", mapType=").append(mapType);

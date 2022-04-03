@@ -15,8 +15,6 @@ public class OrderOpenidMapExample {
 
     private Long offset;
 
-    private Boolean forUpdate;
-
     public OrderOpenidMapExample() {
         oredCriteria = new ArrayList<>();
     }
@@ -84,14 +82,6 @@ public class OrderOpenidMapExample {
 
     public Long getOffset() {
         return offset;
-    }
-
-    public void setForUpdate(Boolean forUpdate) {
-        this.forUpdate = forUpdate;
-    }
-
-    public Boolean getForUpdate() {
-        return forUpdate;
     }
 
     protected abstract static class GeneratedCriteria {
@@ -1212,6 +1202,66 @@ public class OrderOpenidMapExample {
 
         public Criteria andCommissionStatusNotBetween(String value1, String value2) {
             addCriterion("commission_status not between", value1, value2, "commissionStatus");
+            return (Criteria) this;
+        }
+
+        public Criteria andCurrentPickRecordIdIsNull() {
+            addCriterion("current_pick_record_id is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andCurrentPickRecordIdIsNotNull() {
+            addCriterion("current_pick_record_id is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andCurrentPickRecordIdEqualTo(Integer value) {
+            addCriterion("current_pick_record_id =", value, "currentPickRecordId");
+            return (Criteria) this;
+        }
+
+        public Criteria andCurrentPickRecordIdNotEqualTo(Integer value) {
+            addCriterion("current_pick_record_id <>", value, "currentPickRecordId");
+            return (Criteria) this;
+        }
+
+        public Criteria andCurrentPickRecordIdGreaterThan(Integer value) {
+            addCriterion("current_pick_record_id >", value, "currentPickRecordId");
+            return (Criteria) this;
+        }
+
+        public Criteria andCurrentPickRecordIdGreaterThanOrEqualTo(Integer value) {
+            addCriterion("current_pick_record_id >=", value, "currentPickRecordId");
+            return (Criteria) this;
+        }
+
+        public Criteria andCurrentPickRecordIdLessThan(Integer value) {
+            addCriterion("current_pick_record_id <", value, "currentPickRecordId");
+            return (Criteria) this;
+        }
+
+        public Criteria andCurrentPickRecordIdLessThanOrEqualTo(Integer value) {
+            addCriterion("current_pick_record_id <=", value, "currentPickRecordId");
+            return (Criteria) this;
+        }
+
+        public Criteria andCurrentPickRecordIdIn(List<Integer> values) {
+            addCriterion("current_pick_record_id in", values, "currentPickRecordId");
+            return (Criteria) this;
+        }
+
+        public Criteria andCurrentPickRecordIdNotIn(List<Integer> values) {
+            addCriterion("current_pick_record_id not in", values, "currentPickRecordId");
+            return (Criteria) this;
+        }
+
+        public Criteria andCurrentPickRecordIdBetween(Integer value1, Integer value2) {
+            addCriterion("current_pick_record_id between", value1, value2, "currentPickRecordId");
+            return (Criteria) this;
+        }
+
+        public Criteria andCurrentPickRecordIdNotBetween(Integer value1, Integer value2) {
+            addCriterion("current_pick_record_id not between", value1, value2, "currentPickRecordId");
             return (Criteria) this;
         }
 

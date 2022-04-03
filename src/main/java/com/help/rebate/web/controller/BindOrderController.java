@@ -51,13 +51,14 @@ public class BindOrderController {
 
     @ApiOperation("根据给定的父订单号，以及用户信息（openId或者指定specialId），执行直接绑定，注意：幂等性")
     @RequestMapping("/by_trade_id")
-    public SafeServiceResponse bindByTradeParentId(@ApiParam(name = "openId", value = "微信openId") @RequestParam(required = true) String openId,
+    public SafeServiceResponse bindByTradeParentId(@ApiParam(name = "openId", value = "微信openId") @RequestParam(required = false) String openId,
                                       @ApiParam(name = "specialId", value = "淘宝联盟私域会员ID") @RequestParam(required = false) String specialId,
                                       @ApiParam(name = "tradeParentId", value = "交易父单号") @RequestParam(required = true) String tradeParentId) {
         try{
             SafeServiceResponse.startBiz();
 
             //校验
+            Checks.isTrue(!EmptyUtils.isEmpty(openId) || !EmptyUtils.isEmpty(specialId), "openId和specialId不能同时为空");
             //Checks.isTrue(openId != null || specialId != null, "openId和specialID不能同时为空");
 
             //插入
@@ -73,13 +74,14 @@ public class BindOrderController {
 
     @ApiOperation("根据给定的父订单号，以及用户信息（openId或者指定specialId），查询绑定情况")
     @RequestMapping("/query_bind_info")
-    public SafeServiceResponse queryBindInfoByTradeParentId(@ApiParam(name = "openId", value = "微信openId") @RequestParam(required = true) String openId,
+    public SafeServiceResponse queryBindInfoByTradeParentId(@ApiParam(name = "openId", value = "微信openId") @RequestParam(required = false) String openId,
                                                    @ApiParam(name = "specialId", value = "淘宝联盟私域会员ID") @RequestParam(required = false) String specialId,
                                                    @ApiParam(name = "tradeParentId", value = "交易父单号") @RequestParam(required = true) String tradeParentId) {
         try{
             SafeServiceResponse.startBiz();
 
             //校验
+            Checks.isTrue(!EmptyUtils.isEmpty(openId) || !EmptyUtils.isEmpty(specialId), "openId和specialId不能同时为空");
             //Checks.isTrue(openId != null || specialId != null, "openId和specialID不能同时为空");
 
             //插入
@@ -98,20 +100,21 @@ public class BindOrderController {
 
     @ApiOperation("查询返利的汇总信息")
     @RequestMapping("/query_commission")
-    public SafeServiceResponse queryCommissionByStatus(@ApiParam(name = "openId", value = "微信openId") @RequestParam(required = true) String openId,
+    public SafeServiceResponse queryCommissionByStatus(@ApiParam(name = "openId", value = "微信openId") @RequestParam(required = false) String openId,
                                                    @ApiParam(name = "specialId", value = "淘宝联盟私域会员ID") @RequestParam(required = false) String specialId,
-                                                   @ApiParam(name = "orderStatus", value = "订单状态 - 12-付款，13-关闭，14-确认收货，3-结算成功") @RequestParam(required = true) Integer orderStatus,
+                                                   @ApiParam(name = "orderStatus", value = "订单状态 - 12-付款，13-关闭，14-确认收货，3-结算成功，可多个，逗号隔开") @RequestParam(required = true) String orderStatuss,
                                                    @ApiParam(name = "commissionStatus", value = "给用户的结算状态 - 待结算、已结算、结算中") @RequestParam(required = true) String commissionStatus) {
         try{
             SafeServiceResponse.startBiz();
 
             //校验
-            Checks.isTrue(orderStatus >= 12 && orderStatus <= 14 || orderStatus == 3, "订单状态只能是12、13、14、3");
+            Checks.isTrue(!EmptyUtils.isEmpty(openId) || !EmptyUtils.isEmpty(specialId), "openId和specialId不能同时为空");
+            //Checks.isTrue(orderStatus >= 12 && orderStatus <= 14 || orderStatus == 3, "订单状态只能是12、13、14、3");
             Checks.isTrue(commissionStatus.equals("待结算") || commissionStatus.equals("已结算") || commissionStatus.equals("结算中"), "返利状态只能是[待结算、已结算、结算中]");
 
 
             //查询
-            CommissionVO commissionVO = orderOpenidMapService.selectCommissionBy(openId, specialId, orderStatus, commissionStatus);
+            CommissionVO commissionVO = orderOpenidMapService.selectCommissionBy(openId, specialId, orderStatuss, commissionStatus);
 
             //返回
             return SafeServiceResponse.success(commissionVO);
@@ -123,13 +126,14 @@ public class BindOrderController {
 
     @ApiOperation("测试提取返利，各种状态的流转。tip-返利状态只能是[待结算、已结算、结算中]")
     @RequestMapping("/mock_pick_money")
-    public SafeServiceResponse mockPickMoney(@ApiParam(name = "openId", value = "微信openId") @RequestParam(required = true) String openId,
+    public SafeServiceResponse mockPickMoney(@ApiParam(name = "openId", value = "微信openId") @RequestParam(required = false) String openId,
                                              @ApiParam(name = "specialId", value = "淘宝联盟私域会员ID") @RequestParam(required = false) String specialId,
                                              @ApiParam(name = "mockStatus", value = "当前模拟的是哪种状态 - 触发提现、提现成功、提现失败、提现超时") @RequestParam(required = false) String mockStatus) {
         try{
             SafeServiceResponse.startBiz();
 
             //校验
+            Checks.isTrue(!EmptyUtils.isEmpty(openId) || !EmptyUtils.isEmpty(specialId), "openId和specialId不能同时为空");
             Checks.isTrue("触发提现、提现成功、提现失败、提现超时".contains(mockStatus), "当前模拟的状态只能是 - 触发提现、提现成功、提现失败、提现超时");
 
             //查询

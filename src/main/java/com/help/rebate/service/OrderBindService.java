@@ -8,11 +8,13 @@ import com.help.rebate.service.schedule.FixedOrderBindSyncTask;
 import com.help.rebate.utils.Checks;
 import com.help.rebate.utils.EmptyUtils;
 import com.help.rebate.utils.TimeUtil;
+import com.help.rebate.vo.CommissionVO;
 import com.help.rebate.vo.OrderBindResultVO;
 import com.help.rebate.vo.PickCommissionVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -25,6 +27,7 @@ import java.util.stream.Collectors;
  * @date 21/11/14
  */
 @Service
+@Transactional
 public class OrderBindService {
     private static final Logger logger = LoggerFactory.getLogger(OrderBindService.class);
 
@@ -71,16 +74,116 @@ public class OrderBindService {
     private TimeCursorPositionService timeCursorPositionService;
 
     /**
+     * 提现服务
+     */
+    @Resource
+    private PickMoneyRecordService pickMoneyRecordService;
+
+    /**
      * 模拟提现的流程
      * @param openId
      * @param specialId
      * @param mockStatus 当前模拟的是哪种状态 - 触发提现、提现成功、提现失败、提现超时【预提取、提取中、提取失败、已提取】
      * @return
      */
+    @Transactional
     public PickCommissionVO mockPickMoney(String openId, String specialId, String mockStatus) {
-        //
+        //触发提现操作
+        if ("触发提现".equals(mockStatus)) {
+            //触发
+            return triggerPickMoneyAction(openId, specialId);
+        }
+
+        //触发提现成功 - 最新状态的 - 提现失败（包括，提现超时）
+        if (EmptyUtils.isIn(mockStatus, new String[]{"提现成功", "提现失败", "提现超时"})) {
+            return triggerEndPickMoneyAction(openId, specialId, mockStatus);
+        }
 
         return null;
+    }
+
+    /**
+     * 触发提现操作
+     * @param openId
+     * @param specialId
+     * @return
+     */
+    @Transactional
+    public PickCommissionVO triggerPickMoneyAction(String openId, String specialId) {
+        //如果是触发提现操作，那么先看，之前是否有提现中的状态，或者有失败的，提现中，不允许再提，失败的，那么重试之前的就行，直到成功
+        PickMoneyRecord oldPickMoneyRecord = pickMoneyRecordService.selectPickMoneyAction(openId, specialId, new String[]{"提取中"});
+        if (oldPickMoneyRecord != null) {
+            CommissionVO commissionVO = orderOpenidMapService.selectCommissionBy(openId, specialId, "14,3", new String[]{"提取中",});
+            //直接返回查询的统计信息
+            PickCommissionVO pickCommissionVO = new PickCommissionVO();
+            pickCommissionVO.setAction("重复 - 提现中");
+            pickCommissionVO.setCommission(commissionVO.getPubFee());
+            pickCommissionVO.setTradeParentId2TradeIdsMap(commissionVO.getTradeParentId2ItemIdsMap());
+            return pickCommissionVO;
+        }
+
+        //订单状态 - 12-付款，13-关闭，14-确认收货，3-结算成功
+        CommissionVO commissionVO = orderOpenidMapService.selectCommissionBy(openId, specialId, "14,3", new String[]{"待提取", "提取失败", "提取超时"});
+
+        //可提取的金额
+        String pubFee = commissionVO.getPubFee();
+        Map<String, List<String>> tradeParentId2ItemIdsMap = commissionVO.getTradeParentId2ItemIdsMap();
+
+        //第一步，插入数据库，记录提现这个动作
+        Integer primaryKey = pickMoneyRecordService.recordPickMoneyAction(openId, specialId, pubFee, "提取中");
+        Checks.isTrue(primaryKey != null, "记录提现动作失败");
+
+        //第二步，更新订单表，记录所有的为提取中
+        int affectedCnt = orderOpenidMapService.changeCommissionStatusByTradeParentIds(openId, specialId, tradeParentId2ItemIdsMap, primaryKey, "提取中");
+        int allTradeIdCnt = tradeParentId2ItemIdsMap.values().stream().mapToInt(a -> a.size()).sum();
+        Checks.isTrue(affectedCnt == allTradeIdCnt, "更新的记录数，与查询出的记录数不一致");
+
+        //第三部，更新提现记录表，记录一下附加信息，影响了多少订单数
+        PickMoneyRecord pickMoneyRecord = new PickMoneyRecord();
+        pickMoneyRecord.setId(primaryKey);
+        pickMoneyRecord.setPickAttachInfo("all_trade_id_cnt:" + affectedCnt);
+        pickMoneyRecordService.update(pickMoneyRecord);
+
+        //直接返回查询的统计信息
+        PickCommissionVO pickCommissionVO = new PickCommissionVO();
+        pickCommissionVO.setAction("提现中");
+        pickCommissionVO.setCommission(pubFee);
+        pickCommissionVO.setTradeParentId2TradeIdsMap(tradeParentId2ItemIdsMap);
+        return pickCommissionVO;
+    }
+
+    /**
+     * 触发提现操作的后续操作
+     * @param openId
+     * @param specialId
+     * @param mockStatus
+     * @return
+     */
+    private PickCommissionVO triggerEndPickMoneyAction(String openId, String specialId, String mockStatus) {
+        //先查询出最新的状态，只能存在一个唯一的提现状态
+        PickMoneyRecord pickMoneyRecord = pickMoneyRecordService.selectByStatus(openId, specialId, "提取中");
+        String pickAttachInfo = pickMoneyRecord.getPickAttachInfo();
+
+        //更新状态
+        Integer pickMoneyRecordId = pickMoneyRecord.getId();
+        pickMoneyRecord.setGmtModified(new Date());
+        pickMoneyRecord.setPickStatus(mockStatus);
+        pickMoneyRecord.setActPickCommission(pickMoneyRecord.getPrePickCommission());
+        int affectedCnt = pickMoneyRecordService.update(pickMoneyRecord);
+        logger.error("[pick-money] fail to change status to {}, pick_id:{}, openId:{}, specialId:{}", mockStatus, pickMoneyRecordId, openId, specialId);
+        Checks.isTrue(affectedCnt == 1, "更新提现状态失败");
+
+        //更新订单绑定表中的状态
+        int affectedMapCnt = orderOpenidMapService.changeCommissionStatusByPickMoneyId(openId, specialId, pickMoneyRecordId, mockStatus);
+        Checks.isTrue(pickAttachInfo.equals("all_trade_id_cnt:" + affectedMapCnt), "提现时的详细订单记录与当前更新个数不符");
+
+        //订单状态 - 12-付款，13-关闭，14-确认收货，3-结算成功
+        CommissionVO commissionVO = orderOpenidMapService.selectCommissionBy(openId, specialId, "14,3", new String[]{mockStatus});
+        PickCommissionVO pickCommissionVO = new PickCommissionVO();
+        pickCommissionVO.setAction(mockStatus);
+        pickCommissionVO.setCommission(commissionVO.getPubFee());
+        pickCommissionVO.setTradeParentId2TradeIdsMap(commissionVO.getTradeParentId2ItemIdsMap());
+        return pickCommissionVO;
     }
 
     /**

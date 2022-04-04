@@ -1,9 +1,6 @@
 package com.help.rebate.utils;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.OptionalInt;
-import java.util.OptionalLong;
+import java.util.*;
 
 /**
  * 校验
@@ -52,6 +49,19 @@ public class Checks {
      */
     public static void isNotEmpty(Collection object, String msg) {
         if (object == null || object.size() == 0) {
+            throw new RuntimeException(msg);
+        }
+    }
+
+    /**
+     * string型数组判定
+     * @param target
+     * @param range
+     * @param msg
+     */
+    public static void isIn(String target, String[] range, String msg) {
+        Optional<String> first = Arrays.stream(range).filter(r -> target.equals(r)).findFirst();
+        if (!first.isPresent()) {
             throw new RuntimeException(msg);
         }
     }

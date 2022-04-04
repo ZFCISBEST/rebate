@@ -1,9 +1,6 @@
 package com.help.rebate.utils;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.OptionalInt;
-import java.util.OptionalLong;
+import java.util.*;
 
 /**
  * 校验
@@ -26,6 +23,16 @@ public class EmptyUtils {
      */
     public static boolean isEmpty(Collection object) {
         return object == null || object.size() == 0;
+    }
+
+    /**
+     * 断言条件必须为真
+     * @param target
+     * @param range
+     */
+    public static boolean isIn(String target, String[] range) {
+        Optional<String> first = Arrays.stream(range).filter(r -> target == r).findFirst();
+        return first.isPresent();
     }
 
     /**

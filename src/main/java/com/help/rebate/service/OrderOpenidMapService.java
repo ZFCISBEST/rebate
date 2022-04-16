@@ -141,7 +141,21 @@ public class OrderOpenidMapService {
      * @param openId
      * @param specialId
      * @param orderStatuss 订单状态 - 12-付款，13-关闭，14-确认收货，3-结算成功
-     * @param commissionStatus 给用户的结算状态 - 待提取、提取中，提取成功，提取失败
+     * @param commissionStatuss 给用户的结算状态 - 待提取、提取中，提取成功，提取失败, 提取超时
+     * @return
+     */
+    public CommissionVO selectCommissionBy(String openId, String specialId, String orderStatuss, String commissionStatuss) {
+        String[] split = commissionStatuss.split(",");
+        return selectCommissionBy(openId, specialId, orderStatuss, split);
+    }
+
+    /**
+     * 查询返利信息
+     * 显然，这里需要优化，不然一次查出来太多了
+     * @param openId
+     * @param specialId
+     * @param orderStatuss 订单状态 - 12-付款，13-关闭，14-确认收货，3-结算成功
+     * @param commissionStatus 给用户的结算状态 - 待提取、提取中，提取成功，提取失败, 提取超时
      * @return
      */
     public CommissionVO selectCommissionBy(String openId, String specialId, String orderStatuss, String[] commissionStatus) {
@@ -292,7 +306,7 @@ public class OrderOpenidMapService {
      * @param openId
      * @param specialId
      * @param pickMoneyRecordId
-     * @param commissionStatus
+     * @param commissionStatus 待提取、提取中，提取成功，提取失败, 提取超时
      */
     public int changeCommissionStatusByPickMoneyId(String openId, String specialId, Integer pickMoneyRecordId, String commissionStatus) {
         //前置校验

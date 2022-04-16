@@ -74,28 +74,28 @@ public class OrderBindService {
     private TimeCursorPositionService timeCursorPositionService;
 
     /**
-     * 提现服务
+     * 提取服务
      */
     @Resource
     private PickMoneyRecordService pickMoneyRecordService;
 
     /**
-     * 模拟提现的流程
+     * 模拟提取的流程
      * @param openId
      * @param specialId
-     * @param mockStatus 当前模拟的是哪种状态 - 触发提现、提现成功、提现失败、提现超时【预提取、提取中、提取失败、已提取】
+     * @param mockStatus 当前模拟的是哪种状态 - 触发提取、待提取、提取中，提取成功，提取失败, 提取超时
      * @return
      */
     @Transactional
     public PickCommissionVO mockPickMoney(String openId, String specialId, String mockStatus) {
-        //触发提现操作
-        if ("触发提现".equals(mockStatus)) {
+        //触发提取操作
+        if ("触发提取".equals(mockStatus)) {
             //触发
             return triggerPickMoneyAction(openId, specialId);
         }
 
-        //触发提现成功 - 最新状态的 - 提现失败（包括，提现超时）
-        if (EmptyUtils.isIn(mockStatus, new String[]{"提现成功", "提现失败", "提现超时"})) {
+        //触发提取成功 - 最新状态的 - 提取失败（包括，提取超时）
+        if (EmptyUtils.isIn(mockStatus, new String[]{"提取成功", "提取失败", "提取超时"})) {
             return triggerEndPickMoneyAction(openId, specialId, mockStatus);
         }
 
@@ -103,20 +103,20 @@ public class OrderBindService {
     }
 
     /**
-     * 触发提现操作
+     * 触发提取操作
      * @param openId
      * @param specialId
      * @return
      */
     @Transactional
     public PickCommissionVO triggerPickMoneyAction(String openId, String specialId) {
-        //如果是触发提现操作，那么先看，之前是否有提现中的状态，或者有失败的，提现中，不允许再提，失败的，那么重试之前的就行，直到成功
+        //如果是触发提取操作，那么先看，之前是否有提取中的状态，或者有失败的，提取中，不允许再提，失败的，那么重试之前的就行，直到成功
         PickMoneyRecord oldPickMoneyRecord = pickMoneyRecordService.selectPickMoneyAction(openId, specialId, new String[]{"提取中"});
         if (oldPickMoneyRecord != null) {
             CommissionVO commissionVO = orderOpenidMapService.selectCommissionBy(openId, specialId, "14,3", new String[]{"提取中",});
             //直接返回查询的统计信息
             PickCommissionVO pickCommissionVO = new PickCommissionVO();
-            pickCommissionVO.setAction("重复 - 提现中");
+            pickCommissionVO.setAction("重复 - 提取中");
             pickCommissionVO.setCommission(commissionVO.getPubFee());
             pickCommissionVO.setTradeParentId2TradeIdsMap(commissionVO.getTradeParentId2ItemIdsMap());
             return pickCommissionVO;
@@ -129,16 +129,16 @@ public class OrderBindService {
         String pubFee = commissionVO.getPubFee();
         Map<String, List<String>> tradeParentId2ItemIdsMap = commissionVO.getTradeParentId2ItemIdsMap();
 
-        //第一步，插入数据库，记录提现这个动作
+        //第一步，插入数据库，记录提取这个动作
         Integer primaryKey = pickMoneyRecordService.recordPickMoneyAction(openId, specialId, pubFee, "提取中");
-        Checks.isTrue(primaryKey != null, "记录提现动作失败");
+        Checks.isTrue(primaryKey != null, "记录提取动作失败");
 
         //第二步，更新订单表，记录所有的为提取中
         int affectedCnt = orderOpenidMapService.changeCommissionStatusByTradeParentIds(openId, specialId, tradeParentId2ItemIdsMap, primaryKey, "提取中");
         int allTradeIdCnt = tradeParentId2ItemIdsMap.values().stream().mapToInt(a -> a.size()).sum();
         Checks.isTrue(affectedCnt == allTradeIdCnt, "更新的记录数，与查询出的记录数不一致");
 
-        //第三部，更新提现记录表，记录一下附加信息，影响了多少订单数
+        //第三部，更新提取记录表，记录一下附加信息，影响了多少订单数
         PickMoneyRecord pickMoneyRecord = new PickMoneyRecord();
         pickMoneyRecord.setId(primaryKey);
         pickMoneyRecord.setPickAttachInfo("all_trade_id_cnt:" + affectedCnt);
@@ -146,21 +146,21 @@ public class OrderBindService {
 
         //直接返回查询的统计信息
         PickCommissionVO pickCommissionVO = new PickCommissionVO();
-        pickCommissionVO.setAction("提现中");
+        pickCommissionVO.setAction("提取中");
         pickCommissionVO.setCommission(pubFee);
         pickCommissionVO.setTradeParentId2TradeIdsMap(tradeParentId2ItemIdsMap);
         return pickCommissionVO;
     }
 
     /**
-     * 触发提现操作的后续操作
+     * 触发提取操作的后续操作
      * @param openId
      * @param specialId
-     * @param mockStatus
+     * @param mockStatus 待提取、提取中，提取成功，提取失败,提取超时
      * @return
      */
     private PickCommissionVO triggerEndPickMoneyAction(String openId, String specialId, String mockStatus) {
-        //先查询出最新的状态，只能存在一个唯一的提现状态
+        //先查询出最新的状态，只能存在一个唯一的提取状态
         PickMoneyRecord pickMoneyRecord = pickMoneyRecordService.selectByStatus(openId, specialId, "提取中");
         String pickAttachInfo = pickMoneyRecord.getPickAttachInfo();
 
@@ -171,11 +171,11 @@ public class OrderBindService {
         pickMoneyRecord.setActPickCommission(pickMoneyRecord.getPrePickCommission());
         int affectedCnt = pickMoneyRecordService.update(pickMoneyRecord);
         logger.error("[pick-money] fail to change status to {}, pick_id:{}, openId:{}, specialId:{}", mockStatus, pickMoneyRecordId, openId, specialId);
-        Checks.isTrue(affectedCnt == 1, "更新提现状态失败");
+        Checks.isTrue(affectedCnt == 1, "更新提取状态失败");
 
         //更新订单绑定表中的状态
         int affectedMapCnt = orderOpenidMapService.changeCommissionStatusByPickMoneyId(openId, specialId, pickMoneyRecordId, mockStatus);
-        Checks.isTrue(pickAttachInfo.equals("all_trade_id_cnt:" + affectedMapCnt), "提现时的详细订单记录与当前更新个数不符");
+        Checks.isTrue(pickAttachInfo.equals("all_trade_id_cnt:" + affectedMapCnt), "提取时的详细订单记录与当前更新个数不符");
 
         //订单状态 - 12-付款，13-关闭，14-确认收货，3-结算成功
         CommissionVO commissionVO = orderOpenidMapService.selectCommissionBy(openId, specialId, "14,3", new String[]{mockStatus});
@@ -355,7 +355,7 @@ public class OrderBindService {
             newOrderOpenidMap.setPubShareFee(orderDetail.getPubShareFee());
             newOrderOpenidMap.setAlimamaShareFee(orderDetail.getAlimamaShareFee());
             newOrderOpenidMap.setOrderStatus(orderDetail.getTkStatus());
-            newOrderOpenidMap.setCommissionStatus("待结算");
+            newOrderOpenidMap.setCommissionStatus("待提取");
             newOrderOpenidMap.setRefundTag(orderDetail.getRefundTag());
 
             newOrderOpenidMap.setMapType(MapType.specified_openid_tradeparentid.getLabel());
@@ -511,7 +511,7 @@ public class OrderBindService {
             newOrderOpenidMap.setPubShareFee(orderDetail.getPubShareFee());
             newOrderOpenidMap.setAlimamaShareFee(orderDetail.getAlimamaShareFee());
             newOrderOpenidMap.setOrderStatus(orderDetail.getTkStatus());
-            newOrderOpenidMap.setCommissionStatus("待结算");
+            newOrderOpenidMap.setCommissionStatus("待提取");
             newOrderOpenidMap.setRefundTag(orderDetail.getRefundTag());
             newOrderOpenidMap.setMapType(MapType.tradeparentid_extend.getLabel());
             newOrderOpenidMap.setStatus(0);
@@ -556,7 +556,7 @@ public class OrderBindService {
             newOrderOpenidMap.setPubShareFee(orderDetail.getPubShareFee());
             newOrderOpenidMap.setAlimamaShareFee(orderDetail.getAlimamaShareFee());
             newOrderOpenidMap.setOrderStatus(orderDetail.getTkStatus());
-            newOrderOpenidMap.setCommissionStatus("待结算");
+            newOrderOpenidMap.setCommissionStatus("待提取");
             newOrderOpenidMap.setRefundTag(orderDetail.getRefundTag());
 
             //用作匹配的那个id
@@ -615,7 +615,7 @@ public class OrderBindService {
                 newOrderOpenidMap.setPubShareFee(orderDetail.getPubShareFee());
                 newOrderOpenidMap.setAlimamaShareFee(orderDetail.getAlimamaShareFee());
                 newOrderOpenidMap.setOrderStatus(orderDetail.getTkStatus());
-                newOrderOpenidMap.setCommissionStatus("待结算");
+                newOrderOpenidMap.setCommissionStatus("待提取");
                 newOrderOpenidMap.setRefundTag(orderDetail.getRefundTag());
                 newOrderOpenidMap.setMapType(MapType.specialid_with_pubsite.getLabel());
 
@@ -651,7 +651,7 @@ public class OrderBindService {
             newOrderOpenidMap.setPubShareFee(orderDetail.getPubShareFee());
             newOrderOpenidMap.setAlimamaShareFee(orderDetail.getAlimamaShareFee());
             newOrderOpenidMap.setOrderStatus(orderDetail.getTkStatus());
-            newOrderOpenidMap.setCommissionStatus("待结算");
+            newOrderOpenidMap.setCommissionStatus("待提取");
             newOrderOpenidMap.setRefundTag(orderDetail.getRefundTag());
             newOrderOpenidMap.setMapType(MapType.specialid.getLabel());
 

@@ -59,7 +59,7 @@ CREATE TABLE `order_openid_map` (
   `alimama_share_fee` varchar(16) DEFAULT NULL COMMENT '技术服务费=结算金额*收入比率*技术服务费率。推广者赚取佣金后支付给阿里妈妈的技术服务费用',
   `order_status` int(11) DEFAULT NULL COMMENT '订单状态 - 12-付款，13-关闭，14-确认收货，3-结算成功',
   `actual_commission_fee` varchar(16) DEFAULT NULL COMMENT '实际给用户返利的费用，可能返利以后，发生了维权',
-  `commission_status` varchar(16) DEFAULT NULL COMMENT '给用户的结算状态 - 待结算、已结算、结算中',
+  `commission_status` varchar(16) DEFAULT NULL COMMENT '给用户的结算状态 - 待提取、提取中，提取成功，提取失败, 提取超时',
   `current_pick_record_id` int(11) unsigned DEFAULT NULL COMMENT '当前正在提现的批次记录ID，属于pick_money_record表的主键',
   `refund_tag` int(11) DEFAULT '0' COMMENT '维权标签，0 含义为非维权 1 含义为维权订单',
   `refund_fee` varchar(16) DEFAULT NULL COMMENT '维权以后，返回给商家的金额。此字段用于后期重新计算损益情况',
@@ -104,7 +104,7 @@ CREATE TABLE `pick_money_record` (
   `pre_pick_commission` varchar(16) DEFAULT NULL COMMENT '预提现金额',
   `act_pick_commission` varchar(16) DEFAULT NULL COMMENT '实际提取的金额',
   `pick_attach_info` varchar(32) DEFAULT NULL COMMENT '附加信息，如满10元可提，提取成功，提取失败信息',
-  `pick_status` varchar(8) DEFAULT NULL COMMENT '预提取、提取中、提取失败、已提取',
+  `pick_status` varchar(8) DEFAULT NULL COMMENT '待提取、提取中，提取成功，提取失败, 提取超时',
   `status` int(11) DEFAULT NULL COMMENT '0表示不删除，-1表示删除',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='提现记录表';

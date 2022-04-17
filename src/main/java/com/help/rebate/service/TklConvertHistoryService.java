@@ -45,14 +45,14 @@ public class TklConvertHistoryService {
             criteria.andItemIdEqualTo(itemId);
         }
         if (!EmptyUtils.isEmpty(pubSite)) {
-            //这里现在只默认查询的是 虚拟virtual，会员ID为唯一的virtualId
+            //这里现在只默认查询的是 虚拟virtual，会员ID为唯一的virtualId //virtualId|mm_120037479_18710025_65896653
             criteria.andPubsiteCombinationEqualTo("virtualId|" + pubSite);
         }
         if (startTime != null) {
             criteria.andGmtModifiedGreaterThanOrEqualTo(startTime);
         }
         if (endTime != null) {
-            criteria.andGmtModifiedLessThanOrEqualTo(startTime);
+            criteria.andGmtModifiedLessThanOrEqualTo(endTime);
         }
 
         //排序

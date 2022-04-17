@@ -102,8 +102,8 @@ public class BindOrderController {
     @RequestMapping("/query_commission")
     public SafeServiceResponse queryCommissionByStatus(@ApiParam(name = "openId", value = "微信openId") @RequestParam(required = false) String openId,
                                                    @ApiParam(name = "specialId", value = "淘宝联盟私域会员ID") @RequestParam(required = false) String specialId,
-                                                   @ApiParam(name = "orderStatus", value = "订单状态 - 12-付款，13-关闭，14-确认收货，3-结算成功，可多个，逗号隔开") @RequestParam(required = true) String orderStatuss,
-                                                   @ApiParam(name = "commissionStatus", value = "给用户的结算状态,可填多个，逗号隔开 - 待提取、提取中，提取成功，提取失败,提取超时") @RequestParam(required = true) String commissionStatuss) {
+                                                   @ApiParam(name = "orderStatuss", value = "订单状态 - 12-付款，13-关闭，14-确认收货，3-结算成功，可多个，逗号隔开") @RequestParam(required = true) String orderStatuss,
+                                                   @ApiParam(name = "commissionStatuss", value = "给用户的结算状态,可填多个，逗号隔开 - 待提取、提取中，提取成功，提取失败,提取超时") @RequestParam(required = true) String commissionStatuss) {
         try{
             SafeServiceResponse.startBiz();
 

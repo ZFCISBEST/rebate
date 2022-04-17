@@ -239,6 +239,9 @@ public class OrderBindService {
             criteria.andSpecialIdEqualTo(specialId);
         }
 
+        //订单的付款时间，也必须不能晚于当前的时间
+        criteria.andTbPaidTimeGreaterThanOrEqualTo(TimeUtil.parseDate("2021-12-25 00:00:00"));
+
         //查询数量
         long orderNum = orderDetailDao.countByExample(example);
         if (orderNum == 0) {
@@ -248,7 +251,7 @@ public class OrderBindService {
         //确定循环次数
         Map<String, OrderBindResultVO> parentTradeId2OrderBindResultVOMap = new HashMap<String, OrderBindResultVO>(16);
         long offset = 0;
-        while (offset < orderNum - 1) {
+        while (offset < orderNum) {
             example.setOffset(offset);
             example.setLimit(100);
 
@@ -272,7 +275,6 @@ public class OrderBindService {
             //增加offset
             offset += 100;
         }
-
 
         //结果返回
         return parentTradeId2OrderBindResultVOMap.values().stream().collect(Collectors.toList());
@@ -404,6 +406,12 @@ public class OrderBindService {
             return null;
         }
 
+        //如果tradeId2OrderDetailMap==空，说明，所有订单都绑定过了，直接返回
+        if (tradeId2OrderDetailMap.size() == 0) {
+            return null;
+        }
+
+
         //所有的都没有绑定过
         String specialId = orderDetailList.get(0).getSpecialId();
         //按照普通用户的方式来处理
@@ -429,6 +437,10 @@ public class OrderBindService {
      * @param orderBindResultVO
      */
     private void updateOrderOpenidMapIfNeeded(OrderOpenidMap orderOpenidMap, OrderDetail orderDetail, OrderBindResultVO orderBindResultVO) {
+        if (orderDetail == null) {
+            return;
+        }
+
         //维权标识 0 含义为非维权 1 含义为维权订单
         Integer refundTag = orderDetail.getRefundTag();
         //付款预估收入 - 是总的哦

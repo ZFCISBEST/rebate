@@ -308,8 +308,8 @@ public class OrderBindService {
             orderBindResultVO.setOpenId(openId);
             orderBindResultVO.setSpecialId(specialId);
             orderBindResultVO.setTradeParentId(parentTradeId);
-            List<String> itemIdList = orderOpenidMapList.stream().map(a -> a.getItemId()).collect(Collectors.toList());
-            orderBindResultVO.getTradeIdItemIdList().addAll(itemIdList);
+            List<String> tradeIdList = orderOpenidMapList.stream().map(a -> a.getTradeId()).collect(Collectors.toList());
+            orderBindResultVO.getTradeIdItemIdList().addAll(tradeIdList);
             return orderBindResultVO;
         }
 
@@ -343,37 +343,16 @@ public class OrderBindService {
         List<OrderDetail> orderDetailList = orderService.selectByTradeId(parentTradeId, null);
         Checks.isNotEmpty(orderDetailList, "当前订单不存在，请稍后重试或确定是否通过本平台获取的购买链接");
         for (OrderDetail orderDetail : orderDetailList) {
-            OrderOpenidMap newOrderOpenidMap = new OrderOpenidMap();
-            newOrderOpenidMap.setGmtCreated(new Date());
-            newOrderOpenidMap.setGmtModified(new Date());
-            newOrderOpenidMap.setTradeId(orderDetail.getTradeId());
-            newOrderOpenidMap.setParentTradeId(orderDetail.getParentTradeId());
-            newOrderOpenidMap.setOpenId(userInfos.getOpenId());
-            newOrderOpenidMap.setExternalId(userInfos.getExternalId());
-            newOrderOpenidMap.setSpecialId(userInfos.getSpecialId());
-            newOrderOpenidMap.setRelationId(userInfos.getRelationId());
-            newOrderOpenidMap.setItemId(orderDetail.getItemId());
-            newOrderOpenidMap.setPubSharePreFee(orderDetail.getPubSharePreFee());
-            newOrderOpenidMap.setPubShareFee(orderDetail.getPubShareFee());
-            newOrderOpenidMap.setAlimamaShareFee(orderDetail.getAlimamaShareFee());
-            newOrderOpenidMap.setOrderStatus(orderDetail.getTkStatus());
-            newOrderOpenidMap.setCommissionStatus("待提取");
-            newOrderOpenidMap.setRefundTag(orderDetail.getRefundTag());
-
-            newOrderOpenidMap.setMapType(MapType.specified_openid_tradeparentid.getLabel());
-            newOrderOpenidMap.setStatus(0);
-
-            //插入数据库
-            int affectedNum = orderOpenidMapService.save(newOrderOpenidMap);
-            Checks.isTrue(affectedNum == 1, "插入失败 - tradeId=" + orderDetail.getTradeId());
+            //先查询，万一存在，就得更新，防止操作错误
+            insertOrUpdateOrderOpenidMap(userInfos.getOpenId(), MapType.specified_openid_tradeparentid, userInfos, orderDetail);
         }
 
         //获取商品名称返回
         orderBindResultVO.setOpenId(openId);
         orderBindResultVO.setSpecialId(specialId);
         orderBindResultVO.setTradeParentId(parentTradeId);
-        List<String> itemIdList = orderOpenidMapList.stream().map(a -> a.getItemId()).collect(Collectors.toList());
-        orderBindResultVO.getTradeIdItemIdList().addAll(itemIdList);
+        List<String> tradeIdList = orderOpenidMapList.stream().map(a -> a.getTradeId()).collect(Collectors.toList());
+        orderBindResultVO.getTradeIdItemIdList().addAll(tradeIdList);
         return orderBindResultVO;
     }
 
@@ -401,16 +380,17 @@ public class OrderBindService {
         }
 
         //如果已经存在了，那么说明已经绑定过，这样可以直接复用原来的信息将剩下的数据绑定完毕
-        if (!EmptyUtils.isEmpty(orderOpenidMapList) && tradeId2OrderDetailMap.size() > 0) {
-            createOrderOpenidMapBy(orderOpenidMapList.get(0), tradeId2OrderDetailMap, orderBindResultVO);
-            return null;
-        }
+        if (!EmptyUtils.isEmpty(orderOpenidMapList)) {
+            if (tradeId2OrderDetailMap.size() > 0) {
+                createOrderOpenidMapBy(orderOpenidMapList.get(0), tradeId2OrderDetailMap, orderBindResultVO);
+            }
 
-        //如果tradeId2OrderDetailMap==空，说明，所有订单都绑定过了，直接返回
-        if (tradeId2OrderDetailMap.size() == 0) {
-            return null;
+            //内容
+            orderBindResultVO.setOpenId(orderOpenidMapList.get(0).getOpenId());
+            orderBindResultVO.setSpecialId(orderOpenidMapList.get(0).getSpecialId());
+            orderBindResultVO.getTradeIdItemIdList().addAll(orderDetailList.stream().map(i -> i.getTradeId()).collect(Collectors.toList()));
+            return orderBindResultVO;
         }
-
 
         //所有的都没有绑定过
         String specialId = orderDetailList.get(0).getSpecialId();
@@ -492,7 +472,7 @@ public class OrderBindService {
         //内容
         orderBindResultVO.setOpenId(orderOpenidMap.getOpenId());
         orderBindResultVO.setSpecialId(orderOpenidMap.getSpecialId());
-        orderBindResultVO.getTradeIdItemIdList().add(orderOpenidMap.getItemId());
+        orderBindResultVO.getTradeIdItemIdList().add(orderOpenidMap.getTradeId());
     }
 
     /**
@@ -506,37 +486,20 @@ public class OrderBindService {
      * @param orderBindResultVO
      */
     private void createOrderOpenidMapBy(OrderOpenidMap orderOpenidMap, Map<String, OrderDetail> tradeId2OrderDetailMap, OrderBindResultVO orderBindResultVO) {
+        //用户信息
+        UserInfos userInfos = userInfosService.selectByOpenIdAndSpecialId(orderOpenidMap.getOpenId(), orderOpenidMap.getSpecialId());
+
         //循环每个订单，插入到绑定表中去
         Collection<OrderDetail> allOrderDetails = tradeId2OrderDetailMap.values();
         for (OrderDetail orderDetail : allOrderDetails) {
-            OrderOpenidMap newOrderOpenidMap = new OrderOpenidMap();
-            newOrderOpenidMap.setGmtCreated(new Date());
-            newOrderOpenidMap.setGmtModified(new Date());
-            newOrderOpenidMap.setTradeId(orderDetail.getTradeId());
-            newOrderOpenidMap.setParentTradeId(orderDetail.getParentTradeId());
-            newOrderOpenidMap.setOpenId(orderOpenidMap.getOpenId());
-            newOrderOpenidMap.setExternalId(orderOpenidMap.getExternalId());
-            newOrderOpenidMap.setSpecialId(orderOpenidMap.getSpecialId());
-            newOrderOpenidMap.setRelationId(orderOpenidMap.getRelationId());
-            newOrderOpenidMap.setItemId(orderDetail.getItemId());
-            newOrderOpenidMap.setPubSharePreFee(orderDetail.getPubSharePreFee());
-            newOrderOpenidMap.setPubShareFee(orderDetail.getPubShareFee());
-            newOrderOpenidMap.setAlimamaShareFee(orderDetail.getAlimamaShareFee());
-            newOrderOpenidMap.setOrderStatus(orderDetail.getTkStatus());
-            newOrderOpenidMap.setCommissionStatus("待提取");
-            newOrderOpenidMap.setRefundTag(orderDetail.getRefundTag());
-            newOrderOpenidMap.setMapType(MapType.tradeparentid_extend.getLabel());
-            newOrderOpenidMap.setStatus(0);
-
-            //插入数据库
-            int affectedNum = orderOpenidMapService.save(newOrderOpenidMap);
-            Checks.isTrue(affectedNum == 1, "插入失败 - tradeId=" + orderDetail.getTradeId());
+            //先查询，万一存在，就得更新，防止操作错误
+            insertOrUpdateOrderOpenidMap(userInfos.getOpenId(), MapType.tradeparentid_extend, userInfos, orderDetail);
         }
 
         //内容
         orderBindResultVO.setOpenId(orderOpenidMap.getOpenId());
         orderBindResultVO.setSpecialId(orderOpenidMap.getSpecialId());
-        orderBindResultVO.getTradeIdItemIdList().add(orderOpenidMap.getItemId());
+        orderBindResultVO.getTradeIdItemIdList().add(orderOpenidMap.getTradeId());
     }
 
     /**
@@ -546,7 +509,7 @@ public class OrderBindService {
      * @param orderBindResultVO
      */
     private void bindByPubSite(List<OrderDetail> orderDetailList, OrderBindResultVO orderBindResultVO) {
-        BindOpenidInfo openidInfo = resolveBindOpenidInfo(orderDetailList);
+        BindOpenidInfo openidInfo = resolveBindOpenidInfoByConvertHistory(orderDetailList);
         if (openidInfo == null) {
             return;
         }
@@ -554,43 +517,78 @@ public class OrderBindService {
         //根据openid查询用户信息
         UserInfos userInfos = userInfosService.selectByOpenId(openidInfo.getOpenid());
         for (OrderDetail orderDetail : orderDetailList) {
-            OrderOpenidMap newOrderOpenidMap = new OrderOpenidMap();
-            newOrderOpenidMap.setGmtCreated(new Date());
-            newOrderOpenidMap.setGmtModified(new Date());
-            newOrderOpenidMap.setTradeId(orderDetail.getTradeId());
-            newOrderOpenidMap.setParentTradeId(orderDetail.getParentTradeId());
-            newOrderOpenidMap.setOpenId(openidInfo.getOpenid());
-            newOrderOpenidMap.setExternalId(userInfos.getExternalId());
-            newOrderOpenidMap.setSpecialId(userInfos.getSpecialId());
-            newOrderOpenidMap.setRelationId(userInfos.getRelationId());
-            newOrderOpenidMap.setItemId(orderDetail.getItemId());
-            newOrderOpenidMap.setPubSharePreFee(orderDetail.getPubSharePreFee());
-            newOrderOpenidMap.setPubShareFee(orderDetail.getPubShareFee());
-            newOrderOpenidMap.setAlimamaShareFee(orderDetail.getAlimamaShareFee());
-            newOrderOpenidMap.setOrderStatus(orderDetail.getTkStatus());
-            newOrderOpenidMap.setCommissionStatus("待提取");
-            newOrderOpenidMap.setRefundTag(orderDetail.getRefundTag());
+            //获取mapType
+            MapType mapType;
 
             //用作匹配的那个id
             if (openidInfo.getItemIds().contains(orderDetail.getItemId())) {
-                newOrderOpenidMap.setMapType(MapType.pubsite.getLabel());
+                mapType = MapType.pubsite;
             }
             else {
-                newOrderOpenidMap.setMapType(MapType.one_item_pubsite_extend.getLabel());
+                mapType = MapType.one_item_pubsite_extend;
             }
 
-            newOrderOpenidMap.setStatus(0);
-
-            //插入数据库
-            int affectedNum = orderOpenidMapService.save(newOrderOpenidMap);
-            Checks.isTrue(affectedNum == 1, "插入失败 - tradeId=" + orderDetail.getTradeId());
+            //先查询，万一存在，就得更新，防止操作错误
+            insertOrUpdateOrderOpenidMap(openidInfo.getOpenid(), mapType, userInfos, orderDetail);
 
             //内容
             orderBindResultVO.setOpenId(userInfos.getOpenId());
             orderBindResultVO.setSpecialId(userInfos.getSpecialId());
-            orderBindResultVO.getTradeIdItemIdList().add(orderDetail.getItemId());
+            orderBindResultVO.getTradeIdItemIdList().add(orderDetail.getTradeId());
         }
 
+    }
+
+    /**
+     * 执行插入或者更新
+     * @param openId
+     * @param mapType
+     * @param userInfos
+     * @param orderDetail
+     */
+    private void insertOrUpdateOrderOpenidMap(String openId, MapType mapType, UserInfos userInfos, OrderDetail orderDetail) {
+        //先查询，万一存在，就得更新，防止操作错误
+        OrderOpenidMap newOrderOpenidMap = null;
+        List<OrderOpenidMap> orderOpenidMapList = orderOpenidMapService.selectByTradeId(orderDetail.getParentTradeId(), orderDetail.getTradeId());
+        if (!orderOpenidMapList.isEmpty()) {
+            newOrderOpenidMap = orderOpenidMapList.get(0);
+
+            //初步判定，绑定的用户得是一样的
+        }
+        else {
+            newOrderOpenidMap = new OrderOpenidMap();
+            newOrderOpenidMap.setGmtCreated(new Date());
+            newOrderOpenidMap.setTradeId(orderDetail.getTradeId());
+            newOrderOpenidMap.setParentTradeId(orderDetail.getParentTradeId());
+            newOrderOpenidMap.setCommissionStatus("待提取");
+        }
+
+        //公共更新字段
+        newOrderOpenidMap.setGmtModified(new Date());
+        newOrderOpenidMap.setOpenId(openId);
+        newOrderOpenidMap.setExternalId(userInfos.getExternalId());
+        newOrderOpenidMap.setSpecialId(userInfos.getSpecialId());
+        newOrderOpenidMap.setRelationId(userInfos.getRelationId());
+        newOrderOpenidMap.setItemId(orderDetail.getItemId());
+        newOrderOpenidMap.setPubSharePreFee(orderDetail.getPubSharePreFee());
+        newOrderOpenidMap.setPubShareFee(orderDetail.getPubShareFee());
+        newOrderOpenidMap.setAlimamaShareFee(orderDetail.getAlimamaShareFee());
+        newOrderOpenidMap.setOrderStatus(orderDetail.getTkStatus());
+        newOrderOpenidMap.setRefundTag(orderDetail.getRefundTag());
+
+        //用作匹配的那个id
+        newOrderOpenidMap.setMapType(mapType.getLabel());
+        newOrderOpenidMap.setStatus(0);
+
+        //插入数据库
+        if (orderOpenidMapList.isEmpty()) {
+            int affectedNum = orderOpenidMapService.save(newOrderOpenidMap);
+            Checks.isTrue(affectedNum == 1, "插入失败 - tradeId=" + orderDetail.getTradeId());
+        }
+        else {
+            int affectedCnt = orderOpenidMapService.update(newOrderOpenidMap);
+            Checks.isTrue(affectedCnt == 1, "更新失败 - tradeId=" + orderDetail.getTradeId());
+        }
     }
 
     /**
@@ -600,7 +598,7 @@ public class OrderBindService {
      */
     private void bindBySpecialId(List<OrderDetail> orderDetailList, OrderBindResultVO orderBindResultVO) {
         //第一种，这里的所有商品，至少有被转链过，那么查出来，那么这种情况，是可以建立openid和specialid的关系并存入用户表的
-        BindOpenidInfo openidInfo = resolveBindOpenidInfo(orderDetailList);
+        BindOpenidInfo openidInfo = resolveBindOpenidInfoByConvertHistory(orderDetailList);
         if (openidInfo != null) {
             //起始这里有个问题，如果转码是A通过微信转的，但是发给了B去买，B正好是会员，此时是不可以将openId和specialId识别为一对的
             //所以此时，就将mapType记录一下，openId-specialId
@@ -609,38 +607,17 @@ public class OrderBindService {
 
             //判定一下
             UserInfos userInfos = userInfosService.selectByOpenId(openidInfo.getOpenid());
-            String specialIdByUserInfo = userInfos.getSpecialId();
+            //String specialIdByUserInfo = userInfos.getSpecialId();
 
             //存储
             for (OrderDetail orderDetail : orderDetailList) {
-                OrderOpenidMap newOrderOpenidMap = new OrderOpenidMap();
-                newOrderOpenidMap.setGmtCreated(new Date());
-                newOrderOpenidMap.setGmtModified(new Date());
-                newOrderOpenidMap.setTradeId(orderDetail.getTradeId());
-                newOrderOpenidMap.setParentTradeId(orderDetail.getParentTradeId());
-                newOrderOpenidMap.setOpenId(userInfos.getOpenId());
-                newOrderOpenidMap.setExternalId(userInfosBySpecialId.getExternalId());
-                newOrderOpenidMap.setSpecialId(userInfosBySpecialId.getSpecialId());
-                newOrderOpenidMap.setRelationId(userInfosBySpecialId.getRelationId());
-                newOrderOpenidMap.setItemId(orderDetail.getItemId());
-                newOrderOpenidMap.setPubSharePreFee(orderDetail.getPubSharePreFee());
-                newOrderOpenidMap.setPubShareFee(orderDetail.getPubShareFee());
-                newOrderOpenidMap.setAlimamaShareFee(orderDetail.getAlimamaShareFee());
-                newOrderOpenidMap.setOrderStatus(orderDetail.getTkStatus());
-                newOrderOpenidMap.setCommissionStatus("待提取");
-                newOrderOpenidMap.setRefundTag(orderDetail.getRefundTag());
-                newOrderOpenidMap.setMapType(MapType.specialid_with_pubsite.getLabel());
-
-                newOrderOpenidMap.setStatus(0);
-
-                //插入数据库
-                int affectedNum = orderOpenidMapService.save(newOrderOpenidMap);
-                Checks.isTrue(affectedNum == 1, "插入失败 - tradeId=" + orderDetail.getTradeId());
+                //先查询，万一存在，就得更新，防止操作错误
+                insertOrUpdateOrderOpenidMap(userInfos.getOpenId(), MapType.specialid_with_pubsite, userInfosBySpecialId, orderDetail);
 
                 //内容
                 orderBindResultVO.setOpenId(userInfos.getOpenId());
                 orderBindResultVO.setSpecialId(userInfos.getSpecialId());
-                orderBindResultVO.getTradeIdItemIdList().add(orderDetail.getItemId());
+                orderBindResultVO.getTradeIdItemIdList().add(orderDetail.getTradeId());
             }
 
             return;
@@ -649,34 +626,13 @@ public class OrderBindService {
         //第二种，这里所有的商品，都没有被转链过，那么只能存入specialid字段，其他openid这些数据不填写，mapType就是specialid，表示只是会员
         UserInfos userInfos = userInfosService.selectBySpecialId(orderDetailList.get(0).getSpecialId());
         for (OrderDetail orderDetail : orderDetailList) {
-            OrderOpenidMap newOrderOpenidMap = new OrderOpenidMap();
-            newOrderOpenidMap.setGmtCreated(new Date());
-            newOrderOpenidMap.setGmtModified(new Date());
-            newOrderOpenidMap.setTradeId(orderDetail.getTradeId());
-            newOrderOpenidMap.setParentTradeId(orderDetail.getParentTradeId());
-            newOrderOpenidMap.setOpenId(userInfos.getOpenId());
-            newOrderOpenidMap.setExternalId(userInfos.getExternalId());
-            newOrderOpenidMap.setSpecialId(userInfos.getSpecialId());
-            newOrderOpenidMap.setRelationId(userInfos.getRelationId());
-            newOrderOpenidMap.setItemId(orderDetail.getItemId());
-            newOrderOpenidMap.setPubSharePreFee(orderDetail.getPubSharePreFee());
-            newOrderOpenidMap.setPubShareFee(orderDetail.getPubShareFee());
-            newOrderOpenidMap.setAlimamaShareFee(orderDetail.getAlimamaShareFee());
-            newOrderOpenidMap.setOrderStatus(orderDetail.getTkStatus());
-            newOrderOpenidMap.setCommissionStatus("待提取");
-            newOrderOpenidMap.setRefundTag(orderDetail.getRefundTag());
-            newOrderOpenidMap.setMapType(MapType.specialid.getLabel());
-
-            newOrderOpenidMap.setStatus(0);
-
-            //插入数据库
-            int affectedNum = orderOpenidMapService.save(newOrderOpenidMap);
-            Checks.isTrue(affectedNum == 1, "插入失败 - tradeId=" + orderDetail.getTradeId());
+            //先查询，万一存在，就得更新，防止操作错误
+            insertOrUpdateOrderOpenidMap(userInfos.getOpenId(), MapType.specialid, userInfos, orderDetail);
 
             //内容
             orderBindResultVO.setOpenId(userInfos.getOpenId());
             orderBindResultVO.setSpecialId(userInfos.getSpecialId());
-            orderBindResultVO.getTradeIdItemIdList().add(orderDetail.getItemId());
+            orderBindResultVO.getTradeIdItemIdList().add(orderDetail.getTradeId());
         }
     }
 
@@ -685,7 +641,7 @@ public class OrderBindService {
      * @param orderDetailList
      * @return
      */
-    private BindOpenidInfo resolveBindOpenidInfo(List<OrderDetail> orderDetailList) {
+    private BindOpenidInfo resolveBindOpenidInfoByConvertHistory(List<OrderDetail> orderDetailList) {
         //查询几天内的数据
         int days = 7;
 

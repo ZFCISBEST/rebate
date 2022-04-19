@@ -184,7 +184,7 @@ public class BindOrderController {
             SafeServiceResponse.startBiz();
 
             //校验
-            Checks.isTrue(minuteStep == null || minuteStep > 0 && minuteStep <= 180, "时间范围只能在[0-180之间]");
+            //Checks.isTrue(minuteStep == null || minuteStep > 0 && minuteStep <= 180, "时间范围只能在[0-180之间]");
 
             //绑定
             List<OrderBindResultVO> orderBindResultVOS = orderBindService.bindByTimeRange(openId, specialId, orderBindTime, minuteStep);

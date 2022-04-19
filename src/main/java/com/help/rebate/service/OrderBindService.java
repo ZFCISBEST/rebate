@@ -616,7 +616,7 @@ public class OrderBindService {
 
                 //内容
                 orderBindResultVO.setOpenId(userInfos.getOpenId());
-                orderBindResultVO.setSpecialId(userInfos.getSpecialId());
+                orderBindResultVO.setSpecialId(userInfosBySpecialId.getSpecialId());
                 orderBindResultVO.getTradeIdItemIdList().add(orderDetail.getTradeId());
             }
 

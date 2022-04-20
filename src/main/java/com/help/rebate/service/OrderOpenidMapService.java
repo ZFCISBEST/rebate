@@ -211,7 +211,7 @@ public class OrderOpenidMapService {
             //alimama
             if (!"0.0".equals(fee)) {
                 String alimamaFee = orderDetail.getAlimamaShareFee();
-                allFee.add(new BigDecimal(fee).subtract(new BigDecimal(alimamaFee)));
+                allFee = allFee.add(new BigDecimal(fee).subtract(new BigDecimal(alimamaFee)));
             }
 
             //关于给用户返利
@@ -219,7 +219,7 @@ public class OrderOpenidMapService {
             if (commissionStatus.equals("提取中") || commissionStatus.equals("提取成功")) {
                 commission = orderDetail.getActualCommissionFee();
             }
-            allCommission.add(new BigDecimal(commission));
+            allCommission = allCommission.add(new BigDecimal(commission));
         }
         commissionVO.setLabel("商家预返利");
         commissionVO.setPubFee(allFee.toString());

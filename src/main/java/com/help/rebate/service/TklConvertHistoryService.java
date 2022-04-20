@@ -39,20 +39,26 @@ public class TklConvertHistoryService {
     public List<TklConvertHistory> selectByItemId(String itemId, String pubSite, Date startTime, Date endTime) {
         TklConvertHistoryExample tklConvertHistoryExample = new TklConvertHistoryExample();
         tklConvertHistoryExample.setLimit(20);
-        TklConvertHistoryExample.Criteria criteria = tklConvertHistoryExample.createCriteria();
+        TklConvertHistoryExample.Criteria criteria01 = tklConvertHistoryExample.or();
+        TklConvertHistoryExample.Criteria criteria02 = tklConvertHistoryExample.or();
 
         if (!EmptyUtils.isEmpty(itemId)) {
-            criteria.andItemIdEqualTo(itemId);
+            criteria01.andItemIdEqualTo(itemId);
+            criteria02.andItemIdEqualTo(itemId);
         }
         if (!EmptyUtils.isEmpty(pubSite)) {
             //这里现在只默认查询的是 虚拟virtual，会员ID为唯一的virtualId //virtualId|mm_120037479_18710025_65896653
-            criteria.andPubsiteCombinationEqualTo("virtualId|" + pubSite);
+            criteria01.andPubsiteCombinationEqualTo("virtualId|" + pubSite);
+            criteria02.andPubsiteCombinationEqualTo("virtualId|" + pubSite);
         }
+
         if (startTime != null) {
-            criteria.andGmtModifiedGreaterThanOrEqualTo(startTime);
+            criteria01.andGmtModifiedGreaterThanOrEqualTo(startTime);
+            criteria02.andGmtCreatedGreaterThanOrEqualTo(startTime);
         }
         if (endTime != null) {
-            criteria.andGmtModifiedLessThanOrEqualTo(endTime);
+            criteria01.andGmtModifiedLessThanOrEqualTo(endTime);
+            criteria02.andGmtCreatedLessThanOrEqualTo(endTime);
         }
 
         //排序

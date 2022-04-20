@@ -300,9 +300,9 @@ public class OrderBindService {
             String oldOpenId = orderOpenidMap.getOpenId();
             String oldSpecialId = orderOpenidMap.getSpecialId();
             String oldExternalId = orderOpenidMap.getExternalId();
-            Checks.isTrue(openId!=null && openId.equals(oldOpenId), "已绑定的openId与当前提供的openId不一致");
-            Checks.isTrue(specialId==null || specialId.equals(oldSpecialId), "已绑定的specialId与当前提供的specialId不一致");
-            Checks.isTrue(externalId==null || externalId.equals(oldExternalId), "已绑定的externalId与当前提供的externalId不一致");
+            Checks.isTrue(openId != null && openId.equals(oldOpenId), "已绑定的openId与当前提供的openId不一致");
+            Checks.isTrue(specialId == null || specialId.equals(oldSpecialId), "已绑定的specialId与当前提供的specialId不一致");
+            Checks.isTrue(externalId == null || externalId.equals(oldExternalId), "已绑定的externalId与当前提供的externalId不一致");
 
             //返回已经绑定的信息
             orderBindResultVO.setOpenId(openId);
@@ -351,7 +351,7 @@ public class OrderBindService {
         orderBindResultVO.setOpenId(openId);
         orderBindResultVO.setSpecialId(specialId);
         orderBindResultVO.setTradeParentId(parentTradeId);
-        List<String> tradeIdList = orderOpenidMapList.stream().map(a -> a.getTradeId()).collect(Collectors.toList());
+        List<String> tradeIdList = orderDetailList.stream().map(a -> a.getTradeId()).collect(Collectors.toList());
         orderBindResultVO.getTradeIdItemIdList().addAll(tradeIdList);
         return orderBindResultVO;
     }

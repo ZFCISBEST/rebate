@@ -198,21 +198,29 @@ public class OrderOpenidMapService {
             tradeParentId2ItemIdsMap.put(parentTradeId, itemIds);
 
             //默认呢，就是预返利，哪怕是关闭
-            String fee = "0.0";
-            //付款
+            BigDecimal fee = new BigDecimal(0.0);
+
+            //返利
             Integer orderStatus = orderDetail.getOrderStatus();
             if (orderStatus == 12 || orderStatus == 14){
-                fee = orderDetail.getPubSharePreFee();
+                fee = new BigDecimal(orderDetail.getPubSharePreFee());
             }
             else if(orderStatus == 3) {
-                fee = orderDetail.getPubShareFee();
+                fee = new BigDecimal(orderDetail.getPubShareFee());
             }
 
-            //alimama
-            if (!"0.0".equals(fee)) {
+            //alimama - 服务费
+            if (fee.doubleValue() > 0) {
                 String alimamaFee = orderDetail.getAlimamaShareFee();
-                allFee = allFee.add(new BigDecimal(fee).subtract(new BigDecimal(alimamaFee)));
+                fee = fee.subtract(new BigDecimal(alimamaFee == null?"0.0":alimamaFee));
             }
+
+            //维权订单
+            BigDecimal refundFee = new BigDecimal(orderDetail.getRefundFee() == null ? "0.0" : orderDetail.getRefundFee());
+            fee = fee.subtract(refundFee);
+
+            //统计费用的更新
+            allFee = allFee.add(fee);
 
             //关于给用户返利
             String commission = "0.0";
@@ -221,7 +229,7 @@ public class OrderOpenidMapService {
             }
             allCommission = allCommission.add(new BigDecimal(commission));
         }
-        commissionVO.setLabel("商家预返利");
+        commissionVO.setLabel("返利信息");
         commissionVO.setPubFee(allFee.toString());
         commissionVO.setCommission(NumberUtil.format(allCommission));
 

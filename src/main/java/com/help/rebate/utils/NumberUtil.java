@@ -21,7 +21,11 @@ public class NumberUtil {
      * @param decimalString
      * @return
      */
-    public static BigDecimal parseDate(String decimalString) {
+    public static BigDecimal parseBigDecimal(String decimalString) {
+        if (EmptyUtils.isEmpty(decimalString)) {
+            return null;
+        }
+
         return new BigDecimal(decimalString.replaceAll(",", ""));
     }
 

@@ -7,6 +7,7 @@ import com.help.rebate.dao.entity.*;
 import com.help.rebate.service.schedule.FixedOrderBindSyncTask;
 import com.help.rebate.utils.Checks;
 import com.help.rebate.utils.EmptyUtils;
+import com.help.rebate.utils.NumberUtil;
 import com.help.rebate.utils.TimeUtil;
 import com.help.rebate.vo.CommissionVO;
 import com.help.rebate.vo.OrderBindResultVO;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -104,6 +106,7 @@ public class OrderBindService {
 
     /**
      * 触发提取操作
+     * 只有状态为 3 的，可以提取
      * @param openId
      * @param specialId
      * @return
@@ -113,7 +116,7 @@ public class OrderBindService {
         //如果是触发提取操作，那么先看，之前是否有提取中的状态，或者有失败的，提取中，不允许再提，失败的，那么重试之前的就行，直到成功
         PickMoneyRecord oldPickMoneyRecord = pickMoneyRecordService.selectPickMoneyAction(openId, specialId, new String[]{"提取中"});
         if (oldPickMoneyRecord != null) {
-            CommissionVO commissionVO = orderOpenidMapService.selectCommissionBy(openId, specialId, "14,3", new String[]{"提取中",});
+            CommissionVO commissionVO = orderOpenidMapService.selectCommissionBy(openId, specialId, "3", new String[]{"提取中"});
             //直接返回查询的统计信息
             PickCommissionVO pickCommissionVO = new PickCommissionVO();
             pickCommissionVO.setAction("重复 - 提取中");
@@ -123,7 +126,7 @@ public class OrderBindService {
         }
 
         //订单状态 - 12-付款，13-关闭，14-确认收货，3-结算成功
-        CommissionVO commissionVO = orderOpenidMapService.selectCommissionBy(openId, specialId, "14,3", new String[]{"待提取", "提取失败", "提取超时"});
+        CommissionVO commissionVO = orderOpenidMapService.selectCommissionBy(openId, specialId, "3", new String[]{"待提取", "提取失败", "提取超时"});
 
         //可提取的金额
         String pubFee = commissionVO.getPubFee();
@@ -178,7 +181,7 @@ public class OrderBindService {
         Checks.isTrue(pickAttachInfo.equals("all_trade_id_cnt:" + affectedMapCnt), "提取时的详细订单记录与当前更新个数不符");
 
         //订单状态 - 12-付款，13-关闭，14-确认收货，3-结算成功
-        CommissionVO commissionVO = orderOpenidMapService.selectCommissionBy(openId, specialId, "14,3", new String[]{mockStatus});
+        CommissionVO commissionVO = orderOpenidMapService.selectCommissionBy(openId, specialId, "3", new String[]{mockStatus});
         PickCommissionVO pickCommissionVO = new PickCommissionVO();
         pickCommissionVO.setAction(mockStatus);
         pickCommissionVO.setCommission(commissionVO.getPubFee());
@@ -692,6 +695,35 @@ public class OrderBindService {
         String openId = tklConvertHistory.getOpenId();
         BindOpenidInfo openidInfo = BindOpenidInfo.build(openId, itemIds);
         return openidInfo;
+    }
+
+    /**
+     * 绑定维权的退回金额
+     * @param openId
+     * @param specialId
+     * @param tradeId
+     * @param itemId
+     * @param refundFeeStr
+     * @return
+     */
+    public void bindRefundFee(String openId, String specialId, String tradeId, String itemId, String refundFeeStr) {
+        List<OrderOpenidMap> orderOpenidMapList = orderOpenidMapService.selectByTradeId(null, tradeId);
+        Checks.isTrue(orderOpenidMapList.size() == 1, "订单不唯一，更新失败");
+
+        //验证
+        OrderOpenidMap orderOpenidMap = orderOpenidMapList.get(0);
+        Checks.isTrue(EmptyUtils.isEmpty(openId) || openId.equals(orderOpenidMap.getOpenId()), "给定的openId与订单绑定的不一致，更新失败");
+        Checks.isTrue(EmptyUtils.isEmpty(specialId) || specialId.equals(orderOpenidMap.getSpecialId()), "给定的specialId与订单绑定的不一致，更新失败");
+        Checks.isTrue(EmptyUtils.isEmpty(itemId) || itemId.equals(orderOpenidMap.getItemId()), "给定的itemId与订单绑定的不一致，更新失败");
+
+        //数值判定
+        BigDecimal refundFee = NumberUtil.parseBigDecimal(refundFeeStr);
+        Checks.isTrue(refundFee != null && !(refundFee.doubleValue() <= 0), "给定的返利金额不正确");
+
+        //更新
+        orderOpenidMap.setRefundFee(refundFeeStr);
+        int affectedCnt = orderOpenidMapService.update(orderOpenidMap);
+        Checks.isTrue(affectedCnt == 1, "更新失败，影响条数:" + affectedCnt);
     }
 
     /**

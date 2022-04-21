@@ -125,7 +125,12 @@ public class PickMoneyRecordService {
         }
         criteria.andStatusEqualTo(0);
         List<PickMoneyRecord> pickMoneyRecords = pickMoneyRecordDao.selectByExample(example);
-        Checks.isTrue(pickMoneyRecords != null, "提现中的状态的记录不存在");
+
+        //没有提现记录
+        if (pickMoneyRecords.size() == 0) {
+            return null;
+        }
+
         Checks.isTrue(pickMoneyRecords.size() == 1, "提现中的状态的记录超过1个");
         return pickMoneyRecords.get(0);
     }
@@ -154,7 +159,12 @@ public class PickMoneyRecordService {
         }
         criteria.andStatusEqualTo(0);
         List<PickMoneyRecord> pickMoneyRecords = pickMoneyRecordDao.selectByExample(example);
-        Checks.isTrue(pickMoneyRecords != null, "提现中的状态的记录不存在");
+
+        //没有提现记录
+        if (pickMoneyRecords.size() == 0) {
+            return null;
+        }
+
         Checks.isTrue(pickMoneyRecords.size() == 1, "提现中的状态的记录超过1个");
         return pickMoneyRecords.get(0);
     }

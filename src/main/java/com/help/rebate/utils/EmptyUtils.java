@@ -31,7 +31,7 @@ public class EmptyUtils {
      * @param range
      */
     public static boolean isIn(String target, String[] range) {
-        Optional<String> first = Arrays.stream(range).filter(r -> target == r).findFirst();
+        Optional<String> first = Arrays.stream(range).filter(r -> target.equals(r)).findFirst();
         return first.isPresent();
     }
 

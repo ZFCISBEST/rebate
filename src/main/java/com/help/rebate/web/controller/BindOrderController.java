@@ -112,7 +112,6 @@ public class BindOrderController {
             //Checks.isTrue(orderStatus >= 12 && orderStatus <= 14 || orderStatus == 3, "订单状态只能是12、13、14、3");
             //Checks.isTrue(commissionStatus.equals("待结算") || commissionStatus.equals("已结算") || commissionStatus.equals("结算中"), "返利状态只能是[待结算、已结算、结算中]");
 
-
             //查询
             CommissionVO commissionVO = orderOpenidMapService.selectCommissionBy(openId, specialId, orderStatuss, commissionStatuss);
 
@@ -128,13 +127,13 @@ public class BindOrderController {
     @RequestMapping("/mock_pick_money")
     public SafeServiceResponse mockPickMoney(@ApiParam(name = "openId", value = "微信openId") @RequestParam(required = false) String openId,
                                              @ApiParam(name = "specialId", value = "淘宝联盟私域会员ID") @RequestParam(required = false) String specialId,
-                                             @ApiParam(name = "mockStatus", value = "当前模拟的是哪种状态 - 触发提现、提现成功、提现失败、提现超时") @RequestParam(required = false) String mockStatus) {
+                                             @ApiParam(name = "mockStatus", value = "当前模拟的是哪种状态 - 触发提取、提取成功，提取失败, 提取超时") @RequestParam(required = false) String mockStatus) {
         try{
             SafeServiceResponse.startBiz();
 
             //校验
             Checks.isTrue(!EmptyUtils.isEmpty(openId) || !EmptyUtils.isEmpty(specialId), "openId和specialId不能同时为空");
-            Checks.isTrue("触发提现、提现成功、提现失败、提现超时".contains(mockStatus), "当前模拟的状态只能是 - 触发提现、提现成功、提现失败、提现超时");
+            Checks.isTrue("触发提取、提取成功，提取失败, 提取超时".contains(mockStatus), "当前模拟的状态只能是 - 触发提取、提取成功，提取失败, 提取超时");
 
             //查询
             PickCommissionVO pickCommissionVO = orderBindService.mockPickMoney(openId, specialId, mockStatus);
@@ -193,6 +192,27 @@ public class BindOrderController {
             return SafeServiceResponse.success(orderBindResultVOS);
         }catch(Exception e){
             logger.error("fail to bind order by tradeId[/tbk/order/bind/by_time_range]", e);
+            return SafeServiceResponse.fail(e.toString());
+        }
+    }
+
+    @ApiOperation("更新订单绑定表，记录维权退回的金额")
+    @RequestMapping("/bind_refund_fee")
+    public SafeServiceResponse bindRefundFee(@ApiParam(name = "openId", value = "微信openId") @RequestParam(required = false) String openId,
+                                             @ApiParam(name = "specialId", value = "淘宝联盟私域会员ID") @RequestParam(required = false) String specialId,
+                                             @ApiParam(name = "tradeId", value = "交易子单号") @RequestParam(required = true) String tradeId,
+                                             @ApiParam(name = "itemId", value = "交易的商品ID") @RequestParam(required = false) String itemId,
+                                             @ApiParam(name = "refundFee", value = "维权退回返利") @RequestParam(required = true) String refundFee) {
+        try{
+            SafeServiceResponse.startBiz();
+
+            //插入或者更新
+            orderBindService.bindRefundFee(openId, specialId, tradeId, itemId, refundFee);
+
+            //返回
+            return SafeServiceResponse.success("更新成功");
+        }catch(Exception e){
+            logger.error("fail to bind refund fee by [/tbk/order/bind/bind_refund_fee]", e);
             return SafeServiceResponse.fail(e.toString());
         }
     }

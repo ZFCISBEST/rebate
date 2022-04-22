@@ -62,6 +62,8 @@ public class OrderBindService {
     private OrderOpenidMapDao orderOpenidMapDao;
     @Resource
     private OrderOpenidMapService orderOpenidMapService;
+    @Resource
+    private OrderOpenidMapFailureService orderOpenidMapFailureDao;
 
     /**
      * 订单绑定的自动同步任务
@@ -127,6 +129,13 @@ public class OrderBindService {
 
         //订单状态 - 12-付款，13-关闭，14-确认收货，3-结算成功
         CommissionVO commissionVO = orderOpenidMapService.selectCommissionBy(openId, specialId, "3", new String[]{"待提取", "提取失败", "提取超时"});
+        if (commissionVO == null || commissionVO.getPubFee() == null || "0.0".equals(commissionVO.getPubFee()) || commissionVO.getTradeParentId2ItemIdsMap().isEmpty()) {
+            PickCommissionVO pickCommissionVO = new PickCommissionVO();
+            pickCommissionVO.setAction("提取中 - [可提取订单为0]");
+            pickCommissionVO.setCommission("0.0");
+            pickCommissionVO.setTradeParentId2TradeIdsMap(null);
+            return pickCommissionVO;
+        }
 
         //可提取的金额
         String pubFee = commissionVO.getPubFee();
@@ -163,8 +172,17 @@ public class OrderBindService {
      * @return
      */
     private PickCommissionVO triggerEndPickMoneyAction(String openId, String specialId, String mockStatus) {
-        //先查询出最新的状态，只能存在一个唯一的提取状态
+        //先查询出最新的状态，只能存在一个唯一的提取状态。只有提取中的状态，才可以触发其他操作
         PickMoneyRecord pickMoneyRecord = pickMoneyRecordService.selectByStatus(openId, specialId, "提取中");
+        if (pickMoneyRecord == null) {
+            PickCommissionVO pickCommissionVO = new PickCommissionVO();
+            pickCommissionVO.setAction(mockStatus + "- [无'提取中'的提现记录]");
+            pickCommissionVO.setCommission("0.0");
+            pickCommissionVO.setTradeParentId2TradeIdsMap(null);
+            return pickCommissionVO;
+        }
+
+        //获取附加信息
         String pickAttachInfo = pickMoneyRecord.getPickAttachInfo();
 
         //更新状态

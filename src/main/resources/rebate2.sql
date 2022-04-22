@@ -68,6 +68,20 @@ CREATE TABLE `order_openid_map` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='订单关联映射表';
 
+CREATE TABLE `order_openid_map_failure` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `gmt_created` datetime DEFAULT CURRENT_TIMESTAMP,
+  `gmt_modified` datetime DEFAULT CURRENT_TIMESTAMP,
+  `trade_id` varchar(32) DEFAULT NULL COMMENT '订单号',
+  `parent_trade_id` varchar(32) DEFAULT NULL COMMENT '父单号',
+
+  `item_id` varchar(16) DEFAULT NULL COMMENT '商品的ID',
+
+  `fail_reason` varchar(64) DEFAULT NULL COMMENT '失败原因',
+
+  `status` int(11) DEFAULT NULL COMMENT '0表示未删除，-1表示删除',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=263 DEFAULT CHARSET=utf8 COMMENT='订单关联映射失败表';
 
 CREATE TABLE `commission_account` (
   `id` int(11) NOT NULL AUTO_INCREMENT,

@@ -178,8 +178,8 @@ public class OrderOpenidMapService {
 
         //查询
         CommissionVO commissionVO = new CommissionVO();
-        List<OrderOpenidMap> orderDetails = orderOpenidMapDao.selectByExample(orderOpenidMapExample);
-        if (EmptyUtils.isEmpty(orderDetails)) {
+        List<OrderOpenidMap> orderOpenidMapList = orderOpenidMapDao.selectByExample(orderOpenidMapExample);
+        if (EmptyUtils.isEmpty(orderOpenidMapList)) {
             commissionVO.setCommission("0.0");
             commissionVO.setLabel("无记录");
             return commissionVO;
@@ -189,7 +189,7 @@ public class OrderOpenidMapService {
         BigDecimal allFee = new BigDecimal(0.0);
         BigDecimal allCommission = new BigDecimal(0.0);
         Map<String, List<String>> tradeParentId2ItemIdsMap = commissionVO.getTradeParentId2ItemIdsMap();
-        for (OrderOpenidMap orderDetail : orderDetails) {
+        for (OrderOpenidMap orderDetail : orderOpenidMapList) {
             //先存储详情
             String parentTradeId = orderDetail.getParentTradeId();
             String itemId = orderDetail.getItemId();

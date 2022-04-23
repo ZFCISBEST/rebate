@@ -81,7 +81,7 @@ CREATE TABLE `order_openid_map_failure` (
 
   `status` int(11) DEFAULT NULL COMMENT '0表示未删除，-1表示删除',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=263 DEFAULT CHARSET=utf8 COMMENT='订单关联映射失败表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='订单关联映射失败表';
 
 CREATE TABLE `commission_account` (
   `id` int(11) NOT NULL AUTO_INCREMENT,

@@ -33,7 +33,7 @@ public class RateLimiterManager {
      * @return
      */
     public boolean acquire(int factor) {
-        return rateLimiter.tryAcquire(factor, 1, TimeUnit.SECONDS);
+        return rateLimiter.tryAcquire(factor, 5, TimeUnit.SECONDS);
     }
 
     /**

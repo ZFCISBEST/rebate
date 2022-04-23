@@ -74,6 +74,7 @@ public class FixedOrderBindSyncTask {
         //获取令牌
         if (!rateLimiterManager.acquire(tokenCnt)) {
             logger.info("[fix-order-bind-sync-task] rate limit: token is not enough");
+            return;
         }
 
         //获取同步开始时间
@@ -121,7 +122,7 @@ public class FixedOrderBindSyncTask {
         //更改游标，并更新数据库
         startTime = new Date(startTime.getTime() + secondStep * 1000);
         endTime = new Date(endTime.getTime() + secondStep * 1000);
-        timeCursorPositionService.saveOrUpdateTimeCursor(startTime, secondStep, null, null, TimeCursorPositionService.TimeType.ORDER_BIND_SYNC);
+        timeCursorPositionService.saveOrUpdateTimeCursor(startTime, secondStep, -1, -1, TimeCursorPositionService.TimeType.ORDER_BIND_SYNC);
     }
 
     /**

@@ -160,7 +160,7 @@ public class BindOrderController {
             }
 
             //校验
-            Checks.isTrue(minuteStep == null || minuteStep > 0 && minuteStep <= 180, "时间范围只能在[0-180之间]");
+            //Checks.isTrue(minuteStep == null || minuteStep > 0 && minuteStep <= 180, "时间范围只能在[0-180之间]");
 
             //插入
             boolean success = orderBindService.syncBindOrderByTimeStart(orderBindTime, minuteStep, running);

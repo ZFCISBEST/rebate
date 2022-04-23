@@ -1,4 +1,5 @@
 package com.help.rebate.service;
+import java.time.LocalDateTime;
 
 import com.help.rebate.dao.OrderDetailDao;
 import com.help.rebate.dao.OrderOpenidMapDao;
@@ -49,4 +50,56 @@ public class OrderOpenidMapFailureService {
     private OrderOpenidMapFailureDao orderOpenidMapFailureDao;
 
 
+    /**
+     * 插入或者更新订单绑定失败的订单
+     * @param orderDetailList
+     * @param reason
+     */
+    public void insertOrDoNoneOrderInfo(List<OrderDetail> orderDetailList, String reason) {
+        if (EmptyUtils.isEmpty(orderDetailList)) {
+            return;
+        }
+
+        //循环插入
+        for (OrderDetail orderDetail : orderDetailList) {
+            OrderOpenidMapFailure orderOpenidMapFailure = getFailureOrder(orderDetail.getTradeId());
+
+            //更新
+            if (orderOpenidMapFailure != null) {
+                continue;
+            }
+            //插入
+            else {
+                orderOpenidMapFailure = new OrderOpenidMapFailure();
+                orderOpenidMapFailure.setGmtCreated(LocalDateTime.now());
+                orderOpenidMapFailure.setGmtModified(LocalDateTime.now());
+                orderOpenidMapFailure.setTradeId(orderDetail.getTradeId());
+                orderOpenidMapFailure.setParentTradeId(orderDetail.getParentTradeId());
+                orderOpenidMapFailure.setItemId(orderDetail.getItemId());
+                orderOpenidMapFailure.setFailReason(reason);
+                orderOpenidMapFailure.setStatus(0);
+                int affectedCnt = orderOpenidMapFailureDao.insert(orderOpenidMapFailure);
+                Checks.isTrue(affectedCnt == 1, "记录未绑定订单失败");
+            }
+        }
+    }
+
+    /**
+     * 获取失败的订单
+     * @param tradeId
+     * @return
+     */
+    private OrderOpenidMapFailure getFailureOrder(String tradeId) {
+        OrderOpenidMapFailureExample example = new OrderOpenidMapFailureExample();
+        example.setLimit(1);
+        OrderOpenidMapFailureExample.Criteria criteria = example.createCriteria();
+        criteria.andTradeIdEqualTo(tradeId);
+        criteria.andStatusEqualTo(0);
+
+        List<OrderOpenidMapFailure> orderOpenidMapFailures = orderOpenidMapFailureDao.selectByExample(example);
+        if (orderOpenidMapFailures.isEmpty()) {
+            return null;
+        }
+        return orderOpenidMapFailures.get(0);
+    }
 }

@@ -63,7 +63,7 @@ public class OrderBindService {
     @Resource
     private OrderOpenidMapService orderOpenidMapService;
     @Resource
-    private OrderOpenidMapFailureService orderOpenidMapFailureDao;
+    private OrderOpenidMapFailureService orderOpenidMapFailureService;
 
     /**
      * 订单绑定的自动同步任务
@@ -532,6 +532,7 @@ public class OrderBindService {
     private void bindByPubSite(List<OrderDetail> orderDetailList, OrderBindResultVO orderBindResultVO) {
         BindOpenidInfo openidInfo = resolveBindOpenidInfoByConvertHistory(orderDetailList);
         if (openidInfo == null) {
+            orderOpenidMapFailureService.insertOrDoNoneOrderInfo(orderDetailList, "无淘口令转换记录");
             return;
         }
 

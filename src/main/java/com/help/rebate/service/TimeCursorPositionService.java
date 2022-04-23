@@ -40,7 +40,7 @@ public class TimeCursorPositionService {
         TimeCursorPositionExample example = new TimeCursorPositionExample();
         example.setLimit(1);
         TimeCursorPositionExample.Criteria criteria = example.createCriteria();
-        criteria.andTimeTypeEqualTo(0);
+        criteria.andTimeTypeEqualTo(timeType.getTimeType());
         criteria.andStatusEqualTo(0);
         List<TimeCursorPosition> timeCursorPositions = timeCursorPositionDao.selectByExample(example);
 

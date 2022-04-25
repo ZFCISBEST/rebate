@@ -2,6 +2,7 @@ package com.help.rebate.service.wx;
 
 import com.alibaba.fastjson.JSON;
 import com.help.rebate.service.TklConvertService;
+import com.help.rebate.service.WxKeyWordHandlerService;
 import com.help.rebate.service.ddx.jd.DdxJDItemConverter;
 import com.help.rebate.service.ddx.mt.DdxMeiTuanActivityConverter;
 import com.help.rebate.service.ddx.pdd.DdxPddItemConverter;
@@ -26,34 +27,10 @@ public class MessageServiceImpl implements MessageService {
     private final static Logger logger = LoggerFactory.getLogger(MessageServiceImpl.class);
 
     /**
-     * 淘口令转链服务
-     */
-    @Autowired
-    private TklConvertService tklConvertService;
-
-    /**
-     * 京东转链接
+     * 微信关键字处理
      */
     @Resource
-    private DdxJDItemConverter ddxJDItemConverter;
-
-    /**
-     * 拼多多转链接
-     */
-    @Resource
-    private DdxPddItemConverter ddxPddItemConverter;
-
-    /**
-     * 饿了么转链接
-     */
-    @Resource
-    private DdxElemeActivityConverter ddxElemeActivityConverter;
-
-    /**
-     * 美团转链接
-     */
-    @Resource
-    private DdxMeiTuanActivityConverter ddxMeiTuanActivityConverter;
+    private WxKeyWordHandlerService wxKeyWordHandlerService;
 
     @Override
     public String newMessageRequest(HttpServletRequest request) {
@@ -61,7 +38,6 @@ public class MessageServiceImpl implements MessageService {
 
         Map<String,String> map = new HashMap<>();
         //logger.info("request="+request.toString());
-
 
         try {
             map = MsgUtil.xmlToMap(request);
@@ -97,7 +73,9 @@ public class MessageServiceImpl implements MessageService {
                 if (eventKey.equals("V001_CHECK_MONEY")) {
                     //查看余额
                     TextMessage text = new TextMessage();
-                    text.setContent("待开发查看余额功能");
+                    //String tips = "待开发查看余额功能";
+                    String tips = WxKeyWordHandlerService.tips;
+                    text.setContent(tips);
                     text.setToUserName(fromUserName);
                     text.setFromUserName(toUserName);
                     text.setCreateTime(new Date().getTime());
@@ -131,20 +109,25 @@ public class MessageServiceImpl implements MessageService {
                 }
 
             }
-        }
-        else  if (msgType.equals("text")) {
-            //这里根据关键字执行相应的逻辑，只有你想不到的，没有做不到的
-            String newContent = convert(fromUserName, toUserName, content);
+        } else if (msgType.equals("text")) {
+            String returnContent;
+            // 是关键字
+            if (wxKeyWordHandlerService.acceptKeyWord(content)) {
+                returnContent = wxKeyWordHandlerService.handleKeyWord(fromUserName, toUserName, content);
+            }
+            else {
+                //这里根据关键字执行相应的逻辑，只有你想不到的，没有做不到的
+                returnContent = wxKeyWordHandlerService.handleConvert(fromUserName, toUserName, content);
+            }
 
             //自动回复
             TextMessage text = new TextMessage();
-            text.setContent(newContent);
+            text.setContent(returnContent);
             text.setToUserName(fromUserName);
             text.setFromUserName(toUserName);
             text.setCreateTime(new Date().getTime());
             text.setMsgType(msgType);
             replyMessage = MsgUtil.textMessageToXML(text);
-
             logger.info("returnText = {}", replyMessage);
         } else {
             TextMessage text = new TextMessage();
@@ -154,85 +137,9 @@ public class MessageServiceImpl implements MessageService {
             text.setCreateTime(new Date().getTime());
             text.setMsgType("text");
             replyMessage = MsgUtil.textMessageToXML(text);
-            logger.info("returnOther="+replyMessage);
+            logger.info("returnOther=" + replyMessage);
         }
 
         return replyMessage;
-    }
-
-    /**
-     * 转化
-     * @param fromUserName
-     * @param toUserName
-     * @param content
-     * @return
-     */
-    private String convert(String fromUserName, String toUserName, String content) {
-        try {
-            return doConvert(fromUserName, toUserName, content);
-        } catch (Throwable ex) {
-            //已知的错误
-            if (ex instanceof ConvertException) {
-                return ex.getMessage();
-            }
-
-            //未知错误
-            logger.error("[MessageService] 转链失败，发生未知错误", ex);
-            return "转链失败，未知错误，请稍后重试或换个商品再试哦";
-        }
-    }
-
-    /**
-     * 转化
-     * @param fromUserName
-     * @param toUserName
-     * @param content
-     * @return
-     */
-    private String doConvert(String fromUserName, String toUserName, String content) {
-        //如果是京东的链接
-        if (content.contains("jd.com")) {
-            String materialId = content;
-            String subUnionId = "wx_" + fromUserName;
-            Long positionId = Long.valueOf(Math.abs(subUnionId.hashCode()));
-            Double tempReturnRate = 0.9;
-            DdxJDItemConverter.JDLinkDO jdLinkDO = ddxJDItemConverter.generateReturnPriceInfo(materialId, positionId, subUnionId, tempReturnRate);
-            return jdLinkDO.getLinkInfo();
-        }
-
-        //解析为pdd的链接
-        else if (content.contains("pdd") || content.contains("pinduoduo") || content.contains("yangkeduo")) {
-            String url = content;
-            String customId = "wx_" + fromUserName;
-            Double tempReturnRate = 0.9;
-
-            DdxPddItemConverter.PddLinkDO pddLinkDO = ddxPddItemConverter.generateReturnPriceInfo(url, customId, tempReturnRate);
-            return pddLinkDO.getLinkInfo();
-        }
-
-        //解析为饿了么 - 外卖、活动、生鲜 - 这个暂时没法跟踪，只能订单绑定
-        else if(content.contains("饿了么")) {
-            String keyword = content;
-            String link = ddxElemeActivityConverter.generateReturnPriceInfo(keyword);
-            return link;
-        }
-
-        //解析为美团
-        else if(content.contains("美团")) {
-            String keyword = content;
-            String link = ddxMeiTuanActivityConverter.generateReturnPriceInfo(keyword, fromUserName);
-            return link;
-        }
-
-        //默认就是淘宝的链接
-        else {
-            //淘口令转链接
-            String tkl = content;
-            String openId = fromUserName;
-            String tklType = "virtual";
-            String newTkl = tklConvertService.convert(tkl, openId, null, tklType, "tb");
-            return newTkl;
-        }
-
     }
 }

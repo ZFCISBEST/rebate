@@ -108,7 +108,7 @@ public class OrderService {
      */
     public List<OrderDetail> selectByTradeId(String parentTradeId, String tradeId) {
         OrderDetailExample orderDetailExample = new OrderDetailExample();
-        orderDetailExample.setLimit(20);
+        orderDetailExample.setLimit(50);
         OrderDetailExample.Criteria criteria = orderDetailExample.createCriteria();
 
         if (!EmptyUtils.isEmpty(parentTradeId)) {

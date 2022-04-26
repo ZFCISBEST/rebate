@@ -1,6 +1,8 @@
 package com.help.rebate.service;
 
+import com.help.rebate.dao.OrderDetailDao;
 import com.help.rebate.dao.entity.OrderDetail;
+import com.help.rebate.dao.entity.OrderOpenidMap;
 import com.help.rebate.dao.entity.OrderOpenidMapFailure;
 import com.help.rebate.dao.entity.OrderOpenidMapFailureExample;
 import com.help.rebate.service.ddx.jd.DdxJDItemConverter;
@@ -10,6 +12,10 @@ import com.help.rebate.service.ddx.tb.DdxElemeActivityConverter;
 import com.help.rebate.service.exception.ConvertException;
 import com.help.rebate.utils.Checks;
 import com.help.rebate.utils.EmptyUtils;
+import com.help.rebate.utils.NumberUtil;
+import com.help.rebate.vo.CommissionVO;
+import com.help.rebate.vo.OrderBindResultVO;
+import com.help.rebate.web.response.SafeServiceResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -71,6 +78,9 @@ public class WxKeyWordHandlerService {
 
     @Autowired
     private OrderOpenidMapService orderOpenidMapService;
+
+    @Autowired
+    private OrderService orderService;
 
     /**
      * keyword
@@ -130,17 +140,17 @@ public class WxKeyWordHandlerService {
 
         //绑定订单
         if (content.startsWith("绑定:")) {
-            return doHandleBindTradeId(fromUserName, content.substring(content.indexOf(":") + 1));
+            return doHandleBindTradeId(fromUserName, content.split(":", 2)[1]);
         }
 
         //查询订单
         if (content.startsWith("查询:")) {
-            return doHandleQueryTradeId(fromUserName, content.substring(content.indexOf(":") + 1));
+            return doHandleQueryTradeId(fromUserName, content.split(":", 2)[1]);
         }
 
         //查询订单
         if (content.startsWith("返利:")) {
-            return doHandleQueryCommissions(fromUserName, content.substring(content.indexOf(":") + 1));
+            return doHandleQueryCommissions(fromUserName, content.split(":", 2)[1]);
         }
 
         return "暂不支持的指令";
@@ -161,40 +171,214 @@ public class WxKeyWordHandlerService {
      * @return
      */
     private String doHandleYuE(String fromUserName) {
-        return "待完成 - " + fromUserName;
+        //orderStatuss 订单状态 - 12-付款，13-关闭，14-确认收货，3-结算成功
+        //commissionStatuss 给用户的结算状态 - 待提取、提取中，提取成功，提取失败, 提取超时
+        String message = "当前账户余额:\n";
+
+        //查询 - 付款
+        int index = 1;
+        CommissionVO commissionByFuKuan = orderOpenidMapService.selectCommissionBy(fromUserName, null, "12", "待提取");
+        if (commissionByFuKuan != null && commissionByFuKuan.getPubFee() != null) {
+            message += index + "、已付款待确认: ￥" + commissionByFuKuan.getPubFee() + "元\n";
+            index++;
+        }
+
+        //查询 - 确认收货
+        CommissionVO commissionByQuRen = orderOpenidMapService.selectCommissionBy(fromUserName, null, "14", "待提取");
+        if (commissionByQuRen != null && commissionByQuRen.getPubFee() != null) {
+            message += index + "、已确认待结算: ￥" + commissionByQuRen.getPubFee() + "元\n";
+            index++;
+        }
+
+        //查询 - 结算成功
+        CommissionVO commissionByJieSuan = orderOpenidMapService.selectCommissionBy(fromUserName, null, "3", "待提取,提取失败,提取超时");
+        if (commissionByJieSuan != null && commissionByJieSuan.getPubFee() != null) {
+            message += index + "、已结算可提现: ￥" + commissionByJieSuan.getPubFee() + "元\n";
+            index++;
+        }
+
+        return message;
     }
 
     /**
      * 手动绑定订单
      *
      * @param fromUserName
-     * @param tradeParentId
+     * @param tradeParentIdContent
      * @return
      */
-    private String doHandleBindTradeId(String fromUserName, String tradeParentId) {
-        return "待完成 - " + fromUserName;
+    private String doHandleBindTradeId(String fromUserName, String tradeParentIdContent) {
+        //管理员操作
+        String[] openidAndSpecialIdAndTradeId = tradeParentIdContent.split(";");
+
+        //单号必须要有
+        String tradeParentId = openidAndSpecialIdAndTradeId[openidAndSpecialIdAndTradeId.length - 1];
+
+        //倒数第二位是specialId
+        String specialId = null;
+        if (openidAndSpecialIdAndTradeId.length >= 2) {
+            specialId = openidAndSpecialIdAndTradeId[openidAndSpecialIdAndTradeId.length - 2];
+        }
+
+        //倒数第三位是openId
+        String openId = null;
+        if (openidAndSpecialIdAndTradeId.length >= 3) {
+            openId = openidAndSpecialIdAndTradeId[openidAndSpecialIdAndTradeId.length - 3];
+        }
+
+        //判定，如果长度只有1，那么说明是用户自己的操作
+        if (openidAndSpecialIdAndTradeId.length == 1) {
+            openId = fromUserName;
+        }
+
+        //执行绑定
+        try {
+            OrderBindResultVO orderBindResultVO = orderBindService.bindByTradeId(tradeParentId, openId, specialId, null);
+            List<String> tradeIdItemIdList = orderBindResultVO.getTradeIdItemIdList();
+            return "成功绑定商品数 - " + tradeIdItemIdList.size();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return "执行绑定失败 - " + ex.getMessage();
+        }
     }
 
     /**
      * 查询某个订单是否绑定成功了
      *
      * @param fromUserName
-     * @param tradeParentId
+     * @param tradeParentIdContent
      * @return
      */
-    private String doHandleQueryTradeId(String fromUserName, String tradeParentId) {
-        return "待完成 - " + fromUserName;
+    private String doHandleQueryTradeId(String fromUserName, String tradeParentIdContent) {
+        //管理员操作
+        String[] openidAndSpecialIdAndTradeId = tradeParentIdContent.split(";");
+
+        //单号必须要有
+        String tradeParentId = openidAndSpecialIdAndTradeId[openidAndSpecialIdAndTradeId.length - 1];
+
+        //倒数第二位是specialId
+        String specialId = null;
+        if (openidAndSpecialIdAndTradeId.length >= 2) {
+            specialId = openidAndSpecialIdAndTradeId[openidAndSpecialIdAndTradeId.length - 2];
+        }
+
+        //倒数第三位是openId
+        String openId = null;
+        if (openidAndSpecialIdAndTradeId.length >= 3) {
+            openId = openidAndSpecialIdAndTradeId[openidAndSpecialIdAndTradeId.length - 3];
+        }
+
+        //判定，如果长度只有1，那么说明是用户自己的操作
+        if (openidAndSpecialIdAndTradeId.length == 1) {
+            openId = fromUserName;
+        }
+
+        //执行绑定
+        try {
+            List<OrderOpenidMap> orderOpenidMapList = orderOpenidMapService.selectBy(tradeParentId, openId, specialId);
+            if (EmptyUtils.isEmpty(orderOpenidMapList)) {
+                return "已绑定";
+            }
+            else {
+                return "未绑定";
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return "查询失败 - " + ex.getMessage();
+        }
     }
 
     /**
      * 查询某个订单的返利信息
      *
      * @param fromUserName
-     * @param tradeParentId
+     * @param tradeParentIdContent
      * @return
      */
-    private String doHandleQueryCommissions(String fromUserName, String tradeParentId) {
-        return "待完成 - " + fromUserName;
+    private String doHandleQueryCommissions(String fromUserName, String tradeParentIdContent) {
+        //管理员操作
+        String[] openidAndSpecialIdAndTradeId = tradeParentIdContent.split(";");
+        //单号必须要有
+        String tradeParentId = openidAndSpecialIdAndTradeId[openidAndSpecialIdAndTradeId.length - 1];
+
+        //倒数第二位是 绕开查询绑定表
+        String genericType = null;
+        if (openidAndSpecialIdAndTradeId.length >= 2) {
+            genericType = openidAndSpecialIdAndTradeId[openidAndSpecialIdAndTradeId.length - 2];
+        }
+
+        //判定
+        //统计返利
+        BigDecimal allFee = new BigDecimal(0.0);
+        if (genericType == null) {
+            List<OrderOpenidMap> orderOpenidMapList = orderOpenidMapService.selectByTradeId(tradeParentIdContent, null);
+            if (EmptyUtils.isEmpty(orderOpenidMapList)) {
+                return "未查询到绑定信息，不符合查询条件，请先手动执行订单绑定";
+            }
+
+            for (OrderOpenidMap orderDetail : orderOpenidMapList) {
+
+                //默认呢，就是预返利，哪怕是关闭
+                BigDecimal fee = new BigDecimal(0.0);
+
+                //返利
+                Integer orderStatus = orderDetail.getOrderStatus();
+                if (orderStatus == 12 || orderStatus == 14){
+                    fee = new BigDecimal(orderDetail.getPubSharePreFee());
+                }
+                else if(orderStatus == 3) {
+                    fee = new BigDecimal(orderDetail.getPubShareFee());
+                }
+
+                //alimama - 服务费
+                if (fee.doubleValue() > 0) {
+                    String alimamaFee = orderDetail.getAlimamaShareFee();
+                    fee = fee.subtract(new BigDecimal(alimamaFee == null ? "0.0" : alimamaFee));
+                }
+
+                //维权订单
+                BigDecimal refundFee = new BigDecimal(orderDetail.getRefundFee() == null ? "0.0" : orderDetail.getRefundFee());
+                fee = fee.subtract(refundFee);
+
+                //统计费用的更新
+                allFee = allFee.add(fee);
+            }
+
+            //返回
+            String message = "返利共: ￥" + NumberUtil.format(allFee.multiply(new BigDecimal(0.9))) + "\n";
+            message += "共包含返利计件商品数: " + orderOpenidMapList.size() + "个";
+            return message;
+        }
+
+        //泛化查询 - 直接查询订单
+        List<OrderDetail> orderDetailList = orderService.selectByTradeId(tradeParentId, null);
+        for (OrderDetail orderDetail : orderDetailList) {
+            //默认呢，就是预返利，哪怕是关闭
+            BigDecimal fee = new BigDecimal(0.0);
+
+            //返利
+            Integer orderStatus = orderDetail.getTkStatus();
+            if (orderStatus == 12 || orderStatus == 14){
+                fee = new BigDecimal(orderDetail.getPubSharePreFee());
+            }
+            else if(orderStatus == 3) {
+                fee = new BigDecimal(orderDetail.getPubShareFee());
+            }
+
+            //alimama - 服务费
+            if (fee.doubleValue() > 0) {
+                String alimamaFee = orderDetail.getAlimamaShareFee();
+                fee = fee.subtract(new BigDecimal(alimamaFee == null ? "0.0" : alimamaFee));
+            }
+
+            //统计费用的更新
+            allFee = allFee.add(fee);
+        }
+
+        //返回
+        String message = "返利共: ￥" + NumberUtil.format(allFee.multiply(new BigDecimal(0.9))) + "\n";
+        message += "共包含返利计件商品数: " + orderDetailList.size() + "个";
+        return message;
     }
 
     /**

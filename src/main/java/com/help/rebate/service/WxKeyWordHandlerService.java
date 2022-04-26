@@ -276,7 +276,7 @@ public class WxKeyWordHandlerService {
         //执行绑定
         try {
             List<OrderOpenidMap> orderOpenidMapList = orderOpenidMapService.selectBy(tradeParentId, openId, specialId);
-            if (EmptyUtils.isEmpty(orderOpenidMapList)) {
+            if (!EmptyUtils.isEmpty(orderOpenidMapList)) {
                 return "已绑定";
             }
             else {

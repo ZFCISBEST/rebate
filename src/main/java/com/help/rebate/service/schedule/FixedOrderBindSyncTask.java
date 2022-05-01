@@ -110,14 +110,18 @@ public class FixedOrderBindSyncTask {
      * 查询时间场景 - 查询时间类型，1-订单创建时间，2-订单支付时间，3-订单结算时间，4-订单更新时间，0-都查
      */
     private void syncBindOrder() {
+        //为了防止覆盖不全，这里自动自起始日期，往前多扫描两个周期
+        Date localStartTime = new Date(startTime.getTime() - 2 * secondStep * 1000);
+        long localSecondStep = 3 * secondStep;
+
         logger.info("[fix-order-bind-sync-task] sync bind order - time range[{}, {}]",
-                TimeUtil.format(startTime), TimeUtil.format(endTime));
+                TimeUtil.format(localStartTime), TimeUtil.format(endTime));
 
         //调用服务，按时间范围查找并绑定
-        List<OrderBindResultVO> orderBindResultVOS = orderBindService.bindByTimeRange(null, null, TimeUtil.format(startTime), (long) (secondStep / 60));
+        List<OrderBindResultVO> orderBindResultVOS = orderBindService.bindByTimeRange(null, null, TimeUtil.format(localStartTime), localSecondStep / 60);
 
         //log输出
-        logOrderBindResults(orderBindResultVOS);
+        logOrderBindResults(orderBindResultVOS, localStartTime, endTime);
 
         //更改游标，并更新数据库
         startTime = new Date(startTime.getTime() + secondStep * 1000);
@@ -129,7 +133,7 @@ public class FixedOrderBindSyncTask {
      * 记录
      * @param orderBindResultVOS
      */
-    private void logOrderBindResults(List<OrderBindResultVO> orderBindResultVOS) {
+    private void logOrderBindResults(List<OrderBindResultVO> orderBindResultVOS, Date startTime, Date endTime) {
         if (EmptyUtils.isEmpty(orderBindResultVOS)) {
             logger.info("[fix-order-bind-sync-task] sync bind order - time range[{}, {}], no any bind order",
                     TimeUtil.format(startTime), TimeUtil.format(endTime));

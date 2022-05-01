@@ -3,23 +3,20 @@ package com.help.rebate.service.schedule;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.help.rebate.commons.DdxConfig;
 import com.help.rebate.commons.DtkConfig;
 import com.help.rebate.commons.PrettyHttpService;
 import com.help.rebate.dao.entity.OrderDetail;
 import com.help.rebate.dao.entity.TimeCursorPosition;
+import com.help.rebate.service.OrderBindService;
 import com.help.rebate.service.OrderService;
 import com.help.rebate.service.TimeCursorPositionService;
-import com.help.rebate.service.dtk.tb.DtkItemConverter;
-import com.help.rebate.service.dtk.tb.DtkOrderDetail;
 import com.help.rebate.utils.EmptyUtils;
 import com.help.rebate.utils.PropertyValueResolver;
 import com.help.rebate.utils.TimeUtil;
 import com.help.rebate.utils.dtk.ApiClient;
-import com.help.rebate.utils.dtk.SignMD5Util;
+import com.help.rebate.vo.OrderBindResultVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -29,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static com.google.common.util.concurrent.Uninterruptibles.sleepUninterruptibly;
 
@@ -73,6 +71,12 @@ public class FixedOrderSyncTask {
      */
     @Resource
     private OrderService orderService;
+
+    /**
+     * 订单绑定服务
+     */
+    @Resource
+    private OrderBindService orderBindService;
 
     /**
      * 时间游标
@@ -121,10 +125,28 @@ public class FixedOrderSyncTask {
 
         //执行
         try {
+            //同步订单
             syncOrder();
+
+            //订单绑定
+            syncBindOrder();
+
+            //更新时间游标
+            updateTimeCursor();
         } catch(Exception e) {
             logger.info("[fix-sync-task] error to sync order", e);
         }
+    }
+
+    /**
+     * 更新时间游标
+     */
+    private void updateTimeCursor() {
+        //更改游标，并更新数据库
+        startTime = new Date(startTime.getTime() + secondStep * 1000);
+        endTime = new Date(endTime.getTime() + secondStep * 1000);
+        positionIndex = null;
+        timeCursorPositionService.saveOrUpdateTimeCursor(startTime, secondStep, orderScene, queryType, TimeCursorPositionService.TimeType.ORDER_SYNC);
     }
 
     /**
@@ -200,12 +222,39 @@ public class FixedOrderSyncTask {
                 }
             }
         }
+    }
 
-        //更改游标，并更新数据库
-        startTime = new Date(startTime.getTime() + secondStep * 1000);
-        endTime = new Date(endTime.getTime() + secondStep * 1000);
-        positionIndex = null;
-        timeCursorPositionService.saveOrUpdateTimeCursor(startTime, secondStep, orderScene, queryType, TimeCursorPositionService.TimeType.ORDER_SYNC);
+    /**
+     * 顺便同步绑定订单
+     */
+    private void syncBindOrder() {
+        //为了防止覆盖不全，这里自动自起始日期，往前多扫描1个周期
+        Date localStartTime = new Date(startTime.getTime() - secondStep * 1000);
+        long localSecondStep = 2 * secondStep;
+
+        logger.info("[fix-order-sync-task] sync bind order - time range[{}, {}]",
+                TimeUtil.format(localStartTime), TimeUtil.format(endTime));
+
+        //调用服务，按时间范围查找并绑定
+        List<OrderBindResultVO> orderBindResultVOS = orderBindService.bindByTimeRange(null, null, TimeUtil.format(localStartTime), localSecondStep / 60);
+
+        //log输出
+        if (EmptyUtils.isEmpty(orderBindResultVOS)) {
+            logger.info("[fix-order-sync-task] sync bind order - time range[{}, {}], no any bind order",
+                    TimeUtil.format(localStartTime), TimeUtil.format(endTime));
+            return;
+        }
+
+        //循环输出
+        for (OrderBindResultVO orderBindResultVO : orderBindResultVOS) {
+            String openId = orderBindResultVO.getOpenId();
+            String specialId = orderBindResultVO.getSpecialId();
+            String tradeParentId = orderBindResultVO.getTradeParentId();
+            List<String> tradeIdItemIdList = orderBindResultVO.getTradeIdItemIdList();
+            String tradeIds = tradeIdItemIdList.stream().collect(Collectors.joining(","));
+            logger.info("[fix-order-sync-task] sync bind order - time range[{}, {}], openId:{}, specialId:{}, tradeParentId:{}, tradeIds:{}",
+                    TimeUtil.format(localStartTime), TimeUtil.format(endTime), openId, specialId, tradeParentId, tradeIds);
+        }
     }
 
     /**

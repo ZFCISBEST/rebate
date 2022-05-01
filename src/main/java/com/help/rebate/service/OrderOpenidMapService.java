@@ -212,7 +212,7 @@ public class OrderOpenidMapService {
             //alimama - 服务费
             if (fee.doubleValue() > 0) {
                 String alimamaFee = orderDetail.getAlimamaShareFee();
-                fee = fee.subtract(new BigDecimal(alimamaFee == null?"0.0":alimamaFee));
+                fee = fee.subtract(new BigDecimal(alimamaFee == null ? "0.0" : alimamaFee));
             }
 
             //维权订单

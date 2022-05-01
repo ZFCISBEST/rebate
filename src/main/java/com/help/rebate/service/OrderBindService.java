@@ -223,7 +223,9 @@ public class OrderBindService {
 
         //运行的话，更新时间游标数据库
         if (orderBindTime != null && minuteStep != null) {
-            timeCursorPositionService.saveOrUpdateTimeCursor(TimeUtil.parseDate(orderBindTime), new Long(minuteStep * 60).intValue(), null, null, TimeCursorPositionService.TimeType.ORDER_BIND_SYNC);
+            Date startTime = TimeUtil.parseDate(orderBindTime);
+            int secondStep = new Long(minuteStep * 60).intValue();
+            timeCursorPositionService.saveOrUpdateTimeCursor(startTime, secondStep, null, null, TimeCursorPositionService.TimeType.ORDER_BIND_SYNC);
         }
 
         //调用执行

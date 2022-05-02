@@ -16,7 +16,6 @@ import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.BasicHttpClientConnectionManager;
-import org.apache.http.ssl.SSLContexts;
 import org.apache.http.util.EntityUtils;
 
 import javax.net.ssl.*;
@@ -24,7 +23,6 @@ import java.io.*;
 import java.net.ConnectException;
 import java.net.URL;
 import java.security.*;
-import java.security.cert.CertificateException;
 
 import static com.help.rebate.service.wx.WXPayConstants.USER_AGENT;
 
@@ -89,7 +87,7 @@ public class WxHttpService {
             //证书位置自己定义
             FileInputStream instream = new FileInputStream(new File("/usr/local/src/apiclient_cert.p12"));
             try {
-                //填写证书密码，默认为商户号 1617446954
+                //填写证书密码，默认为商户号
                 keyStore.load(instream, DecryptMD5.IdOpen(DdxConfig.ID).toCharArray());
             } finally {
                 instream.close();

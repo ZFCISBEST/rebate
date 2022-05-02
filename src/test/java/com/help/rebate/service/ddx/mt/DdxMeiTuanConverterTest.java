@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import javax.annotation.Resource;
 
 class DdxMeiTuanConverterTest {
+
     @Resource
     private DdxMeiTuanActivityConverter ddxMeiTuanActivityConverter;
 

@@ -32,6 +32,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.*;
 import java.security.cert.CertificateException;
+import java.util.HashMap;
 import java.util.Random;
 import java.util.TreeMap;
 
@@ -126,7 +127,7 @@ public class SignatureController {
     @ApiOperation("消息主动推送")
     @RequestMapping(value = "/sendMessage.html")
     @ResponseBody
-    public String sendMessage(String type) {
+    public String sendMessage(String type, HashMap hashMap) {
         String result = "消息发送成功";
         String message = "";
         String url = send_template_message.replace("ACCESS_TOKEN", accessToken());
@@ -156,7 +157,6 @@ public class SignatureController {
     @RequestMapping(value = "/sendMoney.html")
     @ResponseBody
     public String sendMoney(String openID, Integer moneyFen) throws JSONException {
-        String result = "红包发送成功";
 
         //具体参数查看具体实体类，实体类中的的参数参考微信的红包发放接口，这里你直接用map，进行设置参数也可以。。。
         SendRedPack sendRedPack = new SendRedPack(
@@ -198,7 +198,7 @@ public class SignatureController {
                 return "红包发送成功" + jsonObject.getString("err_code_des") + jsonObject.getString("err_code");
             }
         } else if (jsonObject.getString("return_code").equals("FAIL")) {
-            return "红包发送成功" + jsonObject.getString("return_code") + jsonObject.getString("return_msg");
+            return "红包发送失败" + jsonObject.getString("return_code") + jsonObject.getString("return_msg");
         }
 
         return "红包发送成功" + jsonObject.getString("return_code") + jsonObject.getString("return_msg");

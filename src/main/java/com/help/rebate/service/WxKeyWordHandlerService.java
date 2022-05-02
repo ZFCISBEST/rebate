@@ -87,14 +87,14 @@ public class WxKeyWordHandlerService {
      */
     private static String[] keywords = new String[]{"余额", "提现", "会员"};
     private static String[] keywordBegins = new String[]{"绑定:", "查询:", "返利:"};
-    public static String tips = "回复如下指令：\n";
+    public static String tips = "如有订单疑惑，回复如下指令查询：\n";
     static {
-        tips += "1、[余额] 查看账户余额信息\n";
-        tips += "2、[提现] 领取返利\n";
-        tips += "3、[绑定:订单号] 执行订单手动绑定\n";
-        tips += "4、[查询:订单号] 查询订单是否绑定成功\n";
-        tips += "5、[返利:订单号] 查询订单返利详情\n";
-        tips += "6、[会员] 获取绑定会员链接\n";
+//        tips += doHandleYuE(fromUserName)+"\n";
+//        tips += "2、[提现] 领取返利\n";
+        tips += "1、[绑定:订单号] 执行订单手动绑定\n";
+        tips += "2、[查询:订单号] 查询订单是否绑定成功\n";
+        tips += "3、[返利:订单号] 查询订单返利详情\n";
+//        tips += "6、[会员] 获取绑定会员链接\n";
     }
 
     /**

@@ -75,7 +75,7 @@ public class MessageServiceImpl implements MessageService {
                     TextMessage text = new TextMessage();
                     //String tips = "待开发查看余额功能";
                     String tips = WxKeyWordHandlerService.tips;
-                    text.setContent(tips);
+                    text.setContent(wxKeyWordHandlerService.handleKeyWord(fromUserName, toUserName, "余额") + "\n"+tips);
                     text.setToUserName(fromUserName);
                     text.setFromUserName(toUserName);
                     text.setCreateTime(new Date().getTime());
@@ -98,7 +98,7 @@ public class MessageServiceImpl implements MessageService {
                 } else if (eventKey.equals("V001_VIP")) {
                     // 绑定会员
                     TextMessage text = new TextMessage();
-                    text.setContent("待开发绑定会员功能。");
+                    text.setContent(wxKeyWordHandlerService.handleKeyWord(fromUserName, toUserName, "会员"));
                     text.setToUserName(fromUserName);
                     text.setFromUserName(toUserName);
                     text.setCreateTime(new Date().getTime());

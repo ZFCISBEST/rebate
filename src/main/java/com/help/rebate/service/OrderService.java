@@ -143,4 +143,30 @@ public class OrderService {
         int affectedCnt = orderDetailDao.updateByPrimaryKeySelective(orderDetail);
         return affectedCnt;
     }
+
+    /**
+     * 筛选符合条件的订单
+     * @param tradeParentIdList
+     * @param payStartTime
+     * @param payEndTime
+     * @return
+     */
+    public List<OrderDetail> selectByTradeParentIds(List<String> tradeParentIdList, String payStartTime, String payEndTime) {
+        OrderDetailExample orderDetailExample = new OrderDetailExample();
+        OrderDetailExample.Criteria criteria = orderDetailExample.createCriteria();
+
+        if (!EmptyUtils.isEmpty(tradeParentIdList)) {
+            criteria.andParentTradeIdIn(tradeParentIdList);
+        }
+        if (!EmptyUtils.isEmpty(payStartTime)) {
+            criteria.andTbPaidTimeGreaterThanOrEqualTo(TimeUtil.parseDate(payStartTime));
+        }
+        if (!EmptyUtils.isEmpty(payEndTime)) {
+            criteria.andTbPaidTimeLessThanOrEqualTo(TimeUtil.parseDate(payEndTime));
+        }
+
+        //查询
+        List<OrderDetail> orderDetails = orderDetailDao.selectByExample(orderDetailExample);
+        return orderDetails;
+    }
 }

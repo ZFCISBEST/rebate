@@ -1,6 +1,8 @@
 package com.help.rebate.service;
 
 import com.help.rebate.dao.OrderOpenidMapDao;
+import com.help.rebate.dao.entity.OrderDetail;
+import com.help.rebate.dao.entity.OrderDetailExample;
 import com.help.rebate.dao.entity.OrderOpenidMap;
 import com.help.rebate.dao.entity.OrderOpenidMapExample;
 import com.help.rebate.utils.Checks;
@@ -32,6 +34,8 @@ public class OrderOpenidMapService {
     @Resource
     private OrderOpenidMapDao orderOpenidMapDao;
 
+    @Resource
+    private OrderService orderService;
 
 
     /**
@@ -142,11 +146,13 @@ public class OrderOpenidMapService {
      * @param specialId
      * @param orderStatuss 订单状态 - 12-付款，13-关闭，14-确认收货，3-结算成功
      * @param commissionStatuss 给用户的结算状态 - 待提取、提取中，提取成功，提取失败, 提取超时
+     * @param payStartTime 指关注此时间开始的订单返利
+     * @param payEndTime 只关注此时间之前的订单返利
      * @return
      */
-    public CommissionVO selectCommissionBy(String openId, String specialId, String orderStatuss, String commissionStatuss) {
+    public CommissionVO selectCommissionBy(String openId, String specialId, String orderStatuss, String commissionStatuss, String payStartTime, String payEndTime) {
         String[] split = commissionStatuss.split(",");
-        return selectCommissionBy(openId, specialId, orderStatuss, split);
+        return selectCommissionBy(openId, specialId, orderStatuss, split, payStartTime, payEndTime);
     }
 
     /**
@@ -156,9 +162,11 @@ public class OrderOpenidMapService {
      * @param specialId
      * @param orderStatuss 订单状态 - 12-付款，13-关闭，14-确认收货，3-结算成功
      * @param commissionStatus 给用户的结算状态 - 待提取、提取中，提取成功，提取失败, 提取超时
+     * @param payStartTime
+     * @param payEndTime
      * @return
      */
-    public CommissionVO selectCommissionBy(String openId, String specialId, String orderStatuss, String[] commissionStatus) {
+    public CommissionVO selectCommissionBy(String openId, String specialId, String orderStatuss, String[] commissionStatus, String payStartTime, String payEndTime) {
         // TODO: 2022/3/28 优化查询方式
         OrderOpenidMapExample orderOpenidMapExample = new OrderOpenidMapExample();
         OrderOpenidMapExample.Criteria criteria = orderOpenidMapExample.createCriteria();
@@ -183,6 +191,11 @@ public class OrderOpenidMapService {
             commissionVO.setCommission("0.0");
             commissionVO.setLabel("无记录");
             return commissionVO;
+        }
+
+        //按照时间过滤
+        if (!EmptyUtils.isEmpty(payStartTime) || !EmptyUtils.isEmpty(payEndTime)) {
+            filterByTimeRange(payStartTime, payEndTime, orderOpenidMapList);
         }
 
         //循环计算
@@ -234,6 +247,24 @@ public class OrderOpenidMapService {
         commissionVO.setCommission(NumberUtil.format(allCommission));
 
         return commissionVO;
+    }
+
+    /**
+     * 按照条件过滤订单
+     * @param payStartTime
+     * @param payEndTime
+     * @param orderOpenidMapList
+     */
+    private void filterByTimeRange(String payStartTime, String payEndTime, List<OrderOpenidMap> orderOpenidMapList) {
+        List<String> tradeParentIdList = orderOpenidMapList.stream().map(a -> a.getParentTradeId()).distinct().collect(Collectors.toList());
+        List<OrderDetail> orderDetailList = orderService.selectByTradeParentIds(tradeParentIdList, payStartTime, payEndTime);
+
+        //过滤 - 这些是符合条件的
+        List<String> tradeParentIds = orderDetailList.stream().map(a -> a.getParentTradeId()).distinct().collect(Collectors.toList());
+        List<OrderOpenidMap> noIncludeList = orderOpenidMapList.stream().filter(a -> !tradeParentIds.contains(a.getParentTradeId())).collect(Collectors.toList());
+
+        //移除掉不符合条件的
+        orderOpenidMapList.removeAll(noIncludeList);
     }
 
     /**

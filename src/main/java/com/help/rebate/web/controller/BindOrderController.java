@@ -101,9 +101,11 @@ public class BindOrderController {
     @ApiOperation("查询返利的汇总信息")
     @RequestMapping("/query_commission")
     public SafeServiceResponse queryCommissionByStatus(@ApiParam(name = "openId", value = "微信openId") @RequestParam(required = false) String openId,
-                                                   @ApiParam(name = "specialId", value = "淘宝联盟私域会员ID") @RequestParam(required = false) String specialId,
-                                                   @ApiParam(name = "orderStatuss", value = "订单状态 - 12-付款，13-关闭，14-确认收货，3-结算成功，可多个，逗号隔开") @RequestParam(required = true) String orderStatuss,
-                                                   @ApiParam(name = "commissionStatuss", value = "给用户的结算状态,可填多个，逗号隔开 - 待提取、提取中，提取成功，提取失败,提取超时") @RequestParam(required = true) String commissionStatuss) {
+                                                        @ApiParam(name = "specialId", value = "淘宝联盟私域会员ID") @RequestParam(required = false) String specialId,
+                                                        @ApiParam(name = "orderStatuss", value = "订单状态 - 12-付款，13-关闭，14-确认收货，3-结算成功，可多个，逗号隔开") @RequestParam(required = true) String orderStatuss,
+                                                        @ApiParam(name = "commissionStatuss", value = "给用户的结算状态,可填多个，逗号隔开 - 待提取、提取中，提取成功，提取失败,提取超时") @RequestParam(required = true) String commissionStatuss,
+                                                       @ApiParam(name = "payStartTime", value = "支付起始日期，可不填，用在触发提取中") @RequestParam(required = false) String payStartTime,
+                                                       @ApiParam(name = "payEndTime", value = "支付结束日期，可不填，用在触发提取中") @RequestParam(required = false) String payEndTime) {
         try{
             SafeServiceResponse.startBiz();
 
@@ -113,7 +115,7 @@ public class BindOrderController {
             //Checks.isTrue(commissionStatus.equals("待结算") || commissionStatus.equals("已结算") || commissionStatus.equals("结算中"), "返利状态只能是[待结算、已结算、结算中]");
 
             //查询
-            CommissionVO commissionVO = orderOpenidMapService.selectCommissionBy(openId, specialId, orderStatuss, commissionStatuss);
+            CommissionVO commissionVO = orderOpenidMapService.selectCommissionBy(openId, specialId, orderStatuss, commissionStatuss, payStartTime, payEndTime);
 
             //返回
             return SafeServiceResponse.success(commissionVO);
@@ -127,7 +129,9 @@ public class BindOrderController {
     @RequestMapping("/mock_pick_money")
     public SafeServiceResponse mockPickMoney(@ApiParam(name = "openId", value = "微信openId") @RequestParam(required = false) String openId,
                                              @ApiParam(name = "specialId", value = "淘宝联盟私域会员ID") @RequestParam(required = false) String specialId,
-                                             @ApiParam(name = "mockStatus", value = "当前模拟的是哪种状态 - 触发提取、提取成功，提取失败, 提取超时") @RequestParam(required = false) String mockStatus) {
+                                             @ApiParam(name = "mockStatus", value = "当前模拟的是哪种状态 - 触发提取、提取成功，提取失败, 提取超时") @RequestParam(required = false) String mockStatus,
+                                             @ApiParam(name = "payStartTime", value = "支付起始日期，可不填，用在触发提取中") @RequestParam(required = false) String payStartTime,
+                                             @ApiParam(name = "payEndTime", value = "支付结束日期，可不填，用在触发提取中") @RequestParam(required = false) String payEndTime) {
         try{
             SafeServiceResponse.startBiz();
 
@@ -136,7 +140,7 @@ public class BindOrderController {
             Checks.isTrue("触发提取、提取成功，提取失败, 提取超时".contains(mockStatus), "当前模拟的状态只能是 - 触发提取、提取成功，提取失败, 提取超时");
 
             //查询
-            PickCommissionVO pickCommissionVO = orderBindService.mockPickMoney(openId, specialId, mockStatus);
+            PickCommissionVO pickCommissionVO = orderBindService.mockPickMoney(openId, specialId, mockStatus, payStartTime, payEndTime);
 
             //返回
             return SafeServiceResponse.success(pickCommissionVO);

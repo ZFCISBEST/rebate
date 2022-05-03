@@ -15,6 +15,7 @@ import com.help.rebate.utils.EmptyUtils;
 import com.help.rebate.utils.NumberUtil;
 import com.help.rebate.vo.CommissionVO;
 import com.help.rebate.vo.OrderBindResultVO;
+import com.help.rebate.vo.PickCommissionVO;
 import com.help.rebate.web.response.SafeServiceResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,9 +86,10 @@ public class WxKeyWordHandlerService {
     /**
      * keyword
      */
-    private static String[] keywords = new String[]{"余额", "提现", "会员"};
-    private static String[] keywordBegins = new String[]{"绑定:", "查询:", "返利:"};
+    private static String[] keywords = new String[]{"余额", "提现", "会员", "提示", "openId"};
+    private static String[] keywordBegins = new String[]{"绑定:", "查询:", "返利:", "区间余额:", "模拟:"};
     public static String tips = "如有订单疑惑，回复如下指令查询：\n";
+    public static String innerTips = "完整指令：\n";
     static {
 //        tips += doHandleYuE(fromUserName)+"\n";
 //        tips += "2、[提现] 领取返利\n";
@@ -95,6 +97,15 @@ public class WxKeyWordHandlerService {
         tips += "2、[查询:订单号] 查询订单是否绑定成功\n";
         tips += "3、[返利:订单号] 查询订单返利详情\n";
 //        tips += "6、[会员] 获取绑定会员链接\n";
+
+        int index = 0;
+        innerTips += ++index + "、[余额、提现、会员、提示、openId]\n" ;
+        innerTips += ++index + "、绑定:openId;specialId;tradeParentId - 执行订单手动绑定\n" ;
+        innerTips += ++index + "、查询:openId;specialId;tradeParentId - 查询订单是否绑定成功\n" ;
+        innerTips += ++index + "、返利:genericType;tradeParentId - 查询订单返利详情\n" ;
+        innerTips += ++index + "、区间余额:openId;specialId;startTime;endTime - 查询区间的余额\n" ;
+        innerTips += ++index + "、模拟:openId;specialId;mockStatus;startTime;endTime - 模拟提现的状态\n" ;
+
     }
 
     /**
@@ -138,6 +149,14 @@ public class WxKeyWordHandlerService {
             return doHandleVip(fromUserName);
         }
 
+        if ("提示".equals(content)) {
+            return innerTips;
+        }
+
+        if ("openId".equals(content)) {
+            return "openId - " + fromUserName;
+        }
+
         //绑定订单
         if (content.startsWith("绑定:")) {
             return doHandleBindTradeId(fromUserName, content.split(":", 2)[1]);
@@ -152,6 +171,17 @@ public class WxKeyWordHandlerService {
         if (content.startsWith("返利:")) {
             return doHandleQueryCommissions(fromUserName, content.split(":", 2)[1]);
         }
+
+        //其他状态 - 区间余额
+        if (content.startsWith("区间余额:")) {
+            return doHandleRangeYuE(fromUserName, content.split(":", 2)[1]);
+        }
+
+        //其他状态 - 模拟，触发提取、提取成功，提取失败, 提取超时
+        if (content.startsWith("模拟:")) {
+            return doHandleTriggerPickMoney(fromUserName, content.split(":", 2)[1]);
+        }
+
 
         return "暂不支持的指令";
     }
@@ -171,27 +201,37 @@ public class WxKeyWordHandlerService {
      * @return
      */
     private String doHandleYuE(String fromUserName) {
+        //表示，期限不限，全部查出来
+        return doHandleYuE(fromUserName, null, null, null);
+    }
+
+    /**
+     * 查询余额
+     * @param fromUserName
+     * @return
+     */
+    private String doHandleYuE(String fromUserName, String specialId, String payStartTime, String payEndTime) {
         //orderStatuss 订单状态 - 12-付款，13-关闭，14-确认收货，3-结算成功
         //commissionStatuss 给用户的结算状态 - 待提取、提取中，提取成功，提取失败, 提取超时
         String message = "当前账户余额:\n";
 
         //查询 - 付款
         int index = 1;
-        CommissionVO commissionByFuKuan = orderOpenidMapService.selectCommissionBy(fromUserName, null, "12", "待提取");
+        CommissionVO commissionByFuKuan = orderOpenidMapService.selectCommissionBy(fromUserName, specialId, "12", "待提取", payStartTime, payEndTime);
         if (commissionByFuKuan != null && commissionByFuKuan.getPubFee() != null) {
             message += index + "、已付款待确认: ￥" + commissionByFuKuan.getPubFee() + "元\n";
             index++;
         }
 
         //查询 - 确认收货
-        CommissionVO commissionByQuRen = orderOpenidMapService.selectCommissionBy(fromUserName, null, "14", "待提取");
+        CommissionVO commissionByQuRen = orderOpenidMapService.selectCommissionBy(fromUserName, specialId, "14", "待提取",  payStartTime, payEndTime);
         if (commissionByQuRen != null && commissionByQuRen.getPubFee() != null) {
             message += index + "、已确认待结算: ￥" + commissionByQuRen.getPubFee() + "元\n";
             index++;
         }
 
         //查询 - 结算成功
-        CommissionVO commissionByJieSuan = orderOpenidMapService.selectCommissionBy(fromUserName, null, "3", "待提取,提取失败,提取超时");
+        CommissionVO commissionByJieSuan = orderOpenidMapService.selectCommissionBy(fromUserName, specialId, "3", "待提取,提取失败,提取超时",  payStartTime, payEndTime);
         if (commissionByJieSuan != null && commissionByJieSuan.getPubFee() != null) {
             message += index + "、已结算可提现: ￥" + commissionByJieSuan.getPubFee() + "元\n";
             index++;
@@ -201,7 +241,7 @@ public class WxKeyWordHandlerService {
     }
 
     /**
-     * 手动绑定订单
+     * 手动绑定订单 openId;specialId;tradeParentId
      *
      * @param fromUserName
      * @param tradeParentIdContent
@@ -243,7 +283,7 @@ public class WxKeyWordHandlerService {
     }
 
     /**
-     * 查询某个订单是否绑定成功了
+     * 查询某个订单是否绑定成功了 openId;specialId;tradeParentId
      *
      * @param fromUserName
      * @param tradeParentIdContent
@@ -289,7 +329,7 @@ public class WxKeyWordHandlerService {
     }
 
     /**
-     * 查询某个订单的返利信息
+     * 查询某个订单的返利信息 genericType;tradeParentId
      *
      * @param fromUserName
      * @param tradeParentIdContent
@@ -378,6 +418,94 @@ public class WxKeyWordHandlerService {
         //返回
         String message = "返利共: ￥" + NumberUtil.format(allFee.multiply(new BigDecimal(0.9))) + "\n";
         message += "共包含返利计件商品数: " + orderDetailList.size() + "个";
+        return message;
+    }
+
+    /**
+     * 处理查询区间余额数据 - openId;specialId;startTime;endTime
+     * @param fromUserName
+     * @param content
+     * @return
+     */
+    private String doHandleRangeYuE(String fromUserName, String content) {
+        //管理员操作
+        String[] openidAndSpecialIdAndTimeRange = content.split(";");
+
+        //倒数第1位是endTime
+        String endTime = null;
+        endTime = openidAndSpecialIdAndTimeRange[openidAndSpecialIdAndTimeRange.length - 1];
+
+        //倒数第2位是startTime
+        String startTime = null;
+        startTime = openidAndSpecialIdAndTimeRange[openidAndSpecialIdAndTimeRange.length - 2];
+
+        //倒数第2位是 specialId
+        String specialId = null;
+        if (openidAndSpecialIdAndTimeRange.length >= 3) {
+            specialId = openidAndSpecialIdAndTimeRange[openidAndSpecialIdAndTimeRange.length - 3];
+            if (EmptyUtils.isEmpty(specialId)) {
+                specialId = null;
+            }
+        }
+
+        //倒数第三位是openId
+        String openId = null;
+        if (openidAndSpecialIdAndTimeRange.length >= 4) {
+            openId = openidAndSpecialIdAndTimeRange[openidAndSpecialIdAndTimeRange.length - 4];
+            if (EmptyUtils.isEmpty(openId)) {
+                openId = fromUserName;
+            }
+        }
+
+        //返回查询信息
+        return doHandleYuE(openId, specialId, startTime, endTime);
+    }
+
+    /**
+     * 处理触发模拟提现相关操作 openId;specialId;mockStatus;startTime;endTime
+     * @param fromUserName
+     * @param content
+     * @return
+     */
+    private String doHandleTriggerPickMoney(String fromUserName, String content) {
+        //管理员操作
+        String[] openidAndSpecialIdAndTimeRange = content.split(";");
+
+        //倒数第1位是endTime
+        String endTime = null;
+        endTime = openidAndSpecialIdAndTimeRange[openidAndSpecialIdAndTimeRange.length - 1];
+
+        //倒数第2位是startTime
+        String startTime = null;
+        startTime = openidAndSpecialIdAndTimeRange[openidAndSpecialIdAndTimeRange.length - 2];
+
+        //倒数第3位是 mockStatus
+        String mockStatus = null;
+        mockStatus = openidAndSpecialIdAndTimeRange[openidAndSpecialIdAndTimeRange.length - 3];
+
+
+        //倒数第2位是 specialId
+        String specialId = null;
+        if (openidAndSpecialIdAndTimeRange.length >= 4) {
+            specialId = openidAndSpecialIdAndTimeRange[openidAndSpecialIdAndTimeRange.length - 4];
+            if (EmptyUtils.isEmpty(specialId)) {
+                specialId = null;
+            }
+        }
+
+        //倒数第三位是openId
+        String openId = null;
+        if (openidAndSpecialIdAndTimeRange.length >= 5) {
+            openId = openidAndSpecialIdAndTimeRange[openidAndSpecialIdAndTimeRange.length - 5];
+            if (EmptyUtils.isEmpty(openId)) {
+                openId = fromUserName;
+            }
+        }
+
+        //查询
+        PickCommissionVO pickCommissionVO = orderBindService.mockPickMoney(openId, specialId, mockStatus, startTime, endTime);
+        String message = "操作: " + pickCommissionVO.getAction() + "\n";
+        message += "返利: " + pickCommissionVO.getCommission() + "\n";
         return message;
     }
 

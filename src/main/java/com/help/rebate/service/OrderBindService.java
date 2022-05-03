@@ -88,14 +88,16 @@ public class OrderBindService {
      * @param openId
      * @param specialId
      * @param mockStatus 当前模拟的是哪种状态 - 触发提取、待提取、提取中，提取成功，提取失败, 提取超时
+     * @param payStartTime 用在触发提取中
+     * @param payEndTime 用在触发提取中
      * @return
      */
     @Transactional
-    public PickCommissionVO mockPickMoney(String openId, String specialId, String mockStatus) {
+    public PickCommissionVO mockPickMoney(String openId, String specialId, String mockStatus, String payStartTime, String payEndTime) {
         //触发提取操作
         if ("触发提取".equals(mockStatus)) {
             //触发
-            return triggerPickMoneyAction(openId, specialId);
+            return triggerPickMoneyAction(openId, specialId, payStartTime, payEndTime);
         }
 
         //触发提取成功 - 最新状态的 - 提取失败（包括，提取超时）
@@ -111,14 +113,16 @@ public class OrderBindService {
      * 只有状态为 3 的，可以提取
      * @param openId
      * @param specialId
+     * @param payStartTime
+     * @param payEndTime
      * @return
      */
     @Transactional
-    public PickCommissionVO triggerPickMoneyAction(String openId, String specialId) {
+    public PickCommissionVO triggerPickMoneyAction(String openId, String specialId, String payStartTime, String payEndTime) {
         //如果是触发提取操作，那么先看，之前是否有提取中的状态，或者有失败的，提取中，不允许再提，失败的，那么重试之前的就行，直到成功
         PickMoneyRecord oldPickMoneyRecord = pickMoneyRecordService.selectPickMoneyAction(openId, specialId, new String[]{"提取中"});
         if (oldPickMoneyRecord != null) {
-            CommissionVO commissionVO = orderOpenidMapService.selectCommissionBy(openId, specialId, "3", new String[]{"提取中"});
+            CommissionVO commissionVO = orderOpenidMapService.selectCommissionBy(openId, specialId, "3", new String[]{"提取中"}, payStartTime, payEndTime);
             //直接返回查询的统计信息
             PickCommissionVO pickCommissionVO = new PickCommissionVO();
             pickCommissionVO.setAction("重复 - 提取中");
@@ -128,7 +132,7 @@ public class OrderBindService {
         }
 
         //订单状态 - 12-付款，13-关闭，14-确认收货，3-结算成功
-        CommissionVO commissionVO = orderOpenidMapService.selectCommissionBy(openId, specialId, "3", new String[]{"待提取", "提取失败", "提取超时"});
+        CommissionVO commissionVO = orderOpenidMapService.selectCommissionBy(openId, specialId, "3", new String[]{"待提取", "提取失败", "提取超时"}, payStartTime, payEndTime);
         if (commissionVO == null || commissionVO.getPubFee() == null || "0.0".equals(commissionVO.getPubFee()) || commissionVO.getTradeParentId2ItemIdsMap().isEmpty()) {
             PickCommissionVO pickCommissionVO = new PickCommissionVO();
             pickCommissionVO.setAction("提取中 - [可提取订单为0]");
@@ -199,7 +203,7 @@ public class OrderBindService {
         Checks.isTrue(pickAttachInfo.equals("all_trade_id_cnt:" + affectedMapCnt), "提取时的详细订单记录与当前更新个数不符");
 
         //订单状态 - 12-付款，13-关闭，14-确认收货，3-结算成功
-        CommissionVO commissionVO = orderOpenidMapService.selectCommissionBy(openId, specialId, "3", new String[]{mockStatus});
+        CommissionVO commissionVO = orderOpenidMapService.selectCommissionBy(openId, specialId, "3", new String[]{mockStatus}, null, null);
         PickCommissionVO pickCommissionVO = new PickCommissionVO();
         pickCommissionVO.setAction(mockStatus);
         pickCommissionVO.setCommission(commissionVO.getPubFee());

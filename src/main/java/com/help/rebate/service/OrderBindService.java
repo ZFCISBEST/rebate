@@ -122,7 +122,7 @@ public class OrderBindService {
         //如果是触发提取操作，那么先看，之前是否有提取中的状态，或者有失败的，提取中，不允许再提，失败的，那么重试之前的就行，直到成功
         PickMoneyRecord oldPickMoneyRecord = pickMoneyRecordService.selectPickMoneyAction(openId, specialId, new String[]{"提取中"});
         if (oldPickMoneyRecord != null) {
-            CommissionVO commissionVO = orderOpenidMapService.selectCommissionBy(openId, specialId, "3", new String[]{"提取中"}, payStartTime, payEndTime);
+            CommissionVO commissionVO = orderOpenidMapService.selectCommissionBy(openId, specialId, "3", new String[]{"提取中"}, null, null);
             //直接返回查询的统计信息
             PickCommissionVO pickCommissionVO = new PickCommissionVO();
             pickCommissionVO.setAction("重复 - 提取中");
@@ -143,15 +143,17 @@ public class OrderBindService {
 
         //可提取的金额
         String pubFee = commissionVO.getPubFee();
-        Map<String, List<String>> tradeParentId2ItemIdsMap = commissionVO.getTradeParentId2ItemIdsMap();
+        //Map<String, List<String>> tradeParentId2ItemIdsMap = commissionVO.getTradeParentId2ItemIdsMap();
+        Map<String, List<String>> tradeParentId2TradeIdsMap = commissionVO.getTradeParentId2TradeIdsMap();
 
         //第一步，插入数据库，记录提取这个动作
         Integer primaryKey = pickMoneyRecordService.recordPickMoneyAction(openId, specialId, pubFee, "提取中");
         Checks.isTrue(primaryKey != null, "记录提取动作失败");
 
         //第二步，更新订单表，记录所有的为提取中
-        int affectedCnt = orderOpenidMapService.changeCommissionStatusByTradeParentIds(openId, specialId, tradeParentId2ItemIdsMap, primaryKey, "提取中");
-        int allTradeIdCnt = tradeParentId2ItemIdsMap.values().stream().mapToInt(a -> a.size()).sum();
+        int affectedCnt = orderOpenidMapService.changeCommissionStatusByTradeParentIds(openId, specialId, tradeParentId2TradeIdsMap, primaryKey, "提取中");
+        int allTradeIdCnt = tradeParentId2TradeIdsMap.values().stream().mapToInt(a -> a.size()).sum();
+        logger.info("[order-bind-service] 查出待提取记录数: {}，实际可更新订单数: {}", allTradeIdCnt, affectedCnt);
         Checks.isTrue(affectedCnt == allTradeIdCnt, "更新的记录数，与查询出的记录数不一致");
 
         //第三部，更新提取记录表，记录一下附加信息，影响了多少订单数
@@ -164,7 +166,7 @@ public class OrderBindService {
         PickCommissionVO pickCommissionVO = new PickCommissionVO();
         pickCommissionVO.setAction("提取中");
         pickCommissionVO.setCommission(pubFee);
-        pickCommissionVO.setTradeParentId2TradeIdsMap(tradeParentId2ItemIdsMap);
+        pickCommissionVO.setTradeParentId2TradeIdsMap(tradeParentId2TradeIdsMap);
         return pickCommissionVO;
     }
 

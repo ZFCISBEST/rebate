@@ -202,13 +202,22 @@ public class OrderOpenidMapService {
         BigDecimal allFee = new BigDecimal(0.0);
         BigDecimal allCommission = new BigDecimal(0.0);
         Map<String, List<String>> tradeParentId2ItemIdsMap = commissionVO.getTradeParentId2ItemIdsMap();
+        Map<String, List<String>> tradeParentId2TradeIdsMap = commissionVO.getTradeParentId2TradeIdsMap();
         for (OrderOpenidMap orderDetail : orderOpenidMapList) {
             //先存储详情
             String parentTradeId = orderDetail.getParentTradeId();
+
+            //商品ID
             String itemId = orderDetail.getItemId();
             List<String> itemIds = tradeParentId2ItemIdsMap.getOrDefault(parentTradeId, new ArrayList<String>());
             itemIds.add(itemId);
             tradeParentId2ItemIdsMap.put(parentTradeId, itemIds);
+
+            //交易单号
+            String tradeId = orderDetail.getTradeId();
+            List<String> tradeIds = tradeParentId2TradeIdsMap.getOrDefault(parentTradeId, new ArrayList<String>());
+            tradeIds.add(tradeId);
+            tradeParentId2TradeIdsMap.put(parentTradeId, tradeIds);
 
             //默认呢，就是预返利，哪怕是关闭
             BigDecimal fee = new BigDecimal(0.0);
@@ -260,23 +269,25 @@ public class OrderOpenidMapService {
         List<OrderDetail> orderDetailList = orderService.selectByTradeParentIds(tradeParentIdList, payStartTime, payEndTime);
 
         //过滤 - 这些是符合条件的
+        logger.info("[filter-by-time-range] 过滤前大小 - {}", orderOpenidMapList.size());
         List<String> tradeParentIds = orderDetailList.stream().map(a -> a.getParentTradeId()).distinct().collect(Collectors.toList());
         List<OrderOpenidMap> noIncludeList = orderOpenidMapList.stream().filter(a -> !tradeParentIds.contains(a.getParentTradeId())).collect(Collectors.toList());
 
         //移除掉不符合条件的
         orderOpenidMapList.removeAll(noIncludeList);
+        logger.info("[filter-by-time-range] 过滤后大小 - {}", orderOpenidMapList.size());
     }
 
     /**
      * 更改绑定的订单状态
      * @param openId
      * @param specialId
-     * @param tradeParentIds
+     * @param tradeParentId2TradeIdsMap
      * @param pickMoneyRecordId
      * @param commissionStatus
      * @return
      */
-    public int changeCommissionStatusByTradeParentIds(String openId, String specialId, Map<String, List<String>> tradeParentIds, Integer pickMoneyRecordId, String commissionStatus) {
+    public int changeCommissionStatusByTradeParentIds(String openId, String specialId, Map<String, List<String>> tradeParentId2TradeIdsMap, Integer pickMoneyRecordId, String commissionStatus) {
         //前置校验
         Checks.isIn(commissionStatus, new String[]{"提取中"}, "状态错误");
         Checks.isTrue(pickMoneyRecordId != null, "当前提取记录ID不能为空");
@@ -297,8 +308,12 @@ public class OrderOpenidMapService {
         if (!EmptyUtils.isEmpty(specialId)) {
             criteria.andSpecialIdEqualTo(specialId);
         }
-        if (!EmptyUtils.isEmpty(tradeParentIds.keySet())) {
-            criteria.andParentTradeIdIn(tradeParentIds.keySet().stream().collect(Collectors.toList()));
+        if (!EmptyUtils.isEmpty(tradeParentId2TradeIdsMap.keySet())) {
+            List<String> tradeIds = tradeParentId2TradeIdsMap.values().stream().flatMap(a -> a.stream()).collect(Collectors.toList());
+            if (!tradeIds.isEmpty()) {
+                //criteria.andParentTradeIdIn(tradeParentId2TradeIdsMap.keySet().stream().collect(Collectors.toList()));
+                criteria.andTradeIdIn(tradeIds);
+            }
         }
         List<OrderOpenidMap> orderOpenidMapList = orderOpenidMapDao.selectByExample(example);
         for (OrderOpenidMap openidMap : orderOpenidMapList) {

@@ -34,4 +34,5 @@ public class CommissionVO {
      * 父订单 对 详细的商品列表
      */
     private Map<String, List<String>> tradeParentId2ItemIdsMap = new HashMap<String, List<String>>();
+    private Map<String, List<String>> tradeParentId2TradeIdsMap = new HashMap<String, List<String>>();
 }

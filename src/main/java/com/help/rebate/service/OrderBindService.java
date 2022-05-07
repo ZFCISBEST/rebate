@@ -205,7 +205,7 @@ public class OrderBindService {
         Checks.isTrue(pickAttachInfo.equals("all_trade_id_cnt:" + affectedMapCnt), "提取时的详细订单记录与当前更新个数不符");
 
         //订单状态 - 12-付款，13-关闭，14-确认收货，3-结算成功
-        CommissionVO commissionVO = orderOpenidMapService.selectCommissionBy(openId, specialId, "3", new String[]{mockStatus}, null, null);
+        CommissionVO commissionVO = orderOpenidMapService.selectCommissionBy(openId, specialId, pickMoneyRecordId, "3", new String[]{mockStatus}, null, null);
         PickCommissionVO pickCommissionVO = new PickCommissionVO();
         pickCommissionVO.setAction(mockStatus);
         pickCommissionVO.setCommission(commissionVO.getPubFee());

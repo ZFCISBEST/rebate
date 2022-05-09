@@ -220,17 +220,7 @@ public class UserInfosService {
      * @return
      */
     public UserInfos selectByOpenId(String openId) {
-        UserInfosExample userInfosExample = new UserInfosExample();
-        userInfosExample.setLimit(1);
-        UserInfosExample.Criteria criteria = userInfosExample.createCriteria();
-
-        if (!EmptyUtils.isEmpty(openId)) {
-            criteria.andOpenIdEqualTo(openId);
-        }
-
-        //查询 - 按理应该都存在的
-        List<UserInfos> userInfos = userInfosDao.selectByExample(userInfosExample);
-        return userInfos.get(0);
+        return selectByOpenIdAndSpecialIdAndExternalId(openId, null, null);
     }
 
     /**
@@ -239,17 +229,16 @@ public class UserInfosService {
      * @return
      */
     public UserInfos selectBySpecialId(String specialId) {
-        UserInfosExample userInfosExample = new UserInfosExample();
-        userInfosExample.setLimit(1);
-        UserInfosExample.Criteria criteria = userInfosExample.createCriteria();
+        return selectByOpenIdAndSpecialIdAndExternalId(null, specialId, null);
+    }
 
-        if (!EmptyUtils.isEmpty(specialId)) {
-            criteria.andSpecialIdEqualTo(specialId);
-        }
-
-        //查询 - 按理应该都存在的
-        List<UserInfos> userInfos = userInfosDao.selectByExample(userInfosExample);
-        return userInfos.get(0);
+    /**
+     * 查询用户信息
+     * @param externalId
+     * @return
+     */
+    public UserInfos selectByExternalId(String externalId) {
+        return selectByOpenIdAndSpecialIdAndExternalId(null, null, externalId);
     }
 
     /**
@@ -259,6 +248,16 @@ public class UserInfosService {
      * @return
      */
     public UserInfos selectByOpenIdAndSpecialId(String openId, String specialId) {
+        return selectByOpenIdAndSpecialIdAndExternalId(openId, specialId, null);
+    }
+
+    /**
+     * 查询用户信息
+     * @param openId
+     * @param specialId
+     * @return
+     */
+    public UserInfos selectByOpenIdAndSpecialIdAndExternalId(String openId, String specialId, String externalId) {
         UserInfosExample userInfosExample = new UserInfosExample();
         userInfosExample.setLimit(1);
         UserInfosExample.Criteria criteria = userInfosExample.createCriteria();
@@ -269,9 +268,15 @@ public class UserInfosService {
         if (!EmptyUtils.isEmpty(specialId)) {
             criteria.andSpecialIdEqualTo(specialId);
         }
+        if (!EmptyUtils.isEmpty(externalId)) {
+            criteria.andExternalIdEqualTo(externalId);
+        }
 
         //查询 - 按理应该都存在的
         List<UserInfos> userInfos = userInfosDao.selectByExample(userInfosExample);
+        if (userInfos.isEmpty()) {
+            return null;
+        }
         return userInfos.get(0);
     }
 

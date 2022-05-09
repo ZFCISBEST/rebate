@@ -1,10 +1,7 @@
 package com.help.rebate.service;
 
 import com.help.rebate.dao.OrderDetailDao;
-import com.help.rebate.dao.entity.OrderDetail;
-import com.help.rebate.dao.entity.OrderOpenidMap;
-import com.help.rebate.dao.entity.OrderOpenidMapFailure;
-import com.help.rebate.dao.entity.OrderOpenidMapFailureExample;
+import com.help.rebate.dao.entity.*;
 import com.help.rebate.service.ddx.jd.DdxJDItemConverter;
 import com.help.rebate.service.ddx.mt.DdxMeiTuanActivityConverter;
 import com.help.rebate.service.ddx.pdd.DdxPddItemConverter;
@@ -42,6 +39,12 @@ public class WxKeyWordHandlerService {
     private static final Logger logger = LoggerFactory.getLogger(WxKeyWordHandlerService.class);
 
     /**
+     * 用户信息服务
+     */
+    @Autowired
+    private UserInfosService userInfosService;
+
+    /**
      * 淘口令转链服务
      */
     @Autowired
@@ -72,9 +75,6 @@ public class WxKeyWordHandlerService {
     private DdxMeiTuanActivityConverter ddxMeiTuanActivityConverter;
 
     @Autowired
-    private UserInfosService userInfosService;
-
-    @Autowired
     private OrderBindService orderBindService;
 
     @Autowired
@@ -87,7 +87,7 @@ public class WxKeyWordHandlerService {
      * keyword
      */
     private static String[] keywords = new String[]{"余额", "提现", "会员", "提示", "openId"};
-    private static String[] keywordBegins = new String[]{"绑定:", "查询:", "返利:", "区间余额:", "模拟:"};
+    private static String[] keywordBegins = new String[]{"绑定:", "查询:", "返利:", "区间余额:", "模拟:", "会员查询:", "会员绑定:"};
     public static String tips = "如有订单疑惑，回复如下指令查询：\n";
     public static String innerTips = "完整指令：\n";
     static {
@@ -105,6 +105,8 @@ public class WxKeyWordHandlerService {
         innerTips += ++index + "、返利:genericType;tradeParentId - 查询订单返利详情\n" ;
         innerTips += ++index + "、区间余额:openId;specialId;startTime;endTime - 查询区间的余额\n" ;
         innerTips += ++index + "、模拟:openId;specialId;mockStatus;startTime;endTime - 模拟提现的状态\n" ;
+        innerTips += ++index + "、会员查询:keyword(1-openid,2-specialid,3-externalid);value - 查询会员信息\n" ;
+        innerTips += ++index + "、会员绑定:1-openid:val;2-specialid:val;3-externalid:val;force - 执行绑定，以及是否强制绑定，解除其他绑定\n" ;
 
     }
 
@@ -153,7 +155,7 @@ public class WxKeyWordHandlerService {
             return innerTips;
         }
 
-        if ("openId".equals(content)) {
+        if ("openid".equals(content.toLowerCase())) {
             return "openId - " + fromUserName;
         }
 
@@ -182,8 +184,69 @@ public class WxKeyWordHandlerService {
             return doHandleTriggerPickMoney(fromUserName, content.split(":", 2)[1]);
         }
 
+        //其他状态 - 会员查询
+        if (content.startsWith("会员查询:")) {
+            return doHandleVipQuery(fromUserName, content.split(":", 2)[1]);
+        }
+
+        //其他状态 - 会员绑定
+        if (content.startsWith("会员绑定:")) {
+            return doHandleVipBind(fromUserName, content.split(":", 2)[1]);
+        }
 
         return "暂不支持的指令";
+    }
+
+    /**
+     * 会员绑定 1-openid:val;2-specialid:val;3-externalid:val;force - 执行绑定，以及是否强制绑定，解除其他绑定
+     * @param fromUserName
+     * @param content
+     * @return
+     */
+    private String doHandleVipBind(String fromUserName, String content) {
+        return "稍后支持";
+    }
+
+    /**
+     * 会员查询 keyword(1-openid,2-specialid,3-externalid);value - 查询会员信息
+     * @param fromUserName
+     * @param content
+     * @return
+     */
+    private String doHandleVipQuery(String fromUserName, String content) {
+        //管理员操作
+        String[] keywordAndVal = content.split(";");
+
+        //值
+        String value = keywordAndVal[keywordAndVal.length - 1];
+
+        //关键字
+        String openId = null;
+        String specialId = null;
+        String externalId = null;
+        String keyword = null;
+        keyword = keywordAndVal[keywordAndVal.length - 2].toLowerCase();
+        if (keyword.startsWith("1") || keyword.contains("openid")) {
+            openId = value;
+        }
+        else if (keyword.startsWith("2") || keyword.contains("specialid")) {
+            specialId = value;
+        }
+        else {
+            externalId = value;
+        }
+
+        //查询
+        UserInfos userInfos = userInfosService.selectByOpenIdAndSpecialIdAndExternalId(openId, specialId, externalId);
+        if (userInfos == null) {
+            return "不存在该用户信息";
+        }
+        else {
+            String result = "openId: " + userInfos.getOpenId() + "\n";
+            result += "specialId: " + userInfos.getSpecialId() + "\n";
+            result += "externalId: " + userInfos.getExternalId() + "\n";
+            return result;
+        }
     }
 
     /**
@@ -453,8 +516,13 @@ public class WxKeyWordHandlerService {
         if (openidAndSpecialIdAndTimeRange.length >= 4) {
             openId = openidAndSpecialIdAndTimeRange[openidAndSpecialIdAndTimeRange.length - 4];
             if (EmptyUtils.isEmpty(openId)) {
-                openId = fromUserName;
+                openId = null;
             }
+        }
+
+        //都为空
+        if (specialId == null && openId == null) {
+            openId = fromUserName;
         }
 
         //返回查询信息
@@ -498,8 +566,13 @@ public class WxKeyWordHandlerService {
         if (openidAndSpecialIdAndTimeRange.length >= 5) {
             openId = openidAndSpecialIdAndTimeRange[openidAndSpecialIdAndTimeRange.length - 5];
             if (EmptyUtils.isEmpty(openId)) {
-                openId = fromUserName;
+                openId = null;
             }
+        }
+
+        //都为空
+        if (specialId == null && openId == null) {
+            openId = fromUserName;
         }
 
         //查询

@@ -14,6 +14,7 @@ import com.help.rebate.vo.CommissionVO;
 import com.help.rebate.vo.OrderBindResultVO;
 import com.help.rebate.vo.PickCommissionVO;
 import com.help.rebate.web.response.SafeServiceResponse;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +26,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * 微信的关键字处理服务
@@ -106,7 +109,7 @@ public class WxKeyWordHandlerService {
         innerTips += ++index + "、区间余额:openId;specialId;startTime;endTime - 查询区间的余额\n" ;
         innerTips += ++index + "、模拟:openId;specialId;mockStatus;startTime;endTime - 模拟提现的状态\n" ;
         innerTips += ++index + "、会员查询:keyword(1-openid,2-specialid,3-externalid);value - 查询会员信息\n" ;
-        innerTips += ++index + "、会员绑定:1-openid:val;2-specialid:val;3-externalid:val;force - 执行绑定，以及是否强制绑定，解除其他绑定\n" ;
+        innerTips += ++index + "、会员绑定:1-openid:val;2-specialid:val;3-externalid:val;4-force:true/false - 执行绑定，以及是否强制绑定，解除其他绑定\n" ;
 
     }
 
@@ -198,12 +201,31 @@ public class WxKeyWordHandlerService {
     }
 
     /**
-     * 会员绑定 1-openid:val;2-specialid:val;3-externalid:val;force - 执行绑定，以及是否强制绑定，解除其他绑定
+     * 会员绑定 1-openid:val;2-specialid:val;3-externalid:val;4-force:true/false - 执行绑定，以及是否强制绑定，解除其他绑定
      * @param fromUserName
      * @param content
      * @return
      */
     private String doHandleVipBind(String fromUserName, String content) {
+        //管理员操作
+        Map<String, String> keyValMap = Arrays.stream(content.split(";"))
+                .map(a -> a.trim().split(":"))
+                .filter(a -> a.length == 2 && StringUtils.isNotEmpty(a[0]) && StringUtils.isNotEmpty(a[1]))
+                .collect(Collectors.toMap(a -> a[0].trim().toLowerCase(), a -> a[1].trim(), (a, b) -> a));
+
+        //关键字
+        String openId = keyValMap.get("1") == null ? keyValMap.get("openid") : keyValMap.get("1");
+        String specialId = keyValMap.get("2") == null ? keyValMap.get("specialid") : keyValMap.get("2");
+        String externalId = keyValMap.get("3") == null ? keyValMap.get("externalid") : keyValMap.get("3");
+        String forceFlag = keyValMap.get("4") == null ? keyValMap.get("force") : keyValMap.get("4");
+
+        //openid不能为空
+        if (StringUtils.isEmpty(openId) || StringUtils.isEmpty(specialId)) {
+            return "绑定失败-[openId, specialId]必须提供";
+        }
+
+        //
+
         return "稍后支持";
     }
 

@@ -5,6 +5,7 @@ import com.help.rebate.dao.TklConvertHistoryDao;
 import com.help.rebate.dao.UserInfosDao;
 import com.help.rebate.dao.entity.*;
 import com.help.rebate.service.ddx.tb.DdxReturnPriceService;
+import com.help.rebate.service.dtk.tb.DtkReturnPriceService;
 import com.help.rebate.utils.Checks;
 import com.help.rebate.utils.EmptyUtils;
 import com.help.rebate.utils.MD5Utils;
@@ -55,6 +56,9 @@ public class TklConvertService {
     @Resource
     private DdxReturnPriceService ddxReturnPriceService;
 
+    @Resource
+    private DtkReturnPriceService dtkReturnPriceService;
+
     /**
      * 转链服务
      * @param tkl 原始淘口令
@@ -75,14 +79,14 @@ public class TklConvertService {
 
         //1、优先检查，是否是会员
         if ("special".equals(tklType)) {
-            DdxReturnPriceService.TklDO newTkl = null;
+            DtkReturnPriceService.TklDO newTkl = null;
             if (!EmptyUtils.isEmpty(userInfo.getSpecialId())) {
                 //使用会员的specialId
-                newTkl = ddxReturnPriceService.generateReturnPriceInfo(tkl, null, userInfo.getSpecialId(), null, 0.88);
+                newTkl = dtkReturnPriceService.generateReturnPriceInfo(tkl, null, userInfo.getSpecialId(), null, 0.88);
             }
             else {
                 //使用引导添加会员的externalId，默认与openId是一样的
-                newTkl = ddxReturnPriceService.generateReturnPriceInfo(tkl, null, null, userInfo.getExternalId(), 0.88);
+                newTkl = dtkReturnPriceService.generateReturnPriceInfo(tkl, null, null, userInfo.getExternalId(), 0.88);
             }
 
             //存储到转链记录表
@@ -100,7 +104,7 @@ public class TklConvertService {
         String pubSiteCombination = allPubSiteCombinations.get(index);
 
         //2.1.2、hash方式，选中后，开始转链
-        DdxReturnPriceService.TklDO newTkl = convertTklByRelationId(tkl, pubSiteCombination);
+        DtkReturnPriceService.TklDO newTkl = convertTklByRelationId(tkl, pubSiteCombination);
 
         //2.1.3、获取商品ID - 查询转链记录表，看看该用户下是否已经转换过该商品，并使用了某个推广位
         String itemId = newTkl.getItemId();
@@ -167,7 +171,7 @@ public class TklConvertService {
      * @param pubSiteCombination
      * @return
      */
-    private DdxReturnPriceService.TklDO convertTklByRelationId(String tkl, String pubSiteCombination) {
+    private DtkReturnPriceService.TklDO convertTklByRelationId(String tkl, String pubSiteCombination) {
         String[] vipIdAndPubSite = pubSiteCombination.split("\\|");
         String vipId = null;
         String pubSite = vipIdAndPubSite[1];
@@ -175,7 +179,7 @@ public class TklConvertService {
             vipId = vipIdAndPubSite[0];
         }
 
-        return ddxReturnPriceService.generateReturnPriceInfo(tkl, vipId, null, null, pubSite, 0.88);
+        return dtkReturnPriceService.generateReturnPriceInfo(tkl, vipId, null, null, pubSite, 0.88);
     }
 
     /**
@@ -294,7 +298,7 @@ public class TklConvertService {
      * @param pubSiteCombination
      */
     private void storeConvertRecord(String tkl, String openId, String externalId, String tklType,
-                                    DdxReturnPriceService.TklDO newTkl, String pubSiteCombination) {
+                                    DtkReturnPriceService.TklDO newTkl, String pubSiteCombination) {
         List<TklConvertHistory> tklConvertHistories = getTklConvertHistories(tklType, newTkl.getItemId(), externalId, pubSiteCombination, 1);
         if (EmptyUtils.isEmpty(tklConvertHistories)) {
             TklConvertHistory tklConvertHistory = new TklConvertHistory();

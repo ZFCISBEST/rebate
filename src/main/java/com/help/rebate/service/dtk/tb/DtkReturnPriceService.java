@@ -91,8 +91,9 @@ public class DtkReturnPriceService {
             //兼容ios14及其以上 - 这里与订单侠不同，暂时没有可用字段用于判断
             String newCouponTpwd = longCouponTpwd;
             if (EmptyUtils.isEmpty(coupon)) {
+                String tpwd = PropertyValueResolver.getProperty(jsonObject, "data.tpwd");
                 String longItemTpwd = PropertyValueResolver.getProperty(jsonObject, "data.shortUrl");
-                newCouponTpwd = longItemTpwd;
+                newCouponTpwd = tpwd + " " + longItemTpwd;
             }
 
             //根据模板生成新的淘口令

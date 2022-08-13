@@ -32,6 +32,7 @@ public class DtkItemConverter {
 
     /**
      * 根据淘口令，转链接获取返利淘口令
+     *
      * @param tkl
      * @param relationId
      * @param specialId
@@ -39,7 +40,33 @@ public class DtkItemConverter {
      * @param pubSite
      * @return
      */
-    public JSONObject getPrivilegeTkl(String tkl, String relationId, String specialId, String externalId, String pubSite){
+    public JSONObject getPrivilegeTkl(String tkl, String relationId, String specialId, String externalId, String pubSite) {
+        //构建参数
+        Map<String, Object> params = buildParams(tkl, specialId, externalId, pubSite);
+
+        String result = prettyHttpService.get(DtkConfig.DTK_GET_PRIVILEGE_TKL, params);
+        return JSON.parseObject(String.valueOf(result));
+    }
+
+    /**
+     * 根据淘口令，转链接获取返利淘口令
+     *
+     * @param tkl
+     * @param relationId
+     * @param specialId
+     * @param externalId
+     * @param pubSite
+     * @return
+     */
+    public JSONObject getTwd2Twd(String tkl, String relationId, String specialId, String externalId, String pubSite) {
+        //构建参数
+        Map<String, Object> params = buildParams(tkl, specialId, externalId, pubSite);
+
+        String result = prettyHttpService.get(DtkConfig.DTK_GET_TWD_2_TWD, params);
+        return JSON.parseObject(String.valueOf(result));
+    }
+
+    private Map<String, Object> buildParams(String tkl, String specialId, String externalId, String pubSite) {
         String goodsId = parseTkl(tkl).getJSONObject("data").getString("goodsId");
         //基础参数
         Map<String,Object> params = new TreeMap<>();
@@ -58,9 +85,8 @@ public class DtkItemConverter {
             params.put("externalId", externalId);
         }
 
-        params.put("sign", SignMD5Util.getSignStr(params,DtkConfig.dtkAppsecret));
-        String result = prettyHttpService.get(DtkConfig.DTK_GET_PRIVILEGE_TKL, params);
-        return JSON.parseObject(String.valueOf(result));
+        params.put("sign", SignMD5Util.getSignStr(params, DtkConfig.dtkAppsecret));
+        return params;
     }
 
     /**

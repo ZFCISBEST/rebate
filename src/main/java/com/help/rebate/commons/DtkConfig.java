@@ -22,6 +22,9 @@ public class DtkConfig {
      * 高效转链,根据商品id获取返利tkl
      */
     public final static String DTK_GET_PRIVILEGE_TKL ="https://openapi.dataoke.com/api/tb-service/get-privilege-link";
+    public final static String DTK_GET_TWD_2_TWD ="https://openapi.dataoke.com/api/tb-service/twd-to-twd";
+
+
     /**
      * 订单同步接口
      */

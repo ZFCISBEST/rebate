@@ -31,4 +31,12 @@ class DtkItemConverterTest {
         JSONObject a =ddxItemConverter.parseTkl(tkl,null,null,null,"mm_120037479_18710025_65896653");
         System.out.println(JSON.toJSONString(a, true));
     }
+
+    @Test
+    void test_getTwd2Twd() {
+        String tkl = "78￥58he2tdmEMs￥ https://m.tb.cn/h.fBHZtDv  CZ3457 青蛙王子婴儿牛奶沐浴露洗发水二合一宝宝沐浴乳婴幼儿童洗发水";
+        JSONObject a =dtkItemConverter.parseTkl(tkl);
+
+        System.out.println(JSON.toJSONString(a, true));
+    }
 }

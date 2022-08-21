@@ -1,18 +1,12 @@
 package com.help.rebate.service.wx;
 
 import com.alibaba.fastjson.JSON;
-import com.help.rebate.service.TklConvertService;
 import com.help.rebate.service.WxKeyWordHandlerService;
-import com.help.rebate.service.ddx.jd.DdxJDItemConverter;
-import com.help.rebate.service.ddx.mt.DdxMeiTuanActivityConverter;
-import com.help.rebate.service.ddx.pdd.DdxPddItemConverter;
-import com.help.rebate.service.ddx.tb.DdxElemeActivityConverter;
-import com.help.rebate.service.exception.ConvertException;
 import com.help.rebate.utils.MsgUtil;
 import com.help.rebate.vo.TextMessage;
+import org.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -31,6 +25,12 @@ public class MessageServiceImpl implements MessageService {
      */
     @Resource
     private WxKeyWordHandlerService wxKeyWordHandlerService;
+
+    /**
+     * 发红包服务
+     */
+    @Resource
+    private SendRedPackageService sendRedPackageService;
 
     @Override
     public String newMessageRequest(HttpServletRequest request) {
@@ -59,13 +59,7 @@ public class MessageServiceImpl implements MessageService {
         if(msgType.equals("event")) {
             if(map.get("Event").equals("subscribe")) {
                 // 订阅
-                TextMessage text = new TextMessage();
-                text.setContent("感谢您的关注，本服务号当前提供淘宝/京东/拼多多链接返利功能，将商品链接发送给服务号，使用服务号返回的链接购买商品，确认收货后可以通过平台提取优惠现金。");
-                text.setToUserName(fromUserName);
-                text.setFromUserName(toUserName);
-                text.setCreateTime(new Date().getTime());
-                text.setMsgType("text");
-                replyMessage = MsgUtil.textMessageToXML(text);
+                replyMessage = wrapReturnMsg(fromUserName, toUserName, "感谢您的关注，本服务号当前提供淘宝/京东/拼多多链接返利功能，将商品链接发送给服务号，使用服务号返回的链接购买商品，确认收货后可以通过平台提取优惠现金。", "text");
 
                 logger.info("returnOther=" + replyMessage);
             } else if (map.get("Event").equals("CLICK")) {
@@ -85,25 +79,26 @@ public class MessageServiceImpl implements MessageService {
 
                     logger.info("returnOther="+replyMessage);
                 } else if (eventKey.equals("V001_GET_MONEY")) {
-                    // 发送红包
-                    TextMessage text = new TextMessage();
-                    text.setContent("待开发领取红包功能。");
-                    text.setToUserName(fromUserName);
-                    text.setFromUserName(toUserName);
-                    text.setCreateTime(new Date().getTime());
-                    text.setMsgType("text");
-                    replyMessage = MsgUtil.textMessageToXML(text);
+                    boolean sendRedPackFlag = detectSendRedPack(fromUserName);
+                    if (!sendRedPackFlag) {
+                        //默认的回复
+                        replyMessage = wrapReturnMsg(fromUserName, toUserName, "待开发领取红包功能。", "text");
+                    }
+                    else {
+                        //发个红包试试
+                        try {
+                            String msg = sendRedPackageService.sendRedPack(fromUserName, 200);
+                            replyMessage = wrapReturnMsg(fromUserName, toUserName, "红包已发出，请领取,消息:" + msg, "text");
+                        } catch (Exception e) {
+                            logger.error("红包发送失败", e);
+                            replyMessage = wrapReturnMsg(fromUserName, toUserName, "红包发送失败，请稍后重试, 消息:" + e, "text");
+                        }
+                    }
 
-                    logger.info("returnOther="+replyMessage);
+                    logger.info("returnOther={}", replyMessage);
                 } else if (eventKey.equals("V001_VIP")) {
                     // 绑定会员
-                    TextMessage text = new TextMessage();
-                    text.setContent(wxKeyWordHandlerService.handleKeyWord(fromUserName, toUserName, "会员"));
-                    text.setToUserName(fromUserName);
-                    text.setFromUserName(toUserName);
-                    text.setCreateTime(new Date().getTime());
-                    text.setMsgType("text");
-                    replyMessage = MsgUtil.textMessageToXML(text);
+                    replyMessage = wrapReturnMsg(fromUserName, toUserName, wxKeyWordHandlerService.handleKeyWord(fromUserName, toUserName, "会员"), "text");
 
                     logger.info("returnOther="+replyMessage);
                 }
@@ -121,25 +116,42 @@ public class MessageServiceImpl implements MessageService {
             }
 
             //自动回复
-            TextMessage text = new TextMessage();
-            text.setContent(returnContent);
-            text.setToUserName(fromUserName);
-            text.setFromUserName(toUserName);
-            text.setCreateTime(new Date().getTime());
-            text.setMsgType(msgType);
-            replyMessage = MsgUtil.textMessageToXML(text);
+            replyMessage = wrapReturnMsg(fromUserName, toUserName, returnContent, msgType);
             logger.info("returnText = {}", replyMessage);
         } else {
-            TextMessage text = new TextMessage();
-            text.setContent("公众号无法提供相关服务。");
-            text.setToUserName(fromUserName);
-            text.setFromUserName(toUserName);
-            text.setCreateTime(new Date().getTime());
-            text.setMsgType("text");
-            replyMessage = MsgUtil.textMessageToXML(text);
+            replyMessage = wrapReturnMsg(fromUserName, toUserName, "公众号无法提供相关服务。", "text");
             logger.info("returnOther=" + replyMessage);
         }
 
+        return replyMessage;
+    }
+
+    /**
+     * 内测用户可以提取
+     * @param fromUserName
+     * @return
+     */
+    private boolean detectSendRedPack(String fromUserName) {
+        return fromUserName.toLowerCase().startsWith("odgjp5w-s6prav3p");
+    }
+
+    /**
+     * 封装返回消息
+     * @param fromUserName
+     * @param toUserName
+     * @param content
+     * @param msgType
+     * @return
+     */
+    private String wrapReturnMsg(String fromUserName, String toUserName, String content, String msgType) {
+        String replyMessage;
+        TextMessage text = new TextMessage();
+        text.setContent(content);
+        text.setToUserName(fromUserName);
+        text.setFromUserName(toUserName);
+        text.setCreateTime(new Date().getTime());
+        text.setMsgType(msgType);
+        replyMessage = MsgUtil.textMessageToXML(text);
         return replyMessage;
     }
 }

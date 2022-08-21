@@ -17,6 +17,8 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.BasicHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.*;
 import java.io.*;
@@ -27,6 +29,57 @@ import java.security.*;
 import static com.help.rebate.service.wx.WXPayConstants.USER_AGENT;
 
 public class WxHttpService {
+    private static final Logger logger = LoggerFactory.getLogger(WxHttpService.class);
+
+    private static HttpClient httpClient;
+
+    static{
+        try {
+// 创建SSLContext对象，并使用我们指定的信任管理器初始化
+            //TrustManager[] tm = { new MyX509TrustManager() };
+            // 实例化密钥库 & 初始化密钥工厂
+            KeyStore keyStore = KeyStore.getInstance("PKCS12");
+            //证书位置自己定义
+            FileInputStream instream = new FileInputStream(new File("/usr/local/src/apiclient_cert.p12"));
+            try {
+                //填写证书密码，默认为商户号
+                keyStore.load(instream, DecryptMD5.IdOpen(DdxConfig.ID).toCharArray());
+            } finally {
+                instream.close();
+            }
+
+            // 实例化密钥库 & 初始化密钥工厂
+            KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            kmf.init(keyStore,  DecryptMD5.IdOpen(DdxConfig.ID).toCharArray());
+
+            // 创建 SSLContext
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(kmf.getKeyManagers(), null, new SecureRandom());
+
+            // 从上述SSLContext对象中得到SSLSocketFactory对象
+            SSLConnectionSocketFactory sslConnectionSocketFactory = new SSLConnectionSocketFactory(
+                    sslContext,
+                    new String[]{"TLSv1"},
+                    null,
+                    new DefaultHostnameVerifier());
+
+            BasicHttpClientConnectionManager connManager = new BasicHttpClientConnectionManager(
+                    RegistryBuilder.<ConnectionSocketFactory>create()
+                            .register("http", PlainConnectionSocketFactory.getSocketFactory())
+                            .register("https", sslConnectionSocketFactory)
+                            .build(),
+                    null,
+                    null,
+                    null
+            );
+
+            httpClient = HttpClientBuilder.create()
+                    .setConnectionManager(connManager)
+                    .build();
+        } catch (Exception ex) {
+            logger.error("初始化微信http发送服务失败", ex);
+        }
+    }
 
     public static JSONObject httpsRequest(String requestUrl, String requestMethod, String outputStr) {
         JSONObject jsonObject = null;
@@ -78,53 +131,9 @@ public class WxHttpService {
 
 
     public static JSONObject httpsRequestPay(String requestUrl,  String outputStr) {
-        JSONObject jsonObject = null;
         try {
-            // 创建SSLContext对象，并使用我们指定的信任管理器初始化
-            //TrustManager[] tm = { new MyX509TrustManager() };
-            // 实例化密钥库 & 初始化密钥工厂
-            KeyStore keyStore = KeyStore.getInstance("PKCS12");
-            //证书位置自己定义
-            FileInputStream instream = new FileInputStream(new File("/usr/local/src/apiclient_cert.p12"));
-            try {
-                //填写证书密码，默认为商户号
-                keyStore.load(instream, DecryptMD5.IdOpen(DdxConfig.ID).toCharArray());
-            } finally {
-                instream.close();
-            }
-
-            // 实例化密钥库 & 初始化密钥工厂
-            KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-            kmf.init(keyStore,  DecryptMD5.IdOpen(DdxConfig.ID).toCharArray());
-
-            // 创建 SSLContext
-            SSLContext sslContext = SSLContext.getInstance("TLS");
-            sslContext.init(kmf.getKeyManagers(), null, new SecureRandom());
-
-            // 从上述SSLContext对象中得到SSLSocketFactory对象
-            SSLConnectionSocketFactory sslConnectionSocketFactory = new SSLConnectionSocketFactory(
-                    sslContext,
-                    new String[]{"TLSv1"},
-                    null,
-                    new DefaultHostnameVerifier());
-
-            BasicHttpClientConnectionManager connManager = new BasicHttpClientConnectionManager(
-                    RegistryBuilder.<ConnectionSocketFactory>create()
-                            .register("http", PlainConnectionSocketFactory.getSocketFactory())
-                            .register("https", sslConnectionSocketFactory)
-                            .build(),
-                    null,
-                    null,
-                    null
-            );
-
-            HttpClient httpClient = HttpClientBuilder.create()
-                    .setConnectionManager(connManager)
-                    .build();
-
             HttpPost httpPost = new HttpPost(requestUrl);
-
-            RequestConfig requestConfig = RequestConfig.custom().setSocketTimeout(1000).setConnectTimeout(1000).build();
+            RequestConfig requestConfig = RequestConfig.custom().setSocketTimeout(10000).setConnectTimeout(10000).build();
             httpPost.setConfig(requestConfig);
 
             StringEntity postEntity = new StringEntity(outputStr, "UTF-8");
@@ -132,15 +141,64 @@ public class WxHttpService {
             httpPost.addHeader("User-Agent", USER_AGENT + " " + "1617446954");
             httpPost.setEntity(postEntity);
 
+            if (httpClient == null) {
+                throw new IllegalStateException("HttpClient初始化失败");
+            }
+
             HttpResponse httpResponse = httpClient.execute(httpPost);
             HttpEntity httpEntity = httpResponse.getEntity();
             return JSON.parseObject(EntityUtils.toString(httpEntity, "UTF-8"));
-
         } catch (ConnectException ce) {
-            System.out.println("连接超时：" + ce );
+            logger.error("连接超时", ce);
+            throw new RuntimeException("连接超时", ce);
         } catch (Exception e) {
-            System.out.println("https请求异常：" + e );
+            logger.error("https请求异常", e);
+            throw new RuntimeException("https请求异常", e);
         }
-        return jsonObject;
+    }
+
+    /**
+     * <xml>
+     * <return_code><![CDATA[SUCCESS]]></return_code>
+     * <return_msg><![CDATA[发放成功]]></return_msg>
+     * <result_code><![CDATA[SUCCESS]]></result_code>
+     * <err_code><![CDATA[SUCCESS]]></err_code>
+     * <err_code_des><![CDATA[发放成功]]></err_code_des>
+     * <mch_billno><![CDATA[16610964586166018]]></mch_billno>
+     * <mch_id><![CDATA[1617446954]]></mch_id>
+     * <wxappid><![CDATA[wx9f4ab53be3e5e226]]></wxappid>
+     * <re_openid><![CDATA[odgJP5w-s6pRav3pIcIeB1urmqX8]]></re_openid>
+     * <total_amount>200</total_amount>
+     * <send_listid><![CDATA[1000041701202208213033416589419]]></send_listid>
+     * </xml>
+     * @param requestUrl
+     * @param outputStr
+     * @return
+     */
+    public static String httpsRequestPay2(String requestUrl,  String outputStr) {
+        try {
+            HttpPost httpPost = new HttpPost(requestUrl);
+            RequestConfig requestConfig = RequestConfig.custom().setSocketTimeout(10000).setConnectTimeout(10000).build();
+            httpPost.setConfig(requestConfig);
+
+            StringEntity postEntity = new StringEntity(outputStr, "UTF-8");
+            httpPost.addHeader("Content-Type", "text/xml");
+            httpPost.addHeader("User-Agent", USER_AGENT + " " + "1617446954");
+            httpPost.setEntity(postEntity);
+
+            if (httpClient == null) {
+                throw new IllegalStateException("HttpClient初始化失败");
+            }
+
+            HttpResponse httpResponse = httpClient.execute(httpPost);
+            HttpEntity httpEntity = httpResponse.getEntity();
+            return EntityUtils.toString(httpEntity, "UTF-8");
+        } catch (ConnectException ce) {
+            logger.error("连接超时", ce);
+            throw new RuntimeException("连接超时", ce);
+        } catch (Exception e) {
+            logger.error("https请求异常", e);
+            throw new RuntimeException("https请求异常", e);
+        }
     }
 }

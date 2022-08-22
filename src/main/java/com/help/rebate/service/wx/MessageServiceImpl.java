@@ -89,13 +89,12 @@ public class MessageServiceImpl implements MessageService {
                         try {
                             String msg = sendRedPackageService.sendRedPack(fromUserName, 200);
                             replyMessage = wrapReturnMsg(fromUserName, toUserName, "红包已发出，请领取,消息:" + msg, "text");
+                            logger.info("发送红包给[{}]成功: {}", fromUserName, msg);
                         } catch (Exception e) {
-                            logger.error("红包发送失败", e);
+                            logger.info("发送红包给[{}]失败", fromUserName, e);
                             replyMessage = wrapReturnMsg(fromUserName, toUserName, "红包发送失败，请稍后重试, 消息:" + e, "text");
                         }
                     }
-
-                    logger.info("returnOther={}", replyMessage);
                 } else if (eventKey.equals("V001_VIP")) {
                     // 绑定会员
                     replyMessage = wrapReturnMsg(fromUserName, toUserName, wxKeyWordHandlerService.handleKeyWord(fromUserName, toUserName, "会员"), "text");

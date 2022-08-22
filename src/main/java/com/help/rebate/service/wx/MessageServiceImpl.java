@@ -83,17 +83,23 @@ public class MessageServiceImpl implements MessageService {
                     if (!sendRedPackFlag) {
                         //默认的回复
                         replyMessage = wrapReturnMsg(fromUserName, toUserName, "待开发领取红包功能。", "text");
+                        return replyMessage;
                     }
-                    else {
-                        //发个红包试试
-                        try {
-                            String msg = sendRedPackageService.sendRedPack(fromUserName, 200);
-                            replyMessage = wrapReturnMsg(fromUserName, toUserName, "红包已发出，请领取,消息:" + msg, "text");
-                            logger.info("发送红包给[{}]成功: {}", fromUserName, msg);
-                        } catch (Exception e) {
-                            logger.info("发送红包给[{}]失败", fromUserName, e);
-                            replyMessage = wrapReturnMsg(fromUserName, toUserName, "红包发送失败，请稍后重试, 消息:" + e, "text");
+
+                    //发个红包试试
+                    try {
+                        SendRedPackageService.SendPackReturnMsgWrapper returnMsgWrapper = sendRedPackageService.sendRedPack2(fromUserName, 200);
+                        if (returnMsgWrapper.judgeSuccessful()) {
+                            replyMessage = wrapReturnMsg(fromUserName, toUserName, "红包已发出，请领取(24小时有效)", "text");
+                            logger.info("发送红包给[{}]成功: {}", fromUserName, JSON.toJSONString(returnMsgWrapper));
                         }
+                        else {
+                            replyMessage = wrapReturnMsg(fromUserName, toUserName, "红包发送失败，请稍后重试", "text");
+                            logger.info("发送红包给[{}]失败: {}", fromUserName, JSON.toJSONString(returnMsgWrapper));
+                        }
+                    } catch (Exception e) {
+                        logger.info("发送红包给[{}]失败", fromUserName, e);
+                        replyMessage = wrapReturnMsg(fromUserName, toUserName, "红包发送失败，请稍后重试", "text");
                     }
                 } else if (eventKey.equals("V001_VIP")) {
                     // 绑定会员

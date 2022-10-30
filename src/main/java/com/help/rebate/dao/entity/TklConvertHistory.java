@@ -81,6 +81,20 @@ public class TklConvertHistory implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    /**
+     * 重构
+     * @return
+     */
+    public String getItemId() {
+        if (itemId == null || itemId.trim().isEmpty()) {
+            return itemId;
+        }
+        if (itemId.contains("-")) {
+            return itemId.split("-")[1];
+        }
+        return itemId;
+    }
+
     @Override
     public boolean equals(Object that) {
         if (this == that) {

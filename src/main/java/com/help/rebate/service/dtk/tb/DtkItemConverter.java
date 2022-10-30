@@ -102,7 +102,8 @@ public class DtkItemConverter {
         params.put("version", "v1.0.0");
         params.put("sign", SignMD5Util.getSignStr(params,DtkConfig.dtkAppsecret));
 
-        String result = prettyHttpService.get(DtkConfig.DTK_PARSE_CONTENT, params);
+        String result = prettyHttpService.get(DtkConfig.DTK_PARSE_CONTENT２, params);
+        //String result = prettyHttpService.get(DtkConfig.DTK_PARSE_CONTENT, params);
         return JSON.parseObject(String.valueOf(result));
     }
 

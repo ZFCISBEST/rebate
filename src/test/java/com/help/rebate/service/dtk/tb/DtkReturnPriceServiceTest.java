@@ -15,8 +15,12 @@ class DtkReturnPriceServiceTest {
 
     @Test
     void test_generateReturnPriceInfo() {
-        String tkl = "【淘宝】https://m.tb.cn/h.fmA2OfL?tk=Vhm72fOLbQo「植护大包抽纸整箱卫生纸巾大号餐巾纸家用实惠装婴儿面巾纸抽批发」\n" +
-                "点击链接直接打开";
+        String tkl = "7英氏婴儿洗衣液宝宝专用儿童清洗液新生婴幼儿内衣裤清洁剂bb皂液【包邮】\n" +
+                "【推荐理由】30天热卖3万+, 回头客超1千, 赠送运费险退货无忧!\n" +
+                "【券后价】 49 元\n" +
+                "【优惠券】 10 元\n" +
+                "\n" +
+                "7輹\uD83D\uDC4BZhi8$p7kr2vC0jOX$:// CZ6135,打開/";
         DtkReturnPriceService.TklDO tklDO = dtkReturnPriceService.generateReturnPriceInfo(tkl, null, null, null, "mm_120037479_18710025_65896653", 1.0);
         System.out.println(JSON.toJSONString(tklDO, true));
     }

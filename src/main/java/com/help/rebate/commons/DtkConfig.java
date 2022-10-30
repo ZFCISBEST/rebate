@@ -10,13 +10,14 @@ public class DtkConfig {
     /**
      * 基础信息
      */
-    public final static String dtkAppkey = "61961877e8403";
-    public final static String dtkAppsecret = "30511c332ab42746a0fd0f43b948975f";
+    public final static String dtkAppkey = "6195f0595b3a8";
+    public final static String dtkAppsecret = "d70d242a16ee75c0e9509f1ea58add2a";
 
     /**
      * 淘系万能解析,根据淘口令生成商品id
      */
-    public final static String DTK_PARSE_CONTENT ="https://openapi.dataoke.com/api/tb-service/parse-content";
+    public final static String DTK_PARSE_CONTENT２ ="https://openapi.dataoke.com/api/tb-service/parse-content";
+    public final static String DTK_PARSE_CONTENT ="https://openapi.dataoke.com/api/tb-service/parse-taokouling";
 
     /**
      * 高效转链,根据商品id获取返利tkl

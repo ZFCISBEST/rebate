@@ -1,5 +1,6 @@
 package com.help.rebate.service.dtk.tb;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.help.rebate.service.dtk.tb.DtkItemConverter;
 import com.help.rebate.service.dtk.tb.DtkReturnPriceService;
@@ -68,13 +69,14 @@ public class DtkReturnPriceService {
      */
     public DtkReturnPriceService.TklDO generateReturnPriceInfo(String tkl, String relationId, String specialId, String externalId,
                                                                String pubSite, Double tempReturnRate){
+        JSONObject jsonObject = null;
         try{
             if (tempReturnRate == null || tempReturnRate <= 0) {
                 tempReturnRate = 0.8;
             }
 
             //解析淘口令
-            JSONObject jsonObject = dtkItemConverter.getPrivilegeTkl(tkl, relationId, specialId, externalId, pubSite);
+            jsonObject = dtkItemConverter.getPrivilegeTkl(tkl, relationId, specialId, externalId, pubSite);
             String longCouponTpwd = PropertyValueResolver.getProperty(jsonObject, "data.longTpwd");
             String maxCommissionRate = PropertyValueResolver.getProperty(jsonObject, "data.maxCommissionRate", true);
             if (maxCommissionRate == null || maxCommissionRate.equals("null")) {
@@ -103,7 +105,20 @@ public class DtkReturnPriceService {
 
             return new DtkReturnPriceService.TklDO(content, itemId);
         }catch(Throwable e){
-            logger.warn("[DdxReturnPriceService] 淘宝转链失败，message:{}, toString:{}", e.getMessage(), e.toString());
+            logger.warn("[DdxReturnPriceService] 淘宝转链失败，message:{}, 返回的内容:{}", e.getMessage(), JSON.toJSONString(jsonObject));
+
+            if (jsonObject != null) {
+                try{
+                    String itemId = PropertyValueResolver.getProperty(jsonObject, "data.itemId") + "";
+                    String tpwd = PropertyValueResolver.getProperty(jsonObject, "data.tpwd");
+                    return new DtkReturnPriceService.TklDO(tpwd, itemId);
+                }
+                catch(Exception ex) {
+                    logger.error("提取商品属性失败，导致转链接失败", ex);
+                    throw new ConvertException("此商品转链失败 - " + e.getMessage());
+                }
+            }
+
             throw new ConvertException("此商品转链失败 - " + e.getMessage());
         }
     }

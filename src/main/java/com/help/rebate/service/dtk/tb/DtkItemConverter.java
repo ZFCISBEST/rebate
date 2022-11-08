@@ -42,10 +42,30 @@ public class DtkItemConverter {
      */
     public JSONObject getPrivilegeTkl(String tkl, String relationId, String specialId, String externalId, String pubSite) {
         //构建参数
-        Map<String, Object> params = buildParams(tkl, specialId, externalId, pubSite);
+        Map<String, Object> params = null;
+        try {
+            params = buildParams(tkl, specialId, externalId, pubSite);
+        }
+        catch(Exception ex) {
+            logger.error("解析商品ID出错，重新解析:{}", tkl, ex);
 
-        String result = prettyHttpService.get(DtkConfig.DTK_GET_PRIVILEGE_TKL, params);
-        return JSON.parseObject(String.valueOf(result));
+            //重新解析 DtkConfig.DTK_PARSE_CONTENT
+            try{
+                params = buildParams(tkl, DtkConfig.DTK_PARSE_CONTENT, specialId, externalId, pubSite);
+            }
+            catch(Exception e) {
+                logger.error("重新解析商品ID出错，无法重新解析", e);
+            }
+            throw new RuntimeException("无法解析出商品ID");
+        }
+
+        try{
+            String result = prettyHttpService.get(DtkConfig.DTK_GET_PRIVILEGE_TKL, params);
+            return JSON.parseObject(String.valueOf(result));
+        }catch(Exception e) {
+            logger.error("转链接出错, {}", JSON.toJSONString(params), e);
+            throw new RuntimeException("当前商品转链接出错");
+        }
     }
 
     /**
@@ -89,6 +109,29 @@ public class DtkItemConverter {
         return params;
     }
 
+    private Map<String, Object> buildParams(String tkl, String url, String specialId, String externalId, String pubSite) {
+        String goodsId = parseTkl(tkl, url).getJSONObject("data").getString("goodsId");
+        //基础参数
+        Map<String,Object> params = new TreeMap<>();
+        params.put("appKey", DtkConfig.dtkAppkey);
+        params.put("goodsId", goodsId);
+        params.put("version", "v1.3.1");
+
+        //推广位
+        params.put("pid", pubSite);
+
+        //关于ID的参数
+        if (!EmptyUtils.isEmpty(specialId)) {
+            params.put("specialId", specialId);
+        }
+        if (!EmptyUtils.isEmpty(externalId)) {
+            params.put("externalId", externalId);
+        }
+
+        params.put("sign", SignMD5Util.getSignStr(params, DtkConfig.dtkAppsecret));
+        return params;
+    }
+
     /**
      * 根据淘口令，获取商品信息，包含商品ID
      * @param tkl
@@ -103,6 +146,24 @@ public class DtkItemConverter {
         params.put("sign", SignMD5Util.getSignStr(params,DtkConfig.dtkAppsecret));
 
         String result = prettyHttpService.get(DtkConfig.DTK_PARSE_CONTENT２, params);
+        //String result = prettyHttpService.get(DtkConfig.DTK_PARSE_CONTENT, params);
+        return JSON.parseObject(String.valueOf(result));
+    }
+
+    /**
+     * 根据淘口令，获取商品信息，包含商品ID
+     * @param tkl
+     * @return
+     */
+    public JSONObject parseTkl(String tkl, String url) {
+        //基础参数
+        Map<String,Object> params = new TreeMap<>();
+        params.put("appKey", DtkConfig.dtkAppkey);
+        params.put("content", tkl);
+        params.put("version", "v1.0.0");
+        params.put("sign", SignMD5Util.getSignStr(params,DtkConfig.dtkAppsecret));
+
+        String result = prettyHttpService.get(url, params);
         //String result = prettyHttpService.get(DtkConfig.DTK_PARSE_CONTENT, params);
         return JSON.parseObject(String.valueOf(result));
     }

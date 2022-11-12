@@ -21,6 +21,7 @@ import java.util.Map;
  * @author zfcisbest
  * @date 21/11/14
  */
+@Deprecated
 @Service
 public class DdxInviteCodeManager {
     private static final Logger logger = LoggerFactory.getLogger(DdxInviteCodeManager.class);

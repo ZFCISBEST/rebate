@@ -7,15 +7,12 @@ import com.help.rebate.dao.entity.OrderDetail;
 import com.help.rebate.dao.entity.OrderOpenidMap;
 import com.help.rebate.dao.entity.TklConvertHistory;
 import com.help.rebate.dao.entity.UserInfos;
-import com.help.rebate.utils.Checks;
-import com.help.rebate.utils.EmptyUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 订单绑定服务
@@ -47,7 +44,7 @@ public class UserPickMoneyService {
      * 用户信息服务，主要用于对用户信息表的更新操作
      */
     @Resource
-    private UserInfosService userInfosService;
+    private V2TaobaoUserInfoService v2TaobaoUserInfoService;
 
     /**
      * 订单映射表

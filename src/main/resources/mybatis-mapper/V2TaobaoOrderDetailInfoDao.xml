@@ -1,0 +1,1053 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.help.rebate.dao.V2TaobaoOrderDetailInfoDao">
+  <resultMap id="BaseResultMap" type="com.help.rebate.dao.entity.V2TaobaoOrderDetailInfo">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="gmt_created" jdbcType="TIMESTAMP" property="gmtCreated" />
+    <result column="gmt_modified" jdbcType="TIMESTAMP" property="gmtModified" />
+    <result column="trade_id" jdbcType="VARCHAR" property="tradeId" />
+    <result column="trade_parent_id" jdbcType="VARCHAR" property="tradeParentId" />
+    <result column="click_time" jdbcType="TIMESTAMP" property="clickTime" />
+    <result column="tk_create_time" jdbcType="TIMESTAMP" property="tkCreateTime" />
+    <result column="tb_paid_time" jdbcType="TIMESTAMP" property="tbPaidTime" />
+    <result column="tk_paid_time" jdbcType="TIMESTAMP" property="tkPaidTime" />
+    <result column="alipay_total_price" jdbcType="VARCHAR" property="alipayTotalPrice" />
+    <result column="pay_price" jdbcType="VARCHAR" property="payPrice" />
+    <result column="modified_time" jdbcType="VARCHAR" property="modifiedTime" />
+    <result column="tk_status" jdbcType="INTEGER" property="tkStatus" />
+    <result column="order_type" jdbcType="VARCHAR" property="orderType" />
+    <result column="refund_tag" jdbcType="INTEGER" property="refundTag" />
+    <result column="flow_source" jdbcType="VARCHAR" property="flowSource" />
+    <result column="terminal_type" jdbcType="VARCHAR" property="terminalType" />
+    <result column="tk_earning_time" jdbcType="TIMESTAMP" property="tkEarningTime" />
+    <result column="tk_order_role" jdbcType="INTEGER" property="tkOrderRole" />
+    <result column="total_commission_rate" jdbcType="VARCHAR" property="totalCommissionRate" />
+    <result column="income_rate" jdbcType="VARCHAR" property="incomeRate" />
+    <result column="pub_share_rate" jdbcType="VARCHAR" property="pubShareRate" />
+    <result column="tk_total_rate" jdbcType="VARCHAR" property="tkTotalRate" />
+    <result column="total_commission_fee" jdbcType="VARCHAR" property="totalCommissionFee" />
+    <result column="pub_share_pre_fee" jdbcType="VARCHAR" property="pubSharePreFee" />
+    <result column="pub_share_fee" jdbcType="VARCHAR" property="pubShareFee" />
+    <result column="alimama_rate" jdbcType="VARCHAR" property="alimamaRate" />
+    <result column="alimama_share_fee" jdbcType="VARCHAR" property="alimamaShareFee" />
+    <result column="subsidy_rate" jdbcType="VARCHAR" property="subsidyRate" />
+    <result column="subsidy_fee" jdbcType="VARCHAR" property="subsidyFee" />
+    <result column="subsidy_type" jdbcType="VARCHAR" property="subsidyType" />
+    <result column="tk_commission_pre_fee_for_media_platform" jdbcType="VARCHAR" property="tkCommissionPreFeeForMediaPlatform" />
+    <result column="tk_commission_fee_for_media_platform" jdbcType="VARCHAR" property="tkCommissionFeeForMediaPlatform" />
+    <result column="tk_commission_rate_for_media_platform" jdbcType="VARCHAR" property="tkCommissionRateForMediaPlatform" />
+    <result column="pub_id" jdbcType="VARCHAR" property="pubId" />
+    <result column="site_id" jdbcType="VARCHAR" property="siteId" />
+    <result column="adzone_id" jdbcType="VARCHAR" property="adzoneId" />
+    <result column="site_name" jdbcType="VARCHAR" property="siteName" />
+    <result column="adzone_name" jdbcType="VARCHAR" property="adzoneName" />
+    <result column="special_id" jdbcType="VARCHAR" property="specialId" />
+    <result column="relation_id" jdbcType="VARCHAR" property="relationId" />
+    <result column="item_category_name" jdbcType="VARCHAR" property="itemCategoryName" />
+    <result column="seller_nick" jdbcType="VARCHAR" property="sellerNick" />
+    <result column="seller_shop_title" jdbcType="VARCHAR" property="sellerShopTitle" />
+    <result column="item_id" jdbcType="VARCHAR" property="itemId" />
+    <result column="item_title" jdbcType="VARCHAR" property="itemTitle" />
+    <result column="item_price" jdbcType="VARCHAR" property="itemPrice" />
+    <result column="item_link" jdbcType="VARCHAR" property="itemLink" />
+    <result column="item_num" jdbcType="INTEGER" property="itemNum" />
+    <result column="tk_deposit_time" jdbcType="TIMESTAMP" property="tkDepositTime" />
+    <result column="tb_deposit_time" jdbcType="TIMESTAMP" property="tbDepositTime" />
+    <result column="deposit_price" jdbcType="VARCHAR" property="depositPrice" />
+    <result column="alsc_id" jdbcType="VARCHAR" property="alscId" />
+    <result column="alsc_pid" jdbcType="VARCHAR" property="alscPid" />
+    <result column="service_fee_dto_list" jdbcType="VARCHAR" property="serviceFeeDtoList" />
+    <result column="lx_rid" jdbcType="VARCHAR" property="lxRid" />
+    <result column="is_lx" jdbcType="VARCHAR" property="isLx" />
+    <result column="status" jdbcType="TINYINT" property="status" />
+  </resultMap>
+  <sql id="Example_Where_Clause">
+    <where>
+      <foreach collection="oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause">
+    <where>
+      <foreach collection="example.oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List">
+    id, gmt_created, gmt_modified, trade_id, trade_parent_id, click_time, tk_create_time, 
+    tb_paid_time, tk_paid_time, alipay_total_price, pay_price, modified_time, tk_status, 
+    order_type, refund_tag, flow_source, terminal_type, tk_earning_time, tk_order_role, 
+    total_commission_rate, income_rate, pub_share_rate, tk_total_rate, total_commission_fee, 
+    pub_share_pre_fee, pub_share_fee, alimama_rate, alimama_share_fee, subsidy_rate, 
+    subsidy_fee, subsidy_type, tk_commission_pre_fee_for_media_platform, tk_commission_fee_for_media_platform, 
+    tk_commission_rate_for_media_platform, pub_id, site_id, adzone_id, site_name, adzone_name, 
+    special_id, relation_id, item_category_name, seller_nick, seller_shop_title, item_id, 
+    item_title, item_price, item_link, item_num, tk_deposit_time, tb_deposit_time, deposit_price, 
+    alsc_id, alsc_pid, service_fee_dto_list, lx_rid, is_lx, `status`
+  </sql>
+  <select id="selectByExample" parameterType="com.help.rebate.dao.entity.V2TaobaoOrderDetailInfoExample" resultMap="BaseResultMap">
+    select
+    <if test="distinct">
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from v2_taobao_order_detail_info
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null">
+      order by ${orderByClause}
+    </if>
+    <if test="limit != null">
+      <if test="offset != null">
+        limit ${offset}, ${limit}
+      </if>
+      <if test="offset == null">
+        limit ${limit}
+      </if>
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from v2_taobao_order_detail_info
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from v2_taobao_order_detail_info
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.help.rebate.dao.entity.V2TaobaoOrderDetailInfoExample">
+    delete from v2_taobao_order_detail_info
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.help.rebate.dao.entity.V2TaobaoOrderDetailInfo" useGeneratedKeys="true">
+    insert into v2_taobao_order_detail_info (gmt_created, gmt_modified, trade_id, 
+      trade_parent_id, click_time, tk_create_time, 
+      tb_paid_time, tk_paid_time, alipay_total_price, 
+      pay_price, modified_time, tk_status, 
+      order_type, refund_tag, flow_source, 
+      terminal_type, tk_earning_time, tk_order_role, 
+      total_commission_rate, income_rate, pub_share_rate, 
+      tk_total_rate, total_commission_fee, pub_share_pre_fee, 
+      pub_share_fee, alimama_rate, alimama_share_fee, 
+      subsidy_rate, subsidy_fee, subsidy_type, 
+      tk_commission_pre_fee_for_media_platform, tk_commission_fee_for_media_platform, 
+      tk_commission_rate_for_media_platform, pub_id, 
+      site_id, adzone_id, site_name, 
+      adzone_name, special_id, relation_id, 
+      item_category_name, seller_nick, seller_shop_title, 
+      item_id, item_title, item_price, 
+      item_link, item_num, tk_deposit_time, 
+      tb_deposit_time, deposit_price, alsc_id, 
+      alsc_pid, service_fee_dto_list, lx_rid, 
+      is_lx, `status`)
+    values (#{gmtCreated,jdbcType=TIMESTAMP}, #{gmtModified,jdbcType=TIMESTAMP}, #{tradeId,jdbcType=VARCHAR}, 
+      #{tradeParentId,jdbcType=VARCHAR}, #{clickTime,jdbcType=TIMESTAMP}, #{tkCreateTime,jdbcType=TIMESTAMP}, 
+      #{tbPaidTime,jdbcType=TIMESTAMP}, #{tkPaidTime,jdbcType=TIMESTAMP}, #{alipayTotalPrice,jdbcType=VARCHAR}, 
+      #{payPrice,jdbcType=VARCHAR}, #{modifiedTime,jdbcType=VARCHAR}, #{tkStatus,jdbcType=INTEGER}, 
+      #{orderType,jdbcType=VARCHAR}, #{refundTag,jdbcType=INTEGER}, #{flowSource,jdbcType=VARCHAR}, 
+      #{terminalType,jdbcType=VARCHAR}, #{tkEarningTime,jdbcType=TIMESTAMP}, #{tkOrderRole,jdbcType=INTEGER}, 
+      #{totalCommissionRate,jdbcType=VARCHAR}, #{incomeRate,jdbcType=VARCHAR}, #{pubShareRate,jdbcType=VARCHAR}, 
+      #{tkTotalRate,jdbcType=VARCHAR}, #{totalCommissionFee,jdbcType=VARCHAR}, #{pubSharePreFee,jdbcType=VARCHAR}, 
+      #{pubShareFee,jdbcType=VARCHAR}, #{alimamaRate,jdbcType=VARCHAR}, #{alimamaShareFee,jdbcType=VARCHAR}, 
+      #{subsidyRate,jdbcType=VARCHAR}, #{subsidyFee,jdbcType=VARCHAR}, #{subsidyType,jdbcType=VARCHAR}, 
+      #{tkCommissionPreFeeForMediaPlatform,jdbcType=VARCHAR}, #{tkCommissionFeeForMediaPlatform,jdbcType=VARCHAR}, 
+      #{tkCommissionRateForMediaPlatform,jdbcType=VARCHAR}, #{pubId,jdbcType=VARCHAR}, 
+      #{siteId,jdbcType=VARCHAR}, #{adzoneId,jdbcType=VARCHAR}, #{siteName,jdbcType=VARCHAR}, 
+      #{adzoneName,jdbcType=VARCHAR}, #{specialId,jdbcType=VARCHAR}, #{relationId,jdbcType=VARCHAR}, 
+      #{itemCategoryName,jdbcType=VARCHAR}, #{sellerNick,jdbcType=VARCHAR}, #{sellerShopTitle,jdbcType=VARCHAR}, 
+      #{itemId,jdbcType=VARCHAR}, #{itemTitle,jdbcType=VARCHAR}, #{itemPrice,jdbcType=VARCHAR}, 
+      #{itemLink,jdbcType=VARCHAR}, #{itemNum,jdbcType=INTEGER}, #{tkDepositTime,jdbcType=TIMESTAMP}, 
+      #{tbDepositTime,jdbcType=TIMESTAMP}, #{depositPrice,jdbcType=VARCHAR}, #{alscId,jdbcType=VARCHAR}, 
+      #{alscPid,jdbcType=VARCHAR}, #{serviceFeeDtoList,jdbcType=VARCHAR}, #{lxRid,jdbcType=VARCHAR}, 
+      #{isLx,jdbcType=VARCHAR}, #{status,jdbcType=TINYINT})
+  </insert>
+  <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.help.rebate.dao.entity.V2TaobaoOrderDetailInfo" useGeneratedKeys="true">
+    insert into v2_taobao_order_detail_info
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="gmtCreated != null">
+        gmt_created,
+      </if>
+      <if test="gmtModified != null">
+        gmt_modified,
+      </if>
+      <if test="tradeId != null">
+        trade_id,
+      </if>
+      <if test="tradeParentId != null">
+        trade_parent_id,
+      </if>
+      <if test="clickTime != null">
+        click_time,
+      </if>
+      <if test="tkCreateTime != null">
+        tk_create_time,
+      </if>
+      <if test="tbPaidTime != null">
+        tb_paid_time,
+      </if>
+      <if test="tkPaidTime != null">
+        tk_paid_time,
+      </if>
+      <if test="alipayTotalPrice != null">
+        alipay_total_price,
+      </if>
+      <if test="payPrice != null">
+        pay_price,
+      </if>
+      <if test="modifiedTime != null">
+        modified_time,
+      </if>
+      <if test="tkStatus != null">
+        tk_status,
+      </if>
+      <if test="orderType != null">
+        order_type,
+      </if>
+      <if test="refundTag != null">
+        refund_tag,
+      </if>
+      <if test="flowSource != null">
+        flow_source,
+      </if>
+      <if test="terminalType != null">
+        terminal_type,
+      </if>
+      <if test="tkEarningTime != null">
+        tk_earning_time,
+      </if>
+      <if test="tkOrderRole != null">
+        tk_order_role,
+      </if>
+      <if test="totalCommissionRate != null">
+        total_commission_rate,
+      </if>
+      <if test="incomeRate != null">
+        income_rate,
+      </if>
+      <if test="pubShareRate != null">
+        pub_share_rate,
+      </if>
+      <if test="tkTotalRate != null">
+        tk_total_rate,
+      </if>
+      <if test="totalCommissionFee != null">
+        total_commission_fee,
+      </if>
+      <if test="pubSharePreFee != null">
+        pub_share_pre_fee,
+      </if>
+      <if test="pubShareFee != null">
+        pub_share_fee,
+      </if>
+      <if test="alimamaRate != null">
+        alimama_rate,
+      </if>
+      <if test="alimamaShareFee != null">
+        alimama_share_fee,
+      </if>
+      <if test="subsidyRate != null">
+        subsidy_rate,
+      </if>
+      <if test="subsidyFee != null">
+        subsidy_fee,
+      </if>
+      <if test="subsidyType != null">
+        subsidy_type,
+      </if>
+      <if test="tkCommissionPreFeeForMediaPlatform != null">
+        tk_commission_pre_fee_for_media_platform,
+      </if>
+      <if test="tkCommissionFeeForMediaPlatform != null">
+        tk_commission_fee_for_media_platform,
+      </if>
+      <if test="tkCommissionRateForMediaPlatform != null">
+        tk_commission_rate_for_media_platform,
+      </if>
+      <if test="pubId != null">
+        pub_id,
+      </if>
+      <if test="siteId != null">
+        site_id,
+      </if>
+      <if test="adzoneId != null">
+        adzone_id,
+      </if>
+      <if test="siteName != null">
+        site_name,
+      </if>
+      <if test="adzoneName != null">
+        adzone_name,
+      </if>
+      <if test="specialId != null">
+        special_id,
+      </if>
+      <if test="relationId != null">
+        relation_id,
+      </if>
+      <if test="itemCategoryName != null">
+        item_category_name,
+      </if>
+      <if test="sellerNick != null">
+        seller_nick,
+      </if>
+      <if test="sellerShopTitle != null">
+        seller_shop_title,
+      </if>
+      <if test="itemId != null">
+        item_id,
+      </if>
+      <if test="itemTitle != null">
+        item_title,
+      </if>
+      <if test="itemPrice != null">
+        item_price,
+      </if>
+      <if test="itemLink != null">
+        item_link,
+      </if>
+      <if test="itemNum != null">
+        item_num,
+      </if>
+      <if test="tkDepositTime != null">
+        tk_deposit_time,
+      </if>
+      <if test="tbDepositTime != null">
+        tb_deposit_time,
+      </if>
+      <if test="depositPrice != null">
+        deposit_price,
+      </if>
+      <if test="alscId != null">
+        alsc_id,
+      </if>
+      <if test="alscPid != null">
+        alsc_pid,
+      </if>
+      <if test="serviceFeeDtoList != null">
+        service_fee_dto_list,
+      </if>
+      <if test="lxRid != null">
+        lx_rid,
+      </if>
+      <if test="isLx != null">
+        is_lx,
+      </if>
+      <if test="status != null">
+        `status`,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="gmtCreated != null">
+        #{gmtCreated,jdbcType=TIMESTAMP},
+      </if>
+      <if test="gmtModified != null">
+        #{gmtModified,jdbcType=TIMESTAMP},
+      </if>
+      <if test="tradeId != null">
+        #{tradeId,jdbcType=VARCHAR},
+      </if>
+      <if test="tradeParentId != null">
+        #{tradeParentId,jdbcType=VARCHAR},
+      </if>
+      <if test="clickTime != null">
+        #{clickTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="tkCreateTime != null">
+        #{tkCreateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="tbPaidTime != null">
+        #{tbPaidTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="tkPaidTime != null">
+        #{tkPaidTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="alipayTotalPrice != null">
+        #{alipayTotalPrice,jdbcType=VARCHAR},
+      </if>
+      <if test="payPrice != null">
+        #{payPrice,jdbcType=VARCHAR},
+      </if>
+      <if test="modifiedTime != null">
+        #{modifiedTime,jdbcType=VARCHAR},
+      </if>
+      <if test="tkStatus != null">
+        #{tkStatus,jdbcType=INTEGER},
+      </if>
+      <if test="orderType != null">
+        #{orderType,jdbcType=VARCHAR},
+      </if>
+      <if test="refundTag != null">
+        #{refundTag,jdbcType=INTEGER},
+      </if>
+      <if test="flowSource != null">
+        #{flowSource,jdbcType=VARCHAR},
+      </if>
+      <if test="terminalType != null">
+        #{terminalType,jdbcType=VARCHAR},
+      </if>
+      <if test="tkEarningTime != null">
+        #{tkEarningTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="tkOrderRole != null">
+        #{tkOrderRole,jdbcType=INTEGER},
+      </if>
+      <if test="totalCommissionRate != null">
+        #{totalCommissionRate,jdbcType=VARCHAR},
+      </if>
+      <if test="incomeRate != null">
+        #{incomeRate,jdbcType=VARCHAR},
+      </if>
+      <if test="pubShareRate != null">
+        #{pubShareRate,jdbcType=VARCHAR},
+      </if>
+      <if test="tkTotalRate != null">
+        #{tkTotalRate,jdbcType=VARCHAR},
+      </if>
+      <if test="totalCommissionFee != null">
+        #{totalCommissionFee,jdbcType=VARCHAR},
+      </if>
+      <if test="pubSharePreFee != null">
+        #{pubSharePreFee,jdbcType=VARCHAR},
+      </if>
+      <if test="pubShareFee != null">
+        #{pubShareFee,jdbcType=VARCHAR},
+      </if>
+      <if test="alimamaRate != null">
+        #{alimamaRate,jdbcType=VARCHAR},
+      </if>
+      <if test="alimamaShareFee != null">
+        #{alimamaShareFee,jdbcType=VARCHAR},
+      </if>
+      <if test="subsidyRate != null">
+        #{subsidyRate,jdbcType=VARCHAR},
+      </if>
+      <if test="subsidyFee != null">
+        #{subsidyFee,jdbcType=VARCHAR},
+      </if>
+      <if test="subsidyType != null">
+        #{subsidyType,jdbcType=VARCHAR},
+      </if>
+      <if test="tkCommissionPreFeeForMediaPlatform != null">
+        #{tkCommissionPreFeeForMediaPlatform,jdbcType=VARCHAR},
+      </if>
+      <if test="tkCommissionFeeForMediaPlatform != null">
+        #{tkCommissionFeeForMediaPlatform,jdbcType=VARCHAR},
+      </if>
+      <if test="tkCommissionRateForMediaPlatform != null">
+        #{tkCommissionRateForMediaPlatform,jdbcType=VARCHAR},
+      </if>
+      <if test="pubId != null">
+        #{pubId,jdbcType=VARCHAR},
+      </if>
+      <if test="siteId != null">
+        #{siteId,jdbcType=VARCHAR},
+      </if>
+      <if test="adzoneId != null">
+        #{adzoneId,jdbcType=VARCHAR},
+      </if>
+      <if test="siteName != null">
+        #{siteName,jdbcType=VARCHAR},
+      </if>
+      <if test="adzoneName != null">
+        #{adzoneName,jdbcType=VARCHAR},
+      </if>
+      <if test="specialId != null">
+        #{specialId,jdbcType=VARCHAR},
+      </if>
+      <if test="relationId != null">
+        #{relationId,jdbcType=VARCHAR},
+      </if>
+      <if test="itemCategoryName != null">
+        #{itemCategoryName,jdbcType=VARCHAR},
+      </if>
+      <if test="sellerNick != null">
+        #{sellerNick,jdbcType=VARCHAR},
+      </if>
+      <if test="sellerShopTitle != null">
+        #{sellerShopTitle,jdbcType=VARCHAR},
+      </if>
+      <if test="itemId != null">
+        #{itemId,jdbcType=VARCHAR},
+      </if>
+      <if test="itemTitle != null">
+        #{itemTitle,jdbcType=VARCHAR},
+      </if>
+      <if test="itemPrice != null">
+        #{itemPrice,jdbcType=VARCHAR},
+      </if>
+      <if test="itemLink != null">
+        #{itemLink,jdbcType=VARCHAR},
+      </if>
+      <if test="itemNum != null">
+        #{itemNum,jdbcType=INTEGER},
+      </if>
+      <if test="tkDepositTime != null">
+        #{tkDepositTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="tbDepositTime != null">
+        #{tbDepositTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="depositPrice != null">
+        #{depositPrice,jdbcType=VARCHAR},
+      </if>
+      <if test="alscId != null">
+        #{alscId,jdbcType=VARCHAR},
+      </if>
+      <if test="alscPid != null">
+        #{alscPid,jdbcType=VARCHAR},
+      </if>
+      <if test="serviceFeeDtoList != null">
+        #{serviceFeeDtoList,jdbcType=VARCHAR},
+      </if>
+      <if test="lxRid != null">
+        #{lxRid,jdbcType=VARCHAR},
+      </if>
+      <if test="isLx != null">
+        #{isLx,jdbcType=VARCHAR},
+      </if>
+      <if test="status != null">
+        #{status,jdbcType=TINYINT},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.help.rebate.dao.entity.V2TaobaoOrderDetailInfoExample" resultType="java.lang.Long">
+    select count(*) from v2_taobao_order_detail_info
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map">
+    update v2_taobao_order_detail_info
+    <set>
+      <if test="record.id != null">
+        id = #{record.id,jdbcType=INTEGER},
+      </if>
+      <if test="record.gmtCreated != null">
+        gmt_created = #{record.gmtCreated,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.gmtModified != null">
+        gmt_modified = #{record.gmtModified,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.tradeId != null">
+        trade_id = #{record.tradeId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.tradeParentId != null">
+        trade_parent_id = #{record.tradeParentId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.clickTime != null">
+        click_time = #{record.clickTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.tkCreateTime != null">
+        tk_create_time = #{record.tkCreateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.tbPaidTime != null">
+        tb_paid_time = #{record.tbPaidTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.tkPaidTime != null">
+        tk_paid_time = #{record.tkPaidTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.alipayTotalPrice != null">
+        alipay_total_price = #{record.alipayTotalPrice,jdbcType=VARCHAR},
+      </if>
+      <if test="record.payPrice != null">
+        pay_price = #{record.payPrice,jdbcType=VARCHAR},
+      </if>
+      <if test="record.modifiedTime != null">
+        modified_time = #{record.modifiedTime,jdbcType=VARCHAR},
+      </if>
+      <if test="record.tkStatus != null">
+        tk_status = #{record.tkStatus,jdbcType=INTEGER},
+      </if>
+      <if test="record.orderType != null">
+        order_type = #{record.orderType,jdbcType=VARCHAR},
+      </if>
+      <if test="record.refundTag != null">
+        refund_tag = #{record.refundTag,jdbcType=INTEGER},
+      </if>
+      <if test="record.flowSource != null">
+        flow_source = #{record.flowSource,jdbcType=VARCHAR},
+      </if>
+      <if test="record.terminalType != null">
+        terminal_type = #{record.terminalType,jdbcType=VARCHAR},
+      </if>
+      <if test="record.tkEarningTime != null">
+        tk_earning_time = #{record.tkEarningTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.tkOrderRole != null">
+        tk_order_role = #{record.tkOrderRole,jdbcType=INTEGER},
+      </if>
+      <if test="record.totalCommissionRate != null">
+        total_commission_rate = #{record.totalCommissionRate,jdbcType=VARCHAR},
+      </if>
+      <if test="record.incomeRate != null">
+        income_rate = #{record.incomeRate,jdbcType=VARCHAR},
+      </if>
+      <if test="record.pubShareRate != null">
+        pub_share_rate = #{record.pubShareRate,jdbcType=VARCHAR},
+      </if>
+      <if test="record.tkTotalRate != null">
+        tk_total_rate = #{record.tkTotalRate,jdbcType=VARCHAR},
+      </if>
+      <if test="record.totalCommissionFee != null">
+        total_commission_fee = #{record.totalCommissionFee,jdbcType=VARCHAR},
+      </if>
+      <if test="record.pubSharePreFee != null">
+        pub_share_pre_fee = #{record.pubSharePreFee,jdbcType=VARCHAR},
+      </if>
+      <if test="record.pubShareFee != null">
+        pub_share_fee = #{record.pubShareFee,jdbcType=VARCHAR},
+      </if>
+      <if test="record.alimamaRate != null">
+        alimama_rate = #{record.alimamaRate,jdbcType=VARCHAR},
+      </if>
+      <if test="record.alimamaShareFee != null">
+        alimama_share_fee = #{record.alimamaShareFee,jdbcType=VARCHAR},
+      </if>
+      <if test="record.subsidyRate != null">
+        subsidy_rate = #{record.subsidyRate,jdbcType=VARCHAR},
+      </if>
+      <if test="record.subsidyFee != null">
+        subsidy_fee = #{record.subsidyFee,jdbcType=VARCHAR},
+      </if>
+      <if test="record.subsidyType != null">
+        subsidy_type = #{record.subsidyType,jdbcType=VARCHAR},
+      </if>
+      <if test="record.tkCommissionPreFeeForMediaPlatform != null">
+        tk_commission_pre_fee_for_media_platform = #{record.tkCommissionPreFeeForMediaPlatform,jdbcType=VARCHAR},
+      </if>
+      <if test="record.tkCommissionFeeForMediaPlatform != null">
+        tk_commission_fee_for_media_platform = #{record.tkCommissionFeeForMediaPlatform,jdbcType=VARCHAR},
+      </if>
+      <if test="record.tkCommissionRateForMediaPlatform != null">
+        tk_commission_rate_for_media_platform = #{record.tkCommissionRateForMediaPlatform,jdbcType=VARCHAR},
+      </if>
+      <if test="record.pubId != null">
+        pub_id = #{record.pubId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.siteId != null">
+        site_id = #{record.siteId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.adzoneId != null">
+        adzone_id = #{record.adzoneId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.siteName != null">
+        site_name = #{record.siteName,jdbcType=VARCHAR},
+      </if>
+      <if test="record.adzoneName != null">
+        adzone_name = #{record.adzoneName,jdbcType=VARCHAR},
+      </if>
+      <if test="record.specialId != null">
+        special_id = #{record.specialId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.relationId != null">
+        relation_id = #{record.relationId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.itemCategoryName != null">
+        item_category_name = #{record.itemCategoryName,jdbcType=VARCHAR},
+      </if>
+      <if test="record.sellerNick != null">
+        seller_nick = #{record.sellerNick,jdbcType=VARCHAR},
+      </if>
+      <if test="record.sellerShopTitle != null">
+        seller_shop_title = #{record.sellerShopTitle,jdbcType=VARCHAR},
+      </if>
+      <if test="record.itemId != null">
+        item_id = #{record.itemId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.itemTitle != null">
+        item_title = #{record.itemTitle,jdbcType=VARCHAR},
+      </if>
+      <if test="record.itemPrice != null">
+        item_price = #{record.itemPrice,jdbcType=VARCHAR},
+      </if>
+      <if test="record.itemLink != null">
+        item_link = #{record.itemLink,jdbcType=VARCHAR},
+      </if>
+      <if test="record.itemNum != null">
+        item_num = #{record.itemNum,jdbcType=INTEGER},
+      </if>
+      <if test="record.tkDepositTime != null">
+        tk_deposit_time = #{record.tkDepositTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.tbDepositTime != null">
+        tb_deposit_time = #{record.tbDepositTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.depositPrice != null">
+        deposit_price = #{record.depositPrice,jdbcType=VARCHAR},
+      </if>
+      <if test="record.alscId != null">
+        alsc_id = #{record.alscId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.alscPid != null">
+        alsc_pid = #{record.alscPid,jdbcType=VARCHAR},
+      </if>
+      <if test="record.serviceFeeDtoList != null">
+        service_fee_dto_list = #{record.serviceFeeDtoList,jdbcType=VARCHAR},
+      </if>
+      <if test="record.lxRid != null">
+        lx_rid = #{record.lxRid,jdbcType=VARCHAR},
+      </if>
+      <if test="record.isLx != null">
+        is_lx = #{record.isLx,jdbcType=VARCHAR},
+      </if>
+      <if test="record.status != null">
+        `status` = #{record.status,jdbcType=TINYINT},
+      </if>
+    </set>
+    <if test="_parameter != null">
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map">
+    update v2_taobao_order_detail_info
+    set id = #{record.id,jdbcType=INTEGER},
+      gmt_created = #{record.gmtCreated,jdbcType=TIMESTAMP},
+      gmt_modified = #{record.gmtModified,jdbcType=TIMESTAMP},
+      trade_id = #{record.tradeId,jdbcType=VARCHAR},
+      trade_parent_id = #{record.tradeParentId,jdbcType=VARCHAR},
+      click_time = #{record.clickTime,jdbcType=TIMESTAMP},
+      tk_create_time = #{record.tkCreateTime,jdbcType=TIMESTAMP},
+      tb_paid_time = #{record.tbPaidTime,jdbcType=TIMESTAMP},
+      tk_paid_time = #{record.tkPaidTime,jdbcType=TIMESTAMP},
+      alipay_total_price = #{record.alipayTotalPrice,jdbcType=VARCHAR},
+      pay_price = #{record.payPrice,jdbcType=VARCHAR},
+      modified_time = #{record.modifiedTime,jdbcType=VARCHAR},
+      tk_status = #{record.tkStatus,jdbcType=INTEGER},
+      order_type = #{record.orderType,jdbcType=VARCHAR},
+      refund_tag = #{record.refundTag,jdbcType=INTEGER},
+      flow_source = #{record.flowSource,jdbcType=VARCHAR},
+      terminal_type = #{record.terminalType,jdbcType=VARCHAR},
+      tk_earning_time = #{record.tkEarningTime,jdbcType=TIMESTAMP},
+      tk_order_role = #{record.tkOrderRole,jdbcType=INTEGER},
+      total_commission_rate = #{record.totalCommissionRate,jdbcType=VARCHAR},
+      income_rate = #{record.incomeRate,jdbcType=VARCHAR},
+      pub_share_rate = #{record.pubShareRate,jdbcType=VARCHAR},
+      tk_total_rate = #{record.tkTotalRate,jdbcType=VARCHAR},
+      total_commission_fee = #{record.totalCommissionFee,jdbcType=VARCHAR},
+      pub_share_pre_fee = #{record.pubSharePreFee,jdbcType=VARCHAR},
+      pub_share_fee = #{record.pubShareFee,jdbcType=VARCHAR},
+      alimama_rate = #{record.alimamaRate,jdbcType=VARCHAR},
+      alimama_share_fee = #{record.alimamaShareFee,jdbcType=VARCHAR},
+      subsidy_rate = #{record.subsidyRate,jdbcType=VARCHAR},
+      subsidy_fee = #{record.subsidyFee,jdbcType=VARCHAR},
+      subsidy_type = #{record.subsidyType,jdbcType=VARCHAR},
+      tk_commission_pre_fee_for_media_platform = #{record.tkCommissionPreFeeForMediaPlatform,jdbcType=VARCHAR},
+      tk_commission_fee_for_media_platform = #{record.tkCommissionFeeForMediaPlatform,jdbcType=VARCHAR},
+      tk_commission_rate_for_media_platform = #{record.tkCommissionRateForMediaPlatform,jdbcType=VARCHAR},
+      pub_id = #{record.pubId,jdbcType=VARCHAR},
+      site_id = #{record.siteId,jdbcType=VARCHAR},
+      adzone_id = #{record.adzoneId,jdbcType=VARCHAR},
+      site_name = #{record.siteName,jdbcType=VARCHAR},
+      adzone_name = #{record.adzoneName,jdbcType=VARCHAR},
+      special_id = #{record.specialId,jdbcType=VARCHAR},
+      relation_id = #{record.relationId,jdbcType=VARCHAR},
+      item_category_name = #{record.itemCategoryName,jdbcType=VARCHAR},
+      seller_nick = #{record.sellerNick,jdbcType=VARCHAR},
+      seller_shop_title = #{record.sellerShopTitle,jdbcType=VARCHAR},
+      item_id = #{record.itemId,jdbcType=VARCHAR},
+      item_title = #{record.itemTitle,jdbcType=VARCHAR},
+      item_price = #{record.itemPrice,jdbcType=VARCHAR},
+      item_link = #{record.itemLink,jdbcType=VARCHAR},
+      item_num = #{record.itemNum,jdbcType=INTEGER},
+      tk_deposit_time = #{record.tkDepositTime,jdbcType=TIMESTAMP},
+      tb_deposit_time = #{record.tbDepositTime,jdbcType=TIMESTAMP},
+      deposit_price = #{record.depositPrice,jdbcType=VARCHAR},
+      alsc_id = #{record.alscId,jdbcType=VARCHAR},
+      alsc_pid = #{record.alscPid,jdbcType=VARCHAR},
+      service_fee_dto_list = #{record.serviceFeeDtoList,jdbcType=VARCHAR},
+      lx_rid = #{record.lxRid,jdbcType=VARCHAR},
+      is_lx = #{record.isLx,jdbcType=VARCHAR},
+      `status` = #{record.status,jdbcType=TINYINT}
+    <if test="_parameter != null">
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.help.rebate.dao.entity.V2TaobaoOrderDetailInfo">
+    update v2_taobao_order_detail_info
+    <set>
+      <if test="gmtCreated != null">
+        gmt_created = #{gmtCreated,jdbcType=TIMESTAMP},
+      </if>
+      <if test="gmtModified != null">
+        gmt_modified = #{gmtModified,jdbcType=TIMESTAMP},
+      </if>
+      <if test="tradeId != null">
+        trade_id = #{tradeId,jdbcType=VARCHAR},
+      </if>
+      <if test="tradeParentId != null">
+        trade_parent_id = #{tradeParentId,jdbcType=VARCHAR},
+      </if>
+      <if test="clickTime != null">
+        click_time = #{clickTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="tkCreateTime != null">
+        tk_create_time = #{tkCreateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="tbPaidTime != null">
+        tb_paid_time = #{tbPaidTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="tkPaidTime != null">
+        tk_paid_time = #{tkPaidTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="alipayTotalPrice != null">
+        alipay_total_price = #{alipayTotalPrice,jdbcType=VARCHAR},
+      </if>
+      <if test="payPrice != null">
+        pay_price = #{payPrice,jdbcType=VARCHAR},
+      </if>
+      <if test="modifiedTime != null">
+        modified_time = #{modifiedTime,jdbcType=VARCHAR},
+      </if>
+      <if test="tkStatus != null">
+        tk_status = #{tkStatus,jdbcType=INTEGER},
+      </if>
+      <if test="orderType != null">
+        order_type = #{orderType,jdbcType=VARCHAR},
+      </if>
+      <if test="refundTag != null">
+        refund_tag = #{refundTag,jdbcType=INTEGER},
+      </if>
+      <if test="flowSource != null">
+        flow_source = #{flowSource,jdbcType=VARCHAR},
+      </if>
+      <if test="terminalType != null">
+        terminal_type = #{terminalType,jdbcType=VARCHAR},
+      </if>
+      <if test="tkEarningTime != null">
+        tk_earning_time = #{tkEarningTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="tkOrderRole != null">
+        tk_order_role = #{tkOrderRole,jdbcType=INTEGER},
+      </if>
+      <if test="totalCommissionRate != null">
+        total_commission_rate = #{totalCommissionRate,jdbcType=VARCHAR},
+      </if>
+      <if test="incomeRate != null">
+        income_rate = #{incomeRate,jdbcType=VARCHAR},
+      </if>
+      <if test="pubShareRate != null">
+        pub_share_rate = #{pubShareRate,jdbcType=VARCHAR},
+      </if>
+      <if test="tkTotalRate != null">
+        tk_total_rate = #{tkTotalRate,jdbcType=VARCHAR},
+      </if>
+      <if test="totalCommissionFee != null">
+        total_commission_fee = #{totalCommissionFee,jdbcType=VARCHAR},
+      </if>
+      <if test="pubSharePreFee != null">
+        pub_share_pre_fee = #{pubSharePreFee,jdbcType=VARCHAR},
+      </if>
+      <if test="pubShareFee != null">
+        pub_share_fee = #{pubShareFee,jdbcType=VARCHAR},
+      </if>
+      <if test="alimamaRate != null">
+        alimama_rate = #{alimamaRate,jdbcType=VARCHAR},
+      </if>
+      <if test="alimamaShareFee != null">
+        alimama_share_fee = #{alimamaShareFee,jdbcType=VARCHAR},
+      </if>
+      <if test="subsidyRate != null">
+        subsidy_rate = #{subsidyRate,jdbcType=VARCHAR},
+      </if>
+      <if test="subsidyFee != null">
+        subsidy_fee = #{subsidyFee,jdbcType=VARCHAR},
+      </if>
+      <if test="subsidyType != null">
+        subsidy_type = #{subsidyType,jdbcType=VARCHAR},
+      </if>
+      <if test="tkCommissionPreFeeForMediaPlatform != null">
+        tk_commission_pre_fee_for_media_platform = #{tkCommissionPreFeeForMediaPlatform,jdbcType=VARCHAR},
+      </if>
+      <if test="tkCommissionFeeForMediaPlatform != null">
+        tk_commission_fee_for_media_platform = #{tkCommissionFeeForMediaPlatform,jdbcType=VARCHAR},
+      </if>
+      <if test="tkCommissionRateForMediaPlatform != null">
+        tk_commission_rate_for_media_platform = #{tkCommissionRateForMediaPlatform,jdbcType=VARCHAR},
+      </if>
+      <if test="pubId != null">
+        pub_id = #{pubId,jdbcType=VARCHAR},
+      </if>
+      <if test="siteId != null">
+        site_id = #{siteId,jdbcType=VARCHAR},
+      </if>
+      <if test="adzoneId != null">
+        adzone_id = #{adzoneId,jdbcType=VARCHAR},
+      </if>
+      <if test="siteName != null">
+        site_name = #{siteName,jdbcType=VARCHAR},
+      </if>
+      <if test="adzoneName != null">
+        adzone_name = #{adzoneName,jdbcType=VARCHAR},
+      </if>
+      <if test="specialId != null">
+        special_id = #{specialId,jdbcType=VARCHAR},
+      </if>
+      <if test="relationId != null">
+        relation_id = #{relationId,jdbcType=VARCHAR},
+      </if>
+      <if test="itemCategoryName != null">
+        item_category_name = #{itemCategoryName,jdbcType=VARCHAR},
+      </if>
+      <if test="sellerNick != null">
+        seller_nick = #{sellerNick,jdbcType=VARCHAR},
+      </if>
+      <if test="sellerShopTitle != null">
+        seller_shop_title = #{sellerShopTitle,jdbcType=VARCHAR},
+      </if>
+      <if test="itemId != null">
+        item_id = #{itemId,jdbcType=VARCHAR},
+      </if>
+      <if test="itemTitle != null">
+        item_title = #{itemTitle,jdbcType=VARCHAR},
+      </if>
+      <if test="itemPrice != null">
+        item_price = #{itemPrice,jdbcType=VARCHAR},
+      </if>
+      <if test="itemLink != null">
+        item_link = #{itemLink,jdbcType=VARCHAR},
+      </if>
+      <if test="itemNum != null">
+        item_num = #{itemNum,jdbcType=INTEGER},
+      </if>
+      <if test="tkDepositTime != null">
+        tk_deposit_time = #{tkDepositTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="tbDepositTime != null">
+        tb_deposit_time = #{tbDepositTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="depositPrice != null">
+        deposit_price = #{depositPrice,jdbcType=VARCHAR},
+      </if>
+      <if test="alscId != null">
+        alsc_id = #{alscId,jdbcType=VARCHAR},
+      </if>
+      <if test="alscPid != null">
+        alsc_pid = #{alscPid,jdbcType=VARCHAR},
+      </if>
+      <if test="serviceFeeDtoList != null">
+        service_fee_dto_list = #{serviceFeeDtoList,jdbcType=VARCHAR},
+      </if>
+      <if test="lxRid != null">
+        lx_rid = #{lxRid,jdbcType=VARCHAR},
+      </if>
+      <if test="isLx != null">
+        is_lx = #{isLx,jdbcType=VARCHAR},
+      </if>
+      <if test="status != null">
+        `status` = #{status,jdbcType=TINYINT},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.help.rebate.dao.entity.V2TaobaoOrderDetailInfo">
+    update v2_taobao_order_detail_info
+    set gmt_created = #{gmtCreated,jdbcType=TIMESTAMP},
+      gmt_modified = #{gmtModified,jdbcType=TIMESTAMP},
+      trade_id = #{tradeId,jdbcType=VARCHAR},
+      trade_parent_id = #{tradeParentId,jdbcType=VARCHAR},
+      click_time = #{clickTime,jdbcType=TIMESTAMP},
+      tk_create_time = #{tkCreateTime,jdbcType=TIMESTAMP},
+      tb_paid_time = #{tbPaidTime,jdbcType=TIMESTAMP},
+      tk_paid_time = #{tkPaidTime,jdbcType=TIMESTAMP},
+      alipay_total_price = #{alipayTotalPrice,jdbcType=VARCHAR},
+      pay_price = #{payPrice,jdbcType=VARCHAR},
+      modified_time = #{modifiedTime,jdbcType=VARCHAR},
+      tk_status = #{tkStatus,jdbcType=INTEGER},
+      order_type = #{orderType,jdbcType=VARCHAR},
+      refund_tag = #{refundTag,jdbcType=INTEGER},
+      flow_source = #{flowSource,jdbcType=VARCHAR},
+      terminal_type = #{terminalType,jdbcType=VARCHAR},
+      tk_earning_time = #{tkEarningTime,jdbcType=TIMESTAMP},
+      tk_order_role = #{tkOrderRole,jdbcType=INTEGER},
+      total_commission_rate = #{totalCommissionRate,jdbcType=VARCHAR},
+      income_rate = #{incomeRate,jdbcType=VARCHAR},
+      pub_share_rate = #{pubShareRate,jdbcType=VARCHAR},
+      tk_total_rate = #{tkTotalRate,jdbcType=VARCHAR},
+      total_commission_fee = #{totalCommissionFee,jdbcType=VARCHAR},
+      pub_share_pre_fee = #{pubSharePreFee,jdbcType=VARCHAR},
+      pub_share_fee = #{pubShareFee,jdbcType=VARCHAR},
+      alimama_rate = #{alimamaRate,jdbcType=VARCHAR},
+      alimama_share_fee = #{alimamaShareFee,jdbcType=VARCHAR},
+      subsidy_rate = #{subsidyRate,jdbcType=VARCHAR},
+      subsidy_fee = #{subsidyFee,jdbcType=VARCHAR},
+      subsidy_type = #{subsidyType,jdbcType=VARCHAR},
+      tk_commission_pre_fee_for_media_platform = #{tkCommissionPreFeeForMediaPlatform,jdbcType=VARCHAR},
+      tk_commission_fee_for_media_platform = #{tkCommissionFeeForMediaPlatform,jdbcType=VARCHAR},
+      tk_commission_rate_for_media_platform = #{tkCommissionRateForMediaPlatform,jdbcType=VARCHAR},
+      pub_id = #{pubId,jdbcType=VARCHAR},
+      site_id = #{siteId,jdbcType=VARCHAR},
+      adzone_id = #{adzoneId,jdbcType=VARCHAR},
+      site_name = #{siteName,jdbcType=VARCHAR},
+      adzone_name = #{adzoneName,jdbcType=VARCHAR},
+      special_id = #{specialId,jdbcType=VARCHAR},
+      relation_id = #{relationId,jdbcType=VARCHAR},
+      item_category_name = #{itemCategoryName,jdbcType=VARCHAR},
+      seller_nick = #{sellerNick,jdbcType=VARCHAR},
+      seller_shop_title = #{sellerShopTitle,jdbcType=VARCHAR},
+      item_id = #{itemId,jdbcType=VARCHAR},
+      item_title = #{itemTitle,jdbcType=VARCHAR},
+      item_price = #{itemPrice,jdbcType=VARCHAR},
+      item_link = #{itemLink,jdbcType=VARCHAR},
+      item_num = #{itemNum,jdbcType=INTEGER},
+      tk_deposit_time = #{tkDepositTime,jdbcType=TIMESTAMP},
+      tb_deposit_time = #{tbDepositTime,jdbcType=TIMESTAMP},
+      deposit_price = #{depositPrice,jdbcType=VARCHAR},
+      alsc_id = #{alscId,jdbcType=VARCHAR},
+      alsc_pid = #{alscPid,jdbcType=VARCHAR},
+      service_fee_dto_list = #{serviceFeeDtoList,jdbcType=VARCHAR},
+      lx_rid = #{lxRid,jdbcType=VARCHAR},
+      is_lx = #{isLx,jdbcType=VARCHAR},
+      `status` = #{status,jdbcType=TINYINT}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>

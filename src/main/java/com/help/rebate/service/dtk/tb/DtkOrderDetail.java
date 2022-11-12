@@ -44,7 +44,7 @@ public class DtkOrderDetail {
 
         params.put("sign", SignMD5Util.getSignStr(params,DtkConfig.dtkAppsecret));
         //请求数据
-//                    String response = prettyHttpService.get(DdxConfig.TB_TKL_ORDER_DETAILS_URL, params);
+        //String response = prettyHttpService.get(DdxConfig.TB_TKL_ORDER_DETAILS_URL, params);
         String response = prettyHttpService.get(DtkConfig.DTK_TB_ORDER_DETAILS_URL, params);
         JSONObject jsonObject = JSON.parseObject(response);
         return jsonObject;

@@ -3,7 +3,6 @@ package com.help.rebate.service;
 import com.help.rebate.dao.OrderDetailDao;
 import com.help.rebate.dao.OrderOpenidMapDao;
 import com.help.rebate.dao.TklConvertHistoryDao;
-import com.help.rebate.dao.entity.*;
 import com.help.rebate.service.schedule.FixedOrderBindSyncTask;
 import com.help.rebate.utils.Checks;
 import com.help.rebate.utils.EmptyUtils;
@@ -53,7 +52,7 @@ public class OrderBindService {
      * 用户信息服务，主要用于对用户信息表的更新操作
      */
     @Resource
-    private UserInfosService userInfosService;
+    private V2TaobaoUserInfoService v2TaobaoUserInfoService;
 
     /**
      * 订单映射表
@@ -343,7 +342,7 @@ public class OrderBindService {
         }
 
         //获取用户数据
-        UserInfos userInfos = userInfosService.selectByOpenId(openId);
+        UserInfos userInfos = v2TaobaoUserInfoService.selectByOpenId(openId);
         Checks.isNotNull(userInfos, "openid不存在");
 
         //新的special和旧的不相同
@@ -363,7 +362,7 @@ public class OrderBindService {
             userInfos.setExternalId(externalId);
         }
         if (needUpdate) {
-            int affectedCnt = userInfosService.update(userInfos);
+            int affectedCnt = v2TaobaoUserInfoService.update(userInfos);
             Checks.isTrue(affectedCnt == 1, "更新用户信息失败");
         }
 
@@ -516,7 +515,7 @@ public class OrderBindService {
      */
     private void createOrderOpenidMapBy(OrderOpenidMap orderOpenidMap, Map<String, OrderDetail> tradeId2OrderDetailMap, OrderBindResultVO orderBindResultVO) {
         //用户信息
-        UserInfos userInfos = userInfosService.selectByOpenIdAndSpecialId(orderOpenidMap.getOpenId(), orderOpenidMap.getSpecialId());
+        UserInfos userInfos = v2TaobaoUserInfoService.selectByOpenIdAndSpecialId(orderOpenidMap.getOpenId(), orderOpenidMap.getSpecialId());
 
         //循环每个订单，插入到绑定表中去
         Collection<OrderDetail> allOrderDetails = tradeId2OrderDetailMap.values();
@@ -545,7 +544,7 @@ public class OrderBindService {
         }
 
         //根据openid查询用户信息
-        UserInfos userInfos = userInfosService.selectByOpenId(openidInfo.getOpenid());
+        UserInfos userInfos = v2TaobaoUserInfoService.selectByOpenId(openidInfo.getOpenid());
         for (OrderDetail orderDetail : orderDetailList) {
             //获取mapType
             MapType mapType;
@@ -633,10 +632,10 @@ public class OrderBindService {
             //起始这里有个问题，如果转码是A通过微信转的，但是发给了B去买，B正好是会员，此时是不可以将openId和specialId识别为一对的
             //所以此时，就将mapType记录一下，openId-specialId
             String specialIdByOrderDetail = orderDetailList.get(0).getSpecialId();
-            UserInfos userInfosBySpecialId = userInfosService.selectBySpecialId(specialIdByOrderDetail);
+            UserInfos userInfosBySpecialId = v2TaobaoUserInfoService.selectBySpecialId(specialIdByOrderDetail);
 
             //判定一下
-            UserInfos userInfos = userInfosService.selectByOpenId(openidInfo.getOpenid());
+            UserInfos userInfos = v2TaobaoUserInfoService.selectByOpenId(openidInfo.getOpenid());
             //String specialIdByUserInfo = userInfos.getSpecialId();
 
             //存储
@@ -654,7 +653,7 @@ public class OrderBindService {
         }
 
         //第二种，这里所有的商品，都没有被转链过，那么只能存入specialid字段，其他openid这些数据不填写，mapType就是specialid，表示只是会员
-        UserInfos userInfos = userInfosService.selectBySpecialId(orderDetailList.get(0).getSpecialId());
+        UserInfos userInfos = v2TaobaoUserInfoService.selectBySpecialId(orderDetailList.get(0).getSpecialId());
         for (OrderDetail orderDetail : orderDetailList) {
             //先查询，万一存在，就得更新，防止操作错误
             insertOrUpdateOrderOpenidMap(userInfos.getOpenId(), MapType.specialid, userInfos, orderDetail);

@@ -1,0 +1,388 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.help.rebate.dao.V2TaobaoOrderOpenidMapInfoDao">
+  <resultMap id="BaseResultMap" type="com.help.rebate.dao.entity.V2TaobaoOrderOpenidMapInfo">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="gmt_created" jdbcType="TIMESTAMP" property="gmtCreated" />
+    <result column="gmt_modified" jdbcType="TIMESTAMP" property="gmtModified" />
+    <result column="trade_id" jdbcType="VARCHAR" property="tradeId" />
+    <result column="trade_parent_id" jdbcType="VARCHAR" property="tradeParentId" />
+    <result column="open_id" jdbcType="VARCHAR" property="openId" />
+    <result column="item_id" jdbcType="VARCHAR" property="itemId" />
+    <result column="pub_share_pre_fee" jdbcType="VARCHAR" property="pubSharePreFee" />
+    <result column="pub_share_fee" jdbcType="VARCHAR" property="pubShareFee" />
+    <result column="alimama_share_fee" jdbcType="VARCHAR" property="alimamaShareFee" />
+    <result column="order_status" jdbcType="INTEGER" property="orderStatus" />
+    <result column="commission_ratio" jdbcType="INTEGER" property="commissionRatio" />
+    <result column="refund_tag" jdbcType="INTEGER" property="refundTag" />
+    <result column="refund_fee" jdbcType="VARCHAR" property="refundFee" />
+    <result column="map_type_msg" jdbcType="VARCHAR" property="mapTypeMsg" />
+    <result column="status" jdbcType="TINYINT" property="status" />
+  </resultMap>
+  <sql id="Example_Where_Clause">
+    <where>
+      <foreach collection="oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause">
+    <where>
+      <foreach collection="example.oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List">
+    id, gmt_created, gmt_modified, trade_id, trade_parent_id, open_id, item_id, pub_share_pre_fee, 
+    pub_share_fee, alimama_share_fee, order_status, commission_ratio, refund_tag, refund_fee, 
+    map_type_msg, `status`
+  </sql>
+  <select id="selectByExample" parameterType="com.help.rebate.dao.entity.V2TaobaoOrderOpenidMapInfoExample" resultMap="BaseResultMap">
+    select
+    <if test="distinct">
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from v2_taobao_order_openid_map_info
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null">
+      order by ${orderByClause}
+    </if>
+    <if test="limit != null">
+      <if test="offset != null">
+        limit ${offset}, ${limit}
+      </if>
+      <if test="offset == null">
+        limit ${limit}
+      </if>
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from v2_taobao_order_openid_map_info
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from v2_taobao_order_openid_map_info
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.help.rebate.dao.entity.V2TaobaoOrderOpenidMapInfoExample">
+    delete from v2_taobao_order_openid_map_info
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.help.rebate.dao.entity.V2TaobaoOrderOpenidMapInfo" useGeneratedKeys="true">
+    insert into v2_taobao_order_openid_map_info (gmt_created, gmt_modified, trade_id, 
+      trade_parent_id, open_id, item_id, 
+      pub_share_pre_fee, pub_share_fee, alimama_share_fee, 
+      order_status, commission_ratio, refund_tag, 
+      refund_fee, map_type_msg, `status`
+      )
+    values (#{gmtCreated,jdbcType=TIMESTAMP}, #{gmtModified,jdbcType=TIMESTAMP}, #{tradeId,jdbcType=VARCHAR}, 
+      #{tradeParentId,jdbcType=VARCHAR}, #{openId,jdbcType=VARCHAR}, #{itemId,jdbcType=VARCHAR}, 
+      #{pubSharePreFee,jdbcType=VARCHAR}, #{pubShareFee,jdbcType=VARCHAR}, #{alimamaShareFee,jdbcType=VARCHAR}, 
+      #{orderStatus,jdbcType=INTEGER}, #{commissionRatio,jdbcType=INTEGER}, #{refundTag,jdbcType=INTEGER}, 
+      #{refundFee,jdbcType=VARCHAR}, #{mapTypeMsg,jdbcType=VARCHAR}, #{status,jdbcType=TINYINT}
+      )
+  </insert>
+  <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.help.rebate.dao.entity.V2TaobaoOrderOpenidMapInfo" useGeneratedKeys="true">
+    insert into v2_taobao_order_openid_map_info
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="gmtCreated != null">
+        gmt_created,
+      </if>
+      <if test="gmtModified != null">
+        gmt_modified,
+      </if>
+      <if test="tradeId != null">
+        trade_id,
+      </if>
+      <if test="tradeParentId != null">
+        trade_parent_id,
+      </if>
+      <if test="openId != null">
+        open_id,
+      </if>
+      <if test="itemId != null">
+        item_id,
+      </if>
+      <if test="pubSharePreFee != null">
+        pub_share_pre_fee,
+      </if>
+      <if test="pubShareFee != null">
+        pub_share_fee,
+      </if>
+      <if test="alimamaShareFee != null">
+        alimama_share_fee,
+      </if>
+      <if test="orderStatus != null">
+        order_status,
+      </if>
+      <if test="commissionRatio != null">
+        commission_ratio,
+      </if>
+      <if test="refundTag != null">
+        refund_tag,
+      </if>
+      <if test="refundFee != null">
+        refund_fee,
+      </if>
+      <if test="mapTypeMsg != null">
+        map_type_msg,
+      </if>
+      <if test="status != null">
+        `status`,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="gmtCreated != null">
+        #{gmtCreated,jdbcType=TIMESTAMP},
+      </if>
+      <if test="gmtModified != null">
+        #{gmtModified,jdbcType=TIMESTAMP},
+      </if>
+      <if test="tradeId != null">
+        #{tradeId,jdbcType=VARCHAR},
+      </if>
+      <if test="tradeParentId != null">
+        #{tradeParentId,jdbcType=VARCHAR},
+      </if>
+      <if test="openId != null">
+        #{openId,jdbcType=VARCHAR},
+      </if>
+      <if test="itemId != null">
+        #{itemId,jdbcType=VARCHAR},
+      </if>
+      <if test="pubSharePreFee != null">
+        #{pubSharePreFee,jdbcType=VARCHAR},
+      </if>
+      <if test="pubShareFee != null">
+        #{pubShareFee,jdbcType=VARCHAR},
+      </if>
+      <if test="alimamaShareFee != null">
+        #{alimamaShareFee,jdbcType=VARCHAR},
+      </if>
+      <if test="orderStatus != null">
+        #{orderStatus,jdbcType=INTEGER},
+      </if>
+      <if test="commissionRatio != null">
+        #{commissionRatio,jdbcType=INTEGER},
+      </if>
+      <if test="refundTag != null">
+        #{refundTag,jdbcType=INTEGER},
+      </if>
+      <if test="refundFee != null">
+        #{refundFee,jdbcType=VARCHAR},
+      </if>
+      <if test="mapTypeMsg != null">
+        #{mapTypeMsg,jdbcType=VARCHAR},
+      </if>
+      <if test="status != null">
+        #{status,jdbcType=TINYINT},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.help.rebate.dao.entity.V2TaobaoOrderOpenidMapInfoExample" resultType="java.lang.Long">
+    select count(*) from v2_taobao_order_openid_map_info
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map">
+    update v2_taobao_order_openid_map_info
+    <set>
+      <if test="record.id != null">
+        id = #{record.id,jdbcType=INTEGER},
+      </if>
+      <if test="record.gmtCreated != null">
+        gmt_created = #{record.gmtCreated,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.gmtModified != null">
+        gmt_modified = #{record.gmtModified,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.tradeId != null">
+        trade_id = #{record.tradeId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.tradeParentId != null">
+        trade_parent_id = #{record.tradeParentId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.openId != null">
+        open_id = #{record.openId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.itemId != null">
+        item_id = #{record.itemId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.pubSharePreFee != null">
+        pub_share_pre_fee = #{record.pubSharePreFee,jdbcType=VARCHAR},
+      </if>
+      <if test="record.pubShareFee != null">
+        pub_share_fee = #{record.pubShareFee,jdbcType=VARCHAR},
+      </if>
+      <if test="record.alimamaShareFee != null">
+        alimama_share_fee = #{record.alimamaShareFee,jdbcType=VARCHAR},
+      </if>
+      <if test="record.orderStatus != null">
+        order_status = #{record.orderStatus,jdbcType=INTEGER},
+      </if>
+      <if test="record.commissionRatio != null">
+        commission_ratio = #{record.commissionRatio,jdbcType=INTEGER},
+      </if>
+      <if test="record.refundTag != null">
+        refund_tag = #{record.refundTag,jdbcType=INTEGER},
+      </if>
+      <if test="record.refundFee != null">
+        refund_fee = #{record.refundFee,jdbcType=VARCHAR},
+      </if>
+      <if test="record.mapTypeMsg != null">
+        map_type_msg = #{record.mapTypeMsg,jdbcType=VARCHAR},
+      </if>
+      <if test="record.status != null">
+        `status` = #{record.status,jdbcType=TINYINT},
+      </if>
+    </set>
+    <if test="_parameter != null">
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map">
+    update v2_taobao_order_openid_map_info
+    set id = #{record.id,jdbcType=INTEGER},
+      gmt_created = #{record.gmtCreated,jdbcType=TIMESTAMP},
+      gmt_modified = #{record.gmtModified,jdbcType=TIMESTAMP},
+      trade_id = #{record.tradeId,jdbcType=VARCHAR},
+      trade_parent_id = #{record.tradeParentId,jdbcType=VARCHAR},
+      open_id = #{record.openId,jdbcType=VARCHAR},
+      item_id = #{record.itemId,jdbcType=VARCHAR},
+      pub_share_pre_fee = #{record.pubSharePreFee,jdbcType=VARCHAR},
+      pub_share_fee = #{record.pubShareFee,jdbcType=VARCHAR},
+      alimama_share_fee = #{record.alimamaShareFee,jdbcType=VARCHAR},
+      order_status = #{record.orderStatus,jdbcType=INTEGER},
+      commission_ratio = #{record.commissionRatio,jdbcType=INTEGER},
+      refund_tag = #{record.refundTag,jdbcType=INTEGER},
+      refund_fee = #{record.refundFee,jdbcType=VARCHAR},
+      map_type_msg = #{record.mapTypeMsg,jdbcType=VARCHAR},
+      `status` = #{record.status,jdbcType=TINYINT}
+    <if test="_parameter != null">
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.help.rebate.dao.entity.V2TaobaoOrderOpenidMapInfo">
+    update v2_taobao_order_openid_map_info
+    <set>
+      <if test="gmtCreated != null">
+        gmt_created = #{gmtCreated,jdbcType=TIMESTAMP},
+      </if>
+      <if test="gmtModified != null">
+        gmt_modified = #{gmtModified,jdbcType=TIMESTAMP},
+      </if>
+      <if test="tradeId != null">
+        trade_id = #{tradeId,jdbcType=VARCHAR},
+      </if>
+      <if test="tradeParentId != null">
+        trade_parent_id = #{tradeParentId,jdbcType=VARCHAR},
+      </if>
+      <if test="openId != null">
+        open_id = #{openId,jdbcType=VARCHAR},
+      </if>
+      <if test="itemId != null">
+        item_id = #{itemId,jdbcType=VARCHAR},
+      </if>
+      <if test="pubSharePreFee != null">
+        pub_share_pre_fee = #{pubSharePreFee,jdbcType=VARCHAR},
+      </if>
+      <if test="pubShareFee != null">
+        pub_share_fee = #{pubShareFee,jdbcType=VARCHAR},
+      </if>
+      <if test="alimamaShareFee != null">
+        alimama_share_fee = #{alimamaShareFee,jdbcType=VARCHAR},
+      </if>
+      <if test="orderStatus != null">
+        order_status = #{orderStatus,jdbcType=INTEGER},
+      </if>
+      <if test="commissionRatio != null">
+        commission_ratio = #{commissionRatio,jdbcType=INTEGER},
+      </if>
+      <if test="refundTag != null">
+        refund_tag = #{refundTag,jdbcType=INTEGER},
+      </if>
+      <if test="refundFee != null">
+        refund_fee = #{refundFee,jdbcType=VARCHAR},
+      </if>
+      <if test="mapTypeMsg != null">
+        map_type_msg = #{mapTypeMsg,jdbcType=VARCHAR},
+      </if>
+      <if test="status != null">
+        `status` = #{status,jdbcType=TINYINT},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.help.rebate.dao.entity.V2TaobaoOrderOpenidMapInfo">
+    update v2_taobao_order_openid_map_info
+    set gmt_created = #{gmtCreated,jdbcType=TIMESTAMP},
+      gmt_modified = #{gmtModified,jdbcType=TIMESTAMP},
+      trade_id = #{tradeId,jdbcType=VARCHAR},
+      trade_parent_id = #{tradeParentId,jdbcType=VARCHAR},
+      open_id = #{openId,jdbcType=VARCHAR},
+      item_id = #{itemId,jdbcType=VARCHAR},
+      pub_share_pre_fee = #{pubSharePreFee,jdbcType=VARCHAR},
+      pub_share_fee = #{pubShareFee,jdbcType=VARCHAR},
+      alimama_share_fee = #{alimamaShareFee,jdbcType=VARCHAR},
+      order_status = #{orderStatus,jdbcType=INTEGER},
+      commission_ratio = #{commissionRatio,jdbcType=INTEGER},
+      refund_tag = #{refundTag,jdbcType=INTEGER},
+      refund_fee = #{refundFee,jdbcType=VARCHAR},
+      map_type_msg = #{mapTypeMsg,jdbcType=VARCHAR},
+      `status` = #{status,jdbcType=TINYINT}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>

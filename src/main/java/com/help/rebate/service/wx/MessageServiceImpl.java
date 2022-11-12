@@ -3,8 +3,7 @@ package com.help.rebate.service.wx;
 import com.alibaba.fastjson.JSON;
 import com.help.rebate.service.WxKeyWordHandlerService;
 import com.help.rebate.utils.MsgUtil;
-import com.help.rebate.vo.TextMessage;
-import org.json.JSONException;
+import com.help.rebate.vo.WeChartTextMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -66,7 +65,7 @@ public class MessageServiceImpl implements MessageService {
                 String eventKey = map.get("EventKey");// 事件KEY值，与创建自定义菜单时指定的KEY值对应
                 if (eventKey.equals("V001_CHECK_MONEY")) {
                     //查看余额
-                    TextMessage text = new TextMessage();
+                    WeChartTextMessage text = new WeChartTextMessage();
                     //String tips = "待开发查看余额功能";
                     String tips = WxKeyWordHandlerService.tips;
                     text.setContent(wxKeyWordHandlerService.handleKeyWord(fromUserName, toUserName, "余额") + "\n"+tips);
@@ -150,7 +149,7 @@ public class MessageServiceImpl implements MessageService {
      */
     private String wrapReturnMsg(String fromUserName, String toUserName, String content, String msgType) {
         String replyMessage;
-        TextMessage text = new TextMessage();
+        WeChartTextMessage text = new WeChartTextMessage();
         text.setContent(content);
         text.setToUserName(fromUserName);
         text.setFromUserName(toUserName);

@@ -38,10 +38,10 @@ public class SwaggerConfig {
 
     private ApiInfo aipInfo() {
         return new ApiInfoBuilder()
-                .title("长风破浪会有时-直挂云帆济沧海")
+                .title("尘世如潮人如水")
                 .description("详细接口文档")
                 .contact(new Contact("fachao.zfc", "http://tangpingbujuan.com", "zfcisbest@163.com"))
-                .version("1.0.0")
+                .version("2.0.0")
                 .build();
     }
 }

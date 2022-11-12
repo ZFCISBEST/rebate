@@ -20,6 +20,7 @@ import java.util.Map;
  * @author zfcisbest
  * @date 21/11/20
  */
+@Deprecated
 @Service
 public class DdxElemeActivityConverter {
     private static final Logger logger = LoggerFactory.getLogger(DdxElemeActivityConverter.class);

@@ -1,7 +1,7 @@
 package com.help.rebate.utils;
 
 import com.alibaba.fastjson.JSON;
-import com.help.rebate.vo.TextMessage;
+import com.help.rebate.vo.WeChartTextMessage;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.core.util.QuickWriter;
 import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
@@ -110,7 +110,7 @@ public class MsgUtil {
         return null;
     }
 
-    public static String textMessageToXML(TextMessage textMessage){
+    public static String textMessageToXML(WeChartTextMessage textMessage){
 
             xstream.alias("xml", textMessage.getClass());
             return xstream.toXML(textMessage);

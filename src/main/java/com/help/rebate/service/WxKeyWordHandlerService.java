@@ -1,19 +1,16 @@
 package com.help.rebate.service;
 
 import com.help.rebate.dao.OrderDetailDao;
-import com.help.rebate.dao.entity.*;
 import com.help.rebate.service.ddx.jd.DdxJDItemConverter;
 import com.help.rebate.service.ddx.mt.DdxMeiTuanActivityConverter;
 import com.help.rebate.service.ddx.pdd.DdxPddItemConverter;
 import com.help.rebate.service.ddx.tb.DdxElemeActivityConverter;
 import com.help.rebate.service.exception.ConvertException;
-import com.help.rebate.utils.Checks;
 import com.help.rebate.utils.EmptyUtils;
 import com.help.rebate.utils.NumberUtil;
 import com.help.rebate.vo.CommissionVO;
 import com.help.rebate.vo.OrderBindResultVO;
 import com.help.rebate.vo.PickCommissionVO;
-import com.help.rebate.web.response.SafeServiceResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -45,13 +41,13 @@ public class WxKeyWordHandlerService {
      * 用户信息服务
      */
     @Autowired
-    private UserInfosService userInfosService;
+    private V2TaobaoUserInfoService v2TaobaoUserInfoService;
 
     /**
      * 淘口令转链服务
      */
     @Autowired
-    private TklConvertService tklConvertService;
+    private V2TaobaoTklConvertService v2TaobaoTklConvertService;
 
     /**
      * 京东转链接
@@ -259,7 +255,7 @@ public class WxKeyWordHandlerService {
         }
 
         //查询
-        UserInfos userInfos = userInfosService.selectByOpenIdAndSpecialIdAndExternalId(openId, specialId, externalId);
+        UserInfos userInfos = v2TaobaoUserInfoService.selectByOpenIdAndSpecialIdAndExternalId(openId, specialId, externalId);
         if (userInfos == null) {
             return "不存在该用户信息";
         }
@@ -674,7 +670,7 @@ public class WxKeyWordHandlerService {
             String tkl = content;
             String openId = fromUserName;
             String tklType = "virtual";
-            String newTkl = tklConvertService.convert(tkl, openId, null, tklType, "tb");
+            String newTkl = v2TaobaoTklConvertService.convert(tkl, openId, null, tklType, "tb");
             return newTkl;
         }
 

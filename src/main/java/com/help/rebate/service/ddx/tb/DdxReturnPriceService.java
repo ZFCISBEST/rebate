@@ -16,6 +16,7 @@ import java.text.DecimalFormat;
  * @author zfcisbest
  * @date 21/11/14
  */
+@Deprecated
 @Service
 public class DdxReturnPriceService {
     private static final Logger logger = LoggerFactory.getLogger(DdxReturnPriceService.class);

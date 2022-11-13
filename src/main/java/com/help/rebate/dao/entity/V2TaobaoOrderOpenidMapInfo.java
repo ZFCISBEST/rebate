@@ -92,6 +92,12 @@ public class V2TaobaoOrderOpenidMapInfo implements Serializable {
     private String mapTypeMsg;
 
     /**
+     * 给用户的结算状态 - 待提取、提取中，提取成功，提取失败, 提取超时
+     */
+    @ApiModelProperty(value="给用户的结算状态 - 待提取、提取中，提取成功，提取失败, 提取超时")
+    private String commissionStatusMsg;
+
+    /**
      * 状态字段，0表示不删除，1表示逻辑删除
      */
     @ApiModelProperty(value="状态字段，0表示不删除，1表示逻辑删除")
@@ -126,6 +132,7 @@ public class V2TaobaoOrderOpenidMapInfo implements Serializable {
             && (this.getRefundTag() == null ? other.getRefundTag() == null : this.getRefundTag().equals(other.getRefundTag()))
             && (this.getRefundFee() == null ? other.getRefundFee() == null : this.getRefundFee().equals(other.getRefundFee()))
             && (this.getMapTypeMsg() == null ? other.getMapTypeMsg() == null : this.getMapTypeMsg().equals(other.getMapTypeMsg()))
+            && (this.getCommissionStatusMsg() == null ? other.getCommissionStatusMsg() == null : this.getCommissionStatusMsg().equals(other.getCommissionStatusMsg()))
             && (this.getStatus() == null ? other.getStatus() == null : this.getStatus().equals(other.getStatus()));
     }
 
@@ -148,6 +155,7 @@ public class V2TaobaoOrderOpenidMapInfo implements Serializable {
         result = prime * result + ((getRefundTag() == null) ? 0 : getRefundTag().hashCode());
         result = prime * result + ((getRefundFee() == null) ? 0 : getRefundFee().hashCode());
         result = prime * result + ((getMapTypeMsg() == null) ? 0 : getMapTypeMsg().hashCode());
+        result = prime * result + ((getCommissionStatusMsg() == null) ? 0 : getCommissionStatusMsg().hashCode());
         result = prime * result + ((getStatus() == null) ? 0 : getStatus().hashCode());
         return result;
     }
@@ -173,6 +181,7 @@ public class V2TaobaoOrderOpenidMapInfo implements Serializable {
         sb.append(", refundTag=").append(refundTag);
         sb.append(", refundFee=").append(refundFee);
         sb.append(", mapTypeMsg=").append(mapTypeMsg);
+        sb.append(", commissionStatusMsg=").append(commissionStatusMsg);
         sb.append(", status=").append(status);
         sb.append(", serialVersionUID=").append(serialVersionUID);
         sb.append("]");

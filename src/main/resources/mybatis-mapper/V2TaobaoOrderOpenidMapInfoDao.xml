@@ -17,6 +17,7 @@
     <result column="refund_tag" jdbcType="INTEGER" property="refundTag" />
     <result column="refund_fee" jdbcType="VARCHAR" property="refundFee" />
     <result column="map_type_msg" jdbcType="VARCHAR" property="mapTypeMsg" />
+    <result column="commission_status_msg" jdbcType="VARCHAR" property="commissionStatusMsg" />
     <result column="status" jdbcType="TINYINT" property="status" />
   </resultMap>
   <sql id="Example_Where_Clause">
@@ -80,7 +81,7 @@
   <sql id="Base_Column_List">
     id, gmt_created, gmt_modified, trade_id, trade_parent_id, open_id, item_id, pub_share_pre_fee, 
     pub_share_fee, alimama_share_fee, order_status, commission_ratio, refund_tag, refund_fee, 
-    map_type_msg, `status`
+    map_type_msg, commission_status_msg, `status`
   </sql>
   <select id="selectByExample" parameterType="com.help.rebate.dao.entity.V2TaobaoOrderOpenidMapInfoExample" resultMap="BaseResultMap">
     select
@@ -125,14 +126,14 @@
       trade_parent_id, open_id, item_id, 
       pub_share_pre_fee, pub_share_fee, alimama_share_fee, 
       order_status, commission_ratio, refund_tag, 
-      refund_fee, map_type_msg, `status`
-      )
+      refund_fee, map_type_msg, commission_status_msg, 
+      `status`)
     values (#{gmtCreated,jdbcType=TIMESTAMP}, #{gmtModified,jdbcType=TIMESTAMP}, #{tradeId,jdbcType=VARCHAR}, 
       #{tradeParentId,jdbcType=VARCHAR}, #{openId,jdbcType=VARCHAR}, #{itemId,jdbcType=VARCHAR}, 
       #{pubSharePreFee,jdbcType=VARCHAR}, #{pubShareFee,jdbcType=VARCHAR}, #{alimamaShareFee,jdbcType=VARCHAR}, 
       #{orderStatus,jdbcType=INTEGER}, #{commissionRatio,jdbcType=INTEGER}, #{refundTag,jdbcType=INTEGER}, 
-      #{refundFee,jdbcType=VARCHAR}, #{mapTypeMsg,jdbcType=VARCHAR}, #{status,jdbcType=TINYINT}
-      )
+      #{refundFee,jdbcType=VARCHAR}, #{mapTypeMsg,jdbcType=VARCHAR}, #{commissionStatusMsg,jdbcType=VARCHAR}, 
+      #{status,jdbcType=TINYINT})
   </insert>
   <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.help.rebate.dao.entity.V2TaobaoOrderOpenidMapInfo" useGeneratedKeys="true">
     insert into v2_taobao_order_openid_map_info
@@ -178,6 +179,9 @@
       </if>
       <if test="mapTypeMsg != null">
         map_type_msg,
+      </if>
+      <if test="commissionStatusMsg != null">
+        commission_status_msg,
       </if>
       <if test="status != null">
         `status`,
@@ -225,6 +229,9 @@
       </if>
       <if test="mapTypeMsg != null">
         #{mapTypeMsg,jdbcType=VARCHAR},
+      </if>
+      <if test="commissionStatusMsg != null">
+        #{commissionStatusMsg,jdbcType=VARCHAR},
       </if>
       <if test="status != null">
         #{status,jdbcType=TINYINT},
@@ -285,6 +292,9 @@
       <if test="record.mapTypeMsg != null">
         map_type_msg = #{record.mapTypeMsg,jdbcType=VARCHAR},
       </if>
+      <if test="record.commissionStatusMsg != null">
+        commission_status_msg = #{record.commissionStatusMsg,jdbcType=VARCHAR},
+      </if>
       <if test="record.status != null">
         `status` = #{record.status,jdbcType=TINYINT},
       </if>
@@ -310,6 +320,7 @@
       refund_tag = #{record.refundTag,jdbcType=INTEGER},
       refund_fee = #{record.refundFee,jdbcType=VARCHAR},
       map_type_msg = #{record.mapTypeMsg,jdbcType=VARCHAR},
+      commission_status_msg = #{record.commissionStatusMsg,jdbcType=VARCHAR},
       `status` = #{record.status,jdbcType=TINYINT}
     <if test="_parameter != null">
       <include refid="Update_By_Example_Where_Clause" />
@@ -360,6 +371,9 @@
       <if test="mapTypeMsg != null">
         map_type_msg = #{mapTypeMsg,jdbcType=VARCHAR},
       </if>
+      <if test="commissionStatusMsg != null">
+        commission_status_msg = #{commissionStatusMsg,jdbcType=VARCHAR},
+      </if>
       <if test="status != null">
         `status` = #{status,jdbcType=TINYINT},
       </if>
@@ -382,6 +396,7 @@
       refund_tag = #{refundTag,jdbcType=INTEGER},
       refund_fee = #{refundFee,jdbcType=VARCHAR},
       map_type_msg = #{mapTypeMsg,jdbcType=VARCHAR},
+      commission_status_msg = #{commissionStatusMsg,jdbcType=VARCHAR},
       `status` = #{status,jdbcType=TINYINT}
     where id = #{id,jdbcType=INTEGER}
   </update>

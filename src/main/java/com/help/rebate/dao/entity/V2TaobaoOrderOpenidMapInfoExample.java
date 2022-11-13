@@ -1115,6 +1115,76 @@ public class V2TaobaoOrderOpenidMapInfoExample {
             return (Criteria) this;
         }
 
+        public Criteria andCommissionStatusMsgIsNull() {
+            addCriterion("commission_status_msg is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andCommissionStatusMsgIsNotNull() {
+            addCriterion("commission_status_msg is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andCommissionStatusMsgEqualTo(String value) {
+            addCriterion("commission_status_msg =", value, "commissionStatusMsg");
+            return (Criteria) this;
+        }
+
+        public Criteria andCommissionStatusMsgNotEqualTo(String value) {
+            addCriterion("commission_status_msg <>", value, "commissionStatusMsg");
+            return (Criteria) this;
+        }
+
+        public Criteria andCommissionStatusMsgGreaterThan(String value) {
+            addCriterion("commission_status_msg >", value, "commissionStatusMsg");
+            return (Criteria) this;
+        }
+
+        public Criteria andCommissionStatusMsgGreaterThanOrEqualTo(String value) {
+            addCriterion("commission_status_msg >=", value, "commissionStatusMsg");
+            return (Criteria) this;
+        }
+
+        public Criteria andCommissionStatusMsgLessThan(String value) {
+            addCriterion("commission_status_msg <", value, "commissionStatusMsg");
+            return (Criteria) this;
+        }
+
+        public Criteria andCommissionStatusMsgLessThanOrEqualTo(String value) {
+            addCriterion("commission_status_msg <=", value, "commissionStatusMsg");
+            return (Criteria) this;
+        }
+
+        public Criteria andCommissionStatusMsgLike(String value) {
+            addCriterion("commission_status_msg like", value, "commissionStatusMsg");
+            return (Criteria) this;
+        }
+
+        public Criteria andCommissionStatusMsgNotLike(String value) {
+            addCriterion("commission_status_msg not like", value, "commissionStatusMsg");
+            return (Criteria) this;
+        }
+
+        public Criteria andCommissionStatusMsgIn(List<String> values) {
+            addCriterion("commission_status_msg in", values, "commissionStatusMsg");
+            return (Criteria) this;
+        }
+
+        public Criteria andCommissionStatusMsgNotIn(List<String> values) {
+            addCriterion("commission_status_msg not in", values, "commissionStatusMsg");
+            return (Criteria) this;
+        }
+
+        public Criteria andCommissionStatusMsgBetween(String value1, String value2) {
+            addCriterion("commission_status_msg between", value1, value2, "commissionStatusMsg");
+            return (Criteria) this;
+        }
+
+        public Criteria andCommissionStatusMsgNotBetween(String value1, String value2) {
+            addCriterion("commission_status_msg not between", value1, value2, "commissionStatusMsg");
+            return (Criteria) this;
+        }
+
         public Criteria andStatusIsNull() {
             addCriterion("`status` is null");
             return (Criteria) this;

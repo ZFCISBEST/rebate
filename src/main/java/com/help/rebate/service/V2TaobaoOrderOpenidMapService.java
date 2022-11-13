@@ -1,6 +1,7 @@
 package com.help.rebate.service;
 
 import com.help.rebate.dao.OrderOpenidMapDao;
+import com.help.rebate.dao.V2TaobaoOrderOpenidMapInfoDao;
 import com.help.rebate.dao.entity.OrderDetail;
 import com.help.rebate.dao.entity.OrderDetailExample;
 import com.help.rebate.dao.entity.OrderOpenidMap;
@@ -30,14 +31,16 @@ public class V2TaobaoOrderOpenidMapService {
     private static final Logger logger = LoggerFactory.getLogger(V2TaobaoOrderOpenidMapService.class);
 
     /**
-     * 订单映射详情接口
+     * 订单服务
      */
-    @Resource
-    private OrderOpenidMapDao orderOpenidMapDao;
-
     @Resource
     private V2TaobaoOrderService v2TaobaoOrderService;
 
+    /**
+     * 订单映射详情接口
+     */
+    @Resource
+    private V2TaobaoOrderOpenidMapInfoDao v2TaobaoOrderOpenidMapInfoDao;
 
     /**
      * 列出符合条件的所有绑定的订单
@@ -64,7 +67,7 @@ public class V2TaobaoOrderOpenidMapService {
         orderOpenidMapExample.setLimit(pageSize);
 
         //查询
-        List<OrderOpenidMap> orderOpenidMaps = orderOpenidMapDao.selectByExample(orderOpenidMapExample);
+        List<OrderOpenidMap> orderOpenidMaps = v2TaobaoOrderOpenidMapInfoDao.selectByExample(orderOpenidMapExample);
         return orderOpenidMaps;
     }
 
@@ -91,7 +94,7 @@ public class V2TaobaoOrderOpenidMapService {
         }
 
         //查询
-        List<OrderOpenidMap> orderDetails = orderOpenidMapDao.selectByExample(orderOpenidMapExample);
+        List<OrderOpenidMap> orderDetails = v2TaobaoOrderOpenidMapInfoDao.selectByExample(orderOpenidMapExample);
         return orderDetails;
     }
 
@@ -116,7 +119,7 @@ public class V2TaobaoOrderOpenidMapService {
         }
 
         //查询
-        List<OrderOpenidMap> orderDetails = orderOpenidMapDao.selectByExample(orderOpenidMapExample);
+        List<OrderOpenidMap> orderDetails = v2TaobaoOrderOpenidMapInfoDao.selectByExample(orderOpenidMapExample);
         return orderDetails;
     }
 
@@ -126,7 +129,7 @@ public class V2TaobaoOrderOpenidMapService {
      * @return
      */
     public int save(OrderOpenidMap orderOpenidMap) {
-        int affectedCnt = orderOpenidMapDao.insertSelective(orderOpenidMap);
+        int affectedCnt = v2TaobaoOrderOpenidMapInfoDao.insertSelective(orderOpenidMap);
         return affectedCnt;
     }
 
@@ -136,7 +139,7 @@ public class V2TaobaoOrderOpenidMapService {
      * @return
      */
     public int update(OrderOpenidMap orderOpenidMap) {
-        int affectedCnt = orderOpenidMapDao.updateByPrimaryKeySelective(orderOpenidMap);
+        int affectedCnt = v2TaobaoOrderOpenidMapInfoDao.updateByPrimaryKeySelective(orderOpenidMap);
         return affectedCnt;
     }
 
@@ -206,7 +209,7 @@ public class V2TaobaoOrderOpenidMapService {
 
         //查询
         CommissionVO commissionVO = new CommissionVO();
-        List<OrderOpenidMap> orderOpenidMapList = orderOpenidMapDao.selectByExample(orderOpenidMapExample);
+        List<OrderOpenidMap> orderOpenidMapList = v2TaobaoOrderOpenidMapInfoDao.selectByExample(orderOpenidMapExample);
         if (EmptyUtils.isEmpty(orderOpenidMapList)) {
             commissionVO.setCommission("0.0");
             commissionVO.setLabel("无记录");
@@ -335,7 +338,7 @@ public class V2TaobaoOrderOpenidMapService {
                 criteria.andTradeIdIn(tradeIds);
             }
         }
-        List<OrderOpenidMap> orderOpenidMapList = orderOpenidMapDao.selectByExample(example);
+        List<OrderOpenidMap> orderOpenidMapList = v2TaobaoOrderOpenidMapInfoDao.selectByExample(example);
         for (OrderOpenidMap openidMap : orderOpenidMapList) {
             openidMap.setGmtModified(new Date());
             openidMap.setCommissionStatus(commissionStatus);
@@ -364,7 +367,7 @@ public class V2TaobaoOrderOpenidMapService {
             openidMap.setActualCommissionFee(NumberUtil.format(actualCommission));
 
             //更新 - 后面再写一个批量更新
-            int affected = orderOpenidMapDao.updateByPrimaryKeySelective(openidMap);
+            int affected = v2TaobaoOrderOpenidMapInfoDao.updateByPrimaryKeySelective(openidMap);
             Checks.isTrue(affected == 1, "更新失败");
         }
 
@@ -404,7 +407,7 @@ public class V2TaobaoOrderOpenidMapService {
         }
         criteria.andCurrentPickRecordIdEqualTo(pickMoneyRecordId);
 
-        int affectedCnt = orderOpenidMapDao.updateByExampleSelective(orderOpenidMap, example);
+        int affectedCnt = v2TaobaoOrderOpenidMapInfoDao.updateByExampleSelective(orderOpenidMap, example);
         return affectedCnt;
     }
 }

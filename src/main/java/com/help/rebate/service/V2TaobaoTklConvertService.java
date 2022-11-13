@@ -1,21 +1,16 @@
 package com.help.rebate.service;
 
-import com.help.rebate.dao.V2TaobaoTklConvertHistoryInfoDao;
 import com.help.rebate.dao.entity.V2TaobaoTklConvertHistoryInfo;
-import com.help.rebate.dao.entity.V2TaobaoTklConvertHistoryInfoExample;
 import com.help.rebate.dao.entity.V2TaobaoUserInfo;
 import com.help.rebate.service.dtk.tb.DtkReturnPriceService;
 import com.help.rebate.utils.Checks;
 import com.help.rebate.utils.EmptyUtils;
 import com.help.rebate.utils.MD5Utils;
-import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -43,16 +38,16 @@ public class V2TaobaoTklConvertService {
     private V2TaobaoPubSiteService v2TaobaoPubSiteService;
 
     /**
-     * 淘口令转链历史记录表
-     */
-    @Resource
-    private V2TaobaoTklConvertHistoryInfoDao v2TaobaoTklConvertHistoryInfoDao;
-
-    /**
      * 返利比例服务表
      */
     @Resource
     private V2TaobaoCommissionRatioInfoService v2TaobaoCommissionRatioInfoService;
+
+    /**
+     * 淘口令转链历史记录服务
+     */
+    @Resource
+    private V2TaobaoTklConvertHistoryService v2TaobaoTklConvertHistoryService;
 
     /**
      * 实际的转链服务
@@ -99,7 +94,7 @@ public class V2TaobaoTklConvertService {
         DtkReturnPriceService.TklDO newTkl = convertTkl(tkl, specialId, pubSiteCombination, commissionRatio);
         if (!EmptyUtils.isEmpty(specialId)) {
             //存储淘口令
-            storeConvertRecord(tkl, openId, specialId, pubSiteType, newTkl, pubSiteCombination);
+            v2TaobaoTklConvertHistoryService.storeConvertRecord(tkl, openId, specialId, pubSiteType, newTkl, pubSiteCombination);
 
             logger.info("[TklConvertService] bind openId[{}] and specialId[{}] and pubSite[{}] on item[{}]", openId, specialId, pubSiteCombination, newTkl.getItemId());
             return newTkl.getTkl();
@@ -108,7 +103,7 @@ public class V2TaobaoTklConvertService {
         //2.1.3、获取商品ID - 查询转链记录表，看看该用户下是否已经转换过该商品，并使用了某个推广位
         String itemId = newTkl.getItemId();
         int limit = 1;
-        List<V2TaobaoTklConvertHistoryInfo> tklConvertHistories = getTklConvertHistories(pubSiteType, itemId, openId, null, limit);
+        List<V2TaobaoTklConvertHistoryInfo> tklConvertHistories = v2TaobaoTklConvertHistoryService.getTklConvertHistories(pubSiteType, itemId, openId, null, limit);
 
         //2.1.3.1、说明该用户以前转过，直接复用相同的推广位组合
         if (!EmptyUtils.isEmpty(tklConvertHistories)) {
@@ -119,17 +114,17 @@ public class V2TaobaoTklConvertService {
             newTkl = convertTkl(tkl, specialId, oldPubSiteCombination, commissionRatio);
 
             //存储淘口令
-            storeConvertRecord(tkl, openId, null, pubSiteType, newTkl, oldPubSiteCombination);
+            v2TaobaoTklConvertHistoryService.storeConvertRecord(tkl, openId, null, pubSiteType, newTkl, oldPubSiteCombination);
             logger.info("[TklConvertService] bind openId[{}] and pubSite[{}] on item[{}], use old pubSite", openId, oldPubSiteCombination, newTkl.getItemId());
             return newTkl.getTkl();
         }
 
         //2.2、说明该用户以前没有转过，那么查出来所有的
-        tklConvertHistories = getTklConvertHistories(pubSiteType, itemId, null, null, -1);
+        tklConvertHistories = v2TaobaoTklConvertHistoryService.getTklConvertHistories(pubSiteType, itemId, null, null, -1);
 
         //2.2、情况1 - 不存在
         if (EmptyUtils.isEmpty(tklConvertHistories)) {
-            storeConvertRecord(tkl, openId, null, pubSiteType, newTkl, pubSiteCombination);
+            v2TaobaoTklConvertHistoryService.storeConvertRecord(tkl, openId, null, pubSiteType, newTkl, pubSiteCombination);
             logger.info("[TklConvertService] bind openId[{}] and pubSite[{}] on item[{}], not used - 1, itemId not exist", openId, pubSiteCombination, newTkl.getItemId());
             return newTkl.getTkl();
         }
@@ -137,7 +132,7 @@ public class V2TaobaoTklConvertService {
         //2.3、情况2 - 存在，但是当前的推广位没有被使用过
         List<String> hasCostPubSiteCombination = tklConvertHistories.stream().map(t -> t.getPubsiteCombination()).collect(Collectors.toList());
         if (!hasCostPubSiteCombination.contains(pubSiteCombination)) {
-            storeConvertRecord(tkl, openId, null, pubSiteType, newTkl, pubSiteCombination);
+            v2TaobaoTklConvertHistoryService.storeConvertRecord(tkl, openId, null, pubSiteType, newTkl, pubSiteCombination);
             logger.info("[TklConvertService] bind openId[{}] and pubSite[{}] on item[{}], not used - 2, itemId exist", openId, pubSiteCombination, newTkl.getItemId());
             return newTkl.getTkl();
         }
@@ -149,13 +144,13 @@ public class V2TaobaoTklConvertService {
 
             //重新转链接
             newTkl = convertTkl(tkl, null, newNotCostPubSiteComb, commissionRatio);
-            storeConvertRecord(tkl, openId, null, pubSiteType, newTkl, newNotCostPubSiteComb);
+            v2TaobaoTklConvertHistoryService.storeConvertRecord(tkl, openId, null, pubSiteType, newTkl, newNotCostPubSiteComb);
             logger.info("[TklConvertService] bind openId[{}] and pubSite[{}] on item[{}], not used - 3, select new one", openId, newNotCostPubSiteComb, newTkl.getItemId());
             return newTkl.getTkl();
         }
 
         //2.5、都用完了，直接返回
-        storeConvertRecord(tkl, openId, null, pubSiteType, newTkl, pubSiteCombination);
+        v2TaobaoTklConvertHistoryService.storeConvertRecord(tkl, openId, null, pubSiteType, newTkl, pubSiteCombination);
         logger.info("[TklConvertService] bind openId[{}] and pubSite[{}] on item[{}], no remaining, reuse pubSite", openId, pubSiteCombination, newTkl.getItemId());
         return newTkl.getTkl();
     }
@@ -184,77 +179,5 @@ public class V2TaobaoTklConvertService {
         }
 
         return dtkReturnPriceService.generateReturnPriceInfo(tkl, vipId, null, null, pubSite, commissionRatio);
-    }
-
-    /**
-     * 获取转链历史，通过商品ID，和转链类型
-     * @param pubSiteType
-     * @param itemId
-     * @param openId
-     * @param pubSiteCombination
-     * @param limit
-     * @return
-     */
-    private List<V2TaobaoTklConvertHistoryInfo> getTklConvertHistories(String pubSiteType, String itemId, String openId, String pubSiteCombination, int limit) {
-        V2TaobaoTklConvertHistoryInfoExample historyExample = new V2TaobaoTklConvertHistoryInfoExample();
-        if (limit > 0) {
-            historyExample.setLimit(limit);
-        }
-
-        //针对动态itemId，重构一下
-        String[] itemIds = itemId.split("-");
-        itemIds[0] = itemId;
-        List<String> staticAndDynamicItemId = Arrays.stream(itemIds).collect(Collectors.toList());
-
-        V2TaobaoTklConvertHistoryInfoExample.Criteria criteria = historyExample.createCriteria();
-        criteria.andItemIdIn(staticAndDynamicItemId);
-        criteria.andPubSiteTypeEqualTo(pubSiteType);
-        criteria.andOpenIdEqualTo(openId);
-
-        //这种表示，只查某个特定推广位的
-        if (pubSiteCombination != null) {
-            criteria.andPubsiteCombinationEqualTo(pubSiteCombination);
-        }
-
-        //我们只对7天内转链的商品负责 - 7 * 24 * 3600 * 1000
-        criteria.andGmtCreatedGreaterThanOrEqualTo(LocalDateTime.now().minusDays(7));
-        criteria.andStatusEqualTo((byte) 0);
-
-        //查询
-        List<V2TaobaoTklConvertHistoryInfo> tklConvertHistories = v2TaobaoTklConvertHistoryInfoDao.selectByExample(historyExample);
-        return tklConvertHistories;
-    }
-
-    /**
-     * 存储转链记录
-     *
-     * @param tkl
-     * @param openId
-     * @param specialId
-     * @param pubSiteType
-     * @param newTkl
-     * @param pubSiteCombination
-     */
-    private void storeConvertRecord(String tkl, String openId, String specialId, String pubSiteType,
-                                    DtkReturnPriceService.TklDO newTkl, String pubSiteCombination) {
-        V2TaobaoTklConvertHistoryInfo tklConvertHistory = new V2TaobaoTklConvertHistoryInfo();
-        tklConvertHistory.setGmtCreated(LocalDateTime.now());
-        tklConvertHistory.setGmtModified(LocalDateTime.now());
-        tklConvertHistory.setOpenId(openId);
-
-        //会员转码，该字段传入的是null，因为不需要
-        tklConvertHistory.setPubsiteCombination(pubSiteCombination);
-        tklConvertHistory.setTkl(Base64.encodeBase64String(tkl.getBytes()));
-        tklConvertHistory.setNewTkl(Base64.encodeBase64String(newTkl.getTkl().getBytes()));
-        tklConvertHistory.setItemId(newTkl.getItemId());
-        tklConvertHistory.setPubSiteType(pubSiteType);
-        if (!EmptyUtils.isEmpty(specialId)) {
-            tklConvertHistory.setAttachInfo("specialId=" + specialId);
-        }
-        tklConvertHistory.setStatus((byte) 0);
-
-        int affectedCnt = v2TaobaoTklConvertHistoryInfoDao.insertSelective(tklConvertHistory);
-        Checks.isTrue(affectedCnt == 1, "存储新生成的淘口令失败");
-        return;
     }
 }

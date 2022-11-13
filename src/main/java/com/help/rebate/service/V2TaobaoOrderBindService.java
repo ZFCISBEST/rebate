@@ -29,8 +29,8 @@ import java.util.stream.Collectors;
  */
 @Service
 @Transactional
-public class OrderBindService {
-    private static final Logger logger = LoggerFactory.getLogger(OrderBindService.class);
+public class V2TaobaoOrderBindService {
+    private static final Logger logger = LoggerFactory.getLogger(V2TaobaoOrderBindService.class);
 
     /**
      * 订单详情接口
@@ -38,7 +38,7 @@ public class OrderBindService {
     @Resource
     private OrderDetailDao orderDetailDao;
     @Resource
-    private OrderService orderService;
+    private V2TaobaoOrderService v2TaobaoOrderService;
 
     /**
      * 转链历史记录表
@@ -46,7 +46,7 @@ public class OrderBindService {
     @Resource
     private TklConvertHistoryDao tklConvertHistoryDao;
     @Resource
-    private TklConvertHistoryService tklConvertHistoryService;
+    private V2TaobaoTklConvertHistoryService v2TaobaoTklConvertHistoryService;
 
     /**
      * 用户信息服务，主要用于对用户信息表的更新操作
@@ -60,9 +60,9 @@ public class OrderBindService {
     @Resource
     private OrderOpenidMapDao orderOpenidMapDao;
     @Resource
-    private OrderOpenidMapService orderOpenidMapService;
+    private V2TaobaoOrderOpenidMapService v2TaobaoOrderOpenidMapService;
     @Resource
-    private OrderOpenidMapFailureService orderOpenidMapFailureService;
+    private V2TaobaoOrderOpenidMapFailureService v2TaobaoOrderOpenidMapFailureService;
 
     /**
      * 订单绑定的自动同步任务
@@ -74,13 +74,13 @@ public class OrderBindService {
      * 时间游标记录
      */
     @Resource
-    private TimeCursorPositionService timeCursorPositionService;
+    private V2TaobaoSyncOrderOffsetInfoService v2TaobaoSyncOrderOffsetInfoService;
 
     /**
      * 提取服务
      */
     @Resource
-    private PickMoneyRecordService pickMoneyRecordService;
+    private V2TaobaoCommissionAccountService v2TaobaoCommissionAccountService;
 
     /**
      * 模拟提取的流程
@@ -119,9 +119,9 @@ public class OrderBindService {
     @Transactional
     public PickCommissionVO triggerPickMoneyAction(String openId, String specialId, String payStartTime, String payEndTime) {
         //如果是触发提取操作，那么先看，之前是否有提取中的状态，或者有失败的，提取中，不允许再提，失败的，那么重试之前的就行，直到成功
-        PickMoneyRecord oldPickMoneyRecord = pickMoneyRecordService.selectPickMoneyAction(openId, specialId, new String[]{"提取中"});
+        PickMoneyRecord oldPickMoneyRecord = v2TaobaoCommissionAccountService.selectPickMoneyAction(openId, specialId, new String[]{"提取中"});
         if (oldPickMoneyRecord != null) {
-            CommissionVO commissionVO = orderOpenidMapService.selectCommissionBy(openId, specialId, "3", new String[]{"提取中"}, null, null);
+            CommissionVO commissionVO = v2TaobaoOrderOpenidMapService.selectCommissionBy(openId, specialId, "3", new String[]{"提取中"}, null, null);
             //直接返回查询的统计信息
             PickCommissionVO pickCommissionVO = new PickCommissionVO();
             pickCommissionVO.setAction("重复 - 提取中");
@@ -131,7 +131,7 @@ public class OrderBindService {
         }
 
         //订单状态 - 12-付款，13-关闭，14-确认收货，3-结算成功
-        CommissionVO commissionVO = orderOpenidMapService.selectCommissionBy(openId, specialId, "3", new String[]{"待提取", "提取失败", "提取超时"}, payStartTime, payEndTime);
+        CommissionVO commissionVO = v2TaobaoOrderOpenidMapService.selectCommissionBy(openId, specialId, "3", new String[]{"待提取", "提取失败", "提取超时"}, payStartTime, payEndTime);
         if (commissionVO == null || commissionVO.getPubFee() == null || "0.0".equals(commissionVO.getPubFee()) || commissionVO.getTradeParentId2ItemIdsMap().isEmpty()) {
             PickCommissionVO pickCommissionVO = new PickCommissionVO();
             pickCommissionVO.setAction("提取中 - [可提取订单为0]");
@@ -146,11 +146,11 @@ public class OrderBindService {
         Map<String, List<String>> tradeParentId2TradeIdsMap = commissionVO.getTradeParentId2TradeIdsMap();
 
         //第一步，插入数据库，记录提取这个动作
-        Integer primaryKey = pickMoneyRecordService.recordPickMoneyAction(openId, specialId, pubFee, "提取中");
+        Integer primaryKey = v2TaobaoCommissionAccountService.recordPickMoneyAction(openId, specialId, pubFee, "提取中");
         Checks.isTrue(primaryKey != null, "记录提取动作失败");
 
         //第二步，更新订单表，记录所有的为提取中
-        int affectedCnt = orderOpenidMapService.changeCommissionStatusByTradeParentIds(openId, specialId, tradeParentId2TradeIdsMap, primaryKey, "提取中");
+        int affectedCnt = v2TaobaoOrderOpenidMapService.changeCommissionStatusByTradeParentIds(openId, specialId, tradeParentId2TradeIdsMap, primaryKey, "提取中");
         int allTradeIdCnt = tradeParentId2TradeIdsMap.values().stream().mapToInt(a -> a.size()).sum();
         logger.info("[order-bind-service] 查出待提取记录数: {}，实际可更新订单数: {}", allTradeIdCnt, affectedCnt);
         Checks.isTrue(affectedCnt == allTradeIdCnt, "更新的记录数，与查询出的记录数不一致");
@@ -159,7 +159,7 @@ public class OrderBindService {
         PickMoneyRecord pickMoneyRecord = new PickMoneyRecord();
         pickMoneyRecord.setId(primaryKey);
         pickMoneyRecord.setPickAttachInfo("all_trade_id_cnt:" + affectedCnt);
-        pickMoneyRecordService.update(pickMoneyRecord);
+        v2TaobaoCommissionAccountService.update(pickMoneyRecord);
 
         //直接返回查询的统计信息
         PickCommissionVO pickCommissionVO = new PickCommissionVO();
@@ -178,7 +178,7 @@ public class OrderBindService {
      */
     private PickCommissionVO triggerEndPickMoneyAction(String openId, String specialId, String mockStatus) {
         //先查询出最新的状态，只能存在一个唯一的提取状态。只有提取中的状态，才可以触发其他操作
-        PickMoneyRecord pickMoneyRecord = pickMoneyRecordService.selectByStatus(openId, specialId, "提取中");
+        PickMoneyRecord pickMoneyRecord = v2TaobaoCommissionAccountService.selectByStatus(openId, specialId, "提取中");
         if (pickMoneyRecord == null) {
             PickCommissionVO pickCommissionVO = new PickCommissionVO();
             pickCommissionVO.setAction(mockStatus + "- [无'提取中'的提现记录]");
@@ -195,16 +195,16 @@ public class OrderBindService {
         pickMoneyRecord.setGmtModified(new Date());
         pickMoneyRecord.setPickStatus(mockStatus);
         pickMoneyRecord.setActPickCommission(pickMoneyRecord.getPrePickCommission());
-        int affectedCnt = pickMoneyRecordService.update(pickMoneyRecord);
+        int affectedCnt = v2TaobaoCommissionAccountService.update(pickMoneyRecord);
         logger.error("[pick-money] fail to change status to {}, pick_id:{}, openId:{}, specialId:{}", mockStatus, pickMoneyRecordId, openId, specialId);
         Checks.isTrue(affectedCnt == 1, "更新提取状态失败");
 
         //更新订单绑定表中的状态
-        int affectedMapCnt = orderOpenidMapService.changeCommissionStatusByPickMoneyId(openId, specialId, pickMoneyRecordId, mockStatus);
+        int affectedMapCnt = v2TaobaoOrderOpenidMapService.changeCommissionStatusByPickMoneyId(openId, specialId, pickMoneyRecordId, mockStatus);
         Checks.isTrue(pickAttachInfo.equals("all_trade_id_cnt:" + affectedMapCnt), "提取时的详细订单记录与当前更新个数不符");
 
         //订单状态 - 12-付款，13-关闭，14-确认收货，3-结算成功
-        CommissionVO commissionVO = orderOpenidMapService.selectCommissionBy(openId, specialId, pickMoneyRecordId, "3", new String[]{mockStatus}, null, null);
+        CommissionVO commissionVO = v2TaobaoOrderOpenidMapService.selectCommissionBy(openId, specialId, pickMoneyRecordId, "3", new String[]{mockStatus}, null, null);
         PickCommissionVO pickCommissionVO = new PickCommissionVO();
         pickCommissionVO.setAction(mockStatus);
         pickCommissionVO.setCommission(commissionVO.getPubFee());
@@ -213,40 +213,12 @@ public class OrderBindService {
     }
 
     /**
-     * 指定起始时间，周期性调度，执行订单绑定
-     * @param orderBindTime 这个时间，应该是订单的更新时间
-     * @param minuteStep
-     * @param running
-     * @return
-     */
-    public boolean syncBindOrderByTimeStart(String orderBindTime, Long minuteStep, Boolean running) {
-        //如果不运行
-        if (!running) {
-            fixedOrderBindSyncTask.setRunning(false);
-            return true;
-        }
-
-        //运行的话，更新时间游标数据库
-        if (orderBindTime != null && minuteStep != null) {
-            Date startTime = TimeUtil.parseDate(orderBindTime);
-            int secondStep = new Long(minuteStep * 60).intValue();
-            timeCursorPositionService.saveOrUpdateTimeCursor(startTime, secondStep, null, null, TimeCursorPositionService.TimeType.ORDER_BIND_SYNC);
-        }
-
-        //调用执行
-        fixedOrderBindSyncTask.cleanContext(orderBindTime, minuteStep, running);
-        return true;
-    }
-
-    /**
      * 指定一段时间，执行订单绑定
-     * @param openId 微信openId，用于圈定范围，可不指定
-     * @param specialId 淘宝联盟私域会员ID，用于圈定范围，可不指定
      * @param orderBindTime
      * @param minuteStep
      * @return
      */
-    public List<OrderBindResultVO> bindByTimeRange(String openId, String specialId, String orderBindTime, Long minuteStep) {
+    public List<OrderBindResultVO> bindByTimeRange(String orderBindTime, Long minuteStep) {
         //看一下openId，暂时不用
 
         //确定时间范围
@@ -296,7 +268,7 @@ public class OrderBindService {
             //处理 - 有优化空间
             List<String> allParentTradeIdList = orderDetailList.stream().map(a -> a.getParentTradeId()).distinct().collect(Collectors.toList());
             for (String parentTradeId : allParentTradeIdList) {
-                OrderBindResultVO orderBindResultVO = bindByTradeId(parentTradeId, null);
+                OrderBindResultVO orderBindResultVO = bindByTradeParentId(parentTradeId, null);
                 parentTradeId2OrderBindResultVOMap.put(parentTradeId, orderBindResultVO);
             }
 
@@ -314,14 +286,13 @@ public class OrderBindService {
      * @param parentTradeId
      * @param openId
      * @param specialId 额外给出的信息，用于将openid和specialid做强制映射，这个只是给管理员使用
-     * @param externalId 额外给出的信息，用于将openid和externalid做强制映射，这个只是给管理员用
      * @return 商品名称列表
      */
-    public OrderBindResultVO bindByTradeId(String parentTradeId, String openId, String specialId, String externalId) {
+    public OrderBindResultVO bindByTradeParentId(String parentTradeId, String openId, String specialId) {
         OrderBindResultVO orderBindResultVO = new OrderBindResultVO();
 
         //首先看看，是不是已经绑定过了
-        List<OrderOpenidMap> orderOpenidMapList = orderOpenidMapService.selectByTradeId(parentTradeId, null);
+        List<OrderOpenidMap> orderOpenidMapList = v2TaobaoOrderOpenidMapService.selectByTradeId(parentTradeId, null);
         if (!EmptyUtils.isEmpty(orderOpenidMapList)) {
             //that means: has bind already
             OrderOpenidMap orderOpenidMap = orderOpenidMapList.get(0);
@@ -368,7 +339,7 @@ public class OrderBindService {
 
         //干正事，绑定
         //首先查询订单
-        List<OrderDetail> orderDetailList = orderService.selectByTradeId(parentTradeId, null);
+        List<OrderDetail> orderDetailList = v2TaobaoOrderService.selectByTradeId(parentTradeId, null);
         Checks.isNotEmpty(orderDetailList, "当前订单不存在，请稍后重试或确定是否通过本平台获取的购买链接");
         for (OrderDetail orderDetail : orderDetailList) {
             //先查询，万一存在，就得更新，防止操作错误
@@ -391,16 +362,16 @@ public class OrderBindService {
      * @param tradeIds 可传可不传
      * @return
      */
-    public OrderBindResultVO bindByTradeId(String parentTradeId, String... tradeIds) {
+    public OrderBindResultVO bindByTradeParentId(String parentTradeId, String... tradeIds) {
         OrderBindResultVO orderBindResultVO = new OrderBindResultVO();
         orderBindResultVO.setTradeParentId(parentTradeId);
 
         //首先查询订单
-        List<OrderDetail> orderDetailList = orderService.selectByTradeId(parentTradeId, null);
+        List<OrderDetail> orderDetailList = v2TaobaoOrderService.selectByTradeId(parentTradeId, null);
         Map<String, OrderDetail> tradeId2OrderDetailMap = orderDetailList.stream().collect(Collectors.toMap(a -> a.getTradeId(), a -> a));
 
         //查询哪些已经绑定过了
-        List<OrderOpenidMap> orderOpenidMapList = orderOpenidMapService.selectByTradeId(parentTradeId, null);
+        List<OrderOpenidMap> orderOpenidMapList = v2TaobaoOrderOpenidMapService.selectByTradeId(parentTradeId, null);
 
         //如果已经存在了，那么先执行更新操作，如订单状态的演变等
         for (OrderOpenidMap orderOpenidMap : orderOpenidMapList) {
@@ -494,7 +465,7 @@ public class OrderBindService {
 
             //修改时间
             orderOpenidMap.setGmtModified(new Date(System.currentTimeMillis()));
-            orderOpenidMapService.update(orderOpenidMap);
+            v2TaobaoOrderOpenidMapService.update(orderOpenidMap);
         }
 
         //内容
@@ -539,7 +510,7 @@ public class OrderBindService {
     private void bindByPubSite(List<OrderDetail> orderDetailList, OrderBindResultVO orderBindResultVO) {
         BindOpenidInfo openidInfo = resolveBindOpenidInfoByConvertHistory(orderDetailList);
         if (openidInfo == null) {
-            orderOpenidMapFailureService.insertOrDoNoneOrderInfo(orderDetailList, "无淘口令转换记录");
+            v2TaobaoOrderOpenidMapFailureService.insertOrDoNoneOrderInfo(orderDetailList, "无淘口令转换记录");
             return;
         }
 
@@ -578,7 +549,7 @@ public class OrderBindService {
     private void insertOrUpdateOrderOpenidMap(String openId, MapType mapType, UserInfos userInfos, OrderDetail orderDetail) {
         //先查询，万一存在，就得更新，防止操作错误
         OrderOpenidMap newOrderOpenidMap = null;
-        List<OrderOpenidMap> orderOpenidMapList = orderOpenidMapService.selectByTradeId(orderDetail.getParentTradeId(), orderDetail.getTradeId());
+        List<OrderOpenidMap> orderOpenidMapList = v2TaobaoOrderOpenidMapService.selectByTradeId(orderDetail.getParentTradeId(), orderDetail.getTradeId());
         if (!orderOpenidMapList.isEmpty()) {
             newOrderOpenidMap = orderOpenidMapList.get(0);
 
@@ -611,11 +582,11 @@ public class OrderBindService {
 
         //插入数据库
         if (orderOpenidMapList.isEmpty()) {
-            int affectedNum = orderOpenidMapService.save(newOrderOpenidMap);
+            int affectedNum = v2TaobaoOrderOpenidMapService.save(newOrderOpenidMap);
             Checks.isTrue(affectedNum == 1, "插入失败 - tradeId=" + orderDetail.getTradeId());
         }
         else {
-            int affectedCnt = orderOpenidMapService.update(newOrderOpenidMap);
+            int affectedCnt = v2TaobaoOrderOpenidMapService.update(newOrderOpenidMap);
             Checks.isTrue(affectedCnt == 1, "更新失败 - tradeId=" + orderDetail.getTradeId());
         }
     }
@@ -693,7 +664,7 @@ public class OrderBindService {
             Date endTime = clickTime;
 
             //查询看看，是否有转链接记录
-            List<TklConvertHistory> tklConvertHistories = tklConvertHistoryService.selectByItemId(itemId, pubSite, startTime, endTime);
+            List<TklConvertHistory> tklConvertHistories = v2TaobaoTklConvertHistoryService.selectByItemId(itemId, pubSite, startTime, endTime);
             item2ConvertHistoryMap.put(itemId, tklConvertHistories);
             if (!EmptyUtils.isEmpty(tklConvertHistories)) {
                 List<String> itemIds = convertNum2ItemsMap.getOrDefault(tklConvertHistories.size(), new ArrayList<>());
@@ -725,15 +696,12 @@ public class OrderBindService {
 
     /**
      * 绑定维权的退回金额
-     * @param openId
-     * @param specialId
      * @param tradeId
-     * @param itemId
      * @param refundFeeStr
      * @return
      */
-    public void bindRefundFee(String openId, String specialId, String tradeId, String itemId, String refundFeeStr) {
-        List<OrderOpenidMap> orderOpenidMapList = orderOpenidMapService.selectByTradeId(null, tradeId);
+    public void bindRefundFee(String tradeId, String refundFeeStr) {
+        List<OrderOpenidMap> orderOpenidMapList = v2TaobaoOrderOpenidMapService.selectByTradeId(null, tradeId);
         Checks.isTrue(orderOpenidMapList.size() == 1, "订单不唯一，更新失败");
 
         //验证
@@ -748,7 +716,7 @@ public class OrderBindService {
 
         //更新
         orderOpenidMap.setRefundFee(refundFeeStr);
-        int affectedCnt = orderOpenidMapService.update(orderOpenidMap);
+        int affectedCnt = v2TaobaoOrderOpenidMapService.update(orderOpenidMap);
         Checks.isTrue(affectedCnt == 1, "更新失败，影响条数:" + affectedCnt);
     }
 

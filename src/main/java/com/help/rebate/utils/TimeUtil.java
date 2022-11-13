@@ -2,6 +2,8 @@ package com.help.rebate.utils;
 
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -16,6 +18,8 @@ public class TimeUtil {
     private static final SimpleDateFormat ymdhms = new SimpleDateFormat("yyyyMMddHHmmss");
     private static final SimpleDateFormat y_m_d = new SimpleDateFormat("yyyy-MM-dd");
     private static final SimpleDateFormat ymd = new SimpleDateFormat("yyyyMMdd");
+
+    private static final DateTimeFormatter local_ymd_hms = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public static final Map<String, SimpleDateFormat> format2ObjMap = new HashMap<String, SimpleDateFormat>(16, 1);
 
@@ -42,6 +46,15 @@ public class TimeUtil {
      * @param date
      * @return
      */
+    public static LocalDateTime parseLocalDate(String date) {
+        return LocalDateTime.parse(date, local_ymd_hms);
+    }
+
+    /**
+     * 解析出时间，并格式化
+     * @param date
+     * @return
+     */
     public static Date parseDateShort(String date) {
         ParsePosition pos = new ParsePosition(0);
         Date parse = y_m_d.parse(date, pos);
@@ -53,12 +66,25 @@ public class TimeUtil {
      * @param dataLong
      * @return
      */
-    public static String format(Object dataLong) {
+    public static String format(Date dataLong) {
         if (dataLong == null) {
             return null;
         }
 
         return ymd_hms.format(dataLong);
+    }
+
+    /**
+     * 直接格式化
+     * @param dataLong
+     * @return
+     */
+    public static String formatLocalDate(LocalDateTime dataLong) {
+        if (dataLong == null) {
+            return null;
+        }
+
+        return dataLong.format(local_ymd_hms);
     }
 
     /**

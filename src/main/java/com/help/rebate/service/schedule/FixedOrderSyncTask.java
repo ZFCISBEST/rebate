@@ -4,12 +4,11 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.help.rebate.commons.DtkConfig;
-import com.help.rebate.commons.PrettyHttpService;
-import com.help.rebate.dao.entity.OrderDetail;
-import com.help.rebate.dao.entity.TimeCursorPosition;
-import com.help.rebate.service.OrderBindService;
-import com.help.rebate.service.OrderService;
-import com.help.rebate.service.TimeCursorPositionService;
+import com.help.rebate.dao.entity.V2TaobaoOrderDetailInfo;
+import com.help.rebate.dao.entity.V2TaobaoSyncOrderOffsetInfo;
+import com.help.rebate.service.V2TaobaoOrderBindService;
+import com.help.rebate.service.V2TaobaoOrderService;
+import com.help.rebate.service.V2TaobaoSyncOrderOffsetInfoService;
 import com.help.rebate.utils.EmptyUtils;
 import com.help.rebate.utils.PropertyValueResolver;
 import com.help.rebate.utils.TimeUtil;
@@ -21,7 +20,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,11 +47,11 @@ public class FixedOrderSyncTask {
     /**
      * 表示当前的位置缓存
      */
-    private Date startTime;
-    private Date endTime;
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
     private int secondStep;
-    private int orderScene;
-    private int queryType;
+    private int syncOrderType;
+    private int syncTimeType;
     private String positionIndex;
 
     /**
@@ -70,25 +69,19 @@ public class FixedOrderSyncTask {
      * 订单服务
      */
     @Resource
-    private OrderService orderService;
+    private V2TaobaoOrderService v2TaobaoOrderService;
 
     /**
      * 订单绑定服务
      */
     @Resource
-    private OrderBindService orderBindService;
+    private V2TaobaoOrderBindService v2TaobaoOrderBindService;
 
     /**
      * 时间游标
      */
     @Resource
-    private TimeCursorPositionService timeCursorPositionService;
-
-    /**
-     * http服务
-     */
-    @Resource
-    private PrettyHttpService prettyHttpService;
+    private V2TaobaoSyncOrderOffsetInfoService v2TaobaoSyncOrderOffsetInfoService;
 
     /**
      * 周期调度执行器
@@ -107,7 +100,7 @@ public class FixedOrderSyncTask {
 
         //获取同步开始时间
         if (startTime == null || endTime == null) {
-            fetchSyncTime();
+            selectSyncTimeOffset();
         }
 
         //二次判定
@@ -117,9 +110,8 @@ public class FixedOrderSyncTask {
         }
 
         //时间判定
-        long endMillis = endTime.getTime();
-        if (System.currentTimeMillis() < endMillis) {
-            logger.info("[fix-sync-task] 当前时间小于结束时间[{}], 跳过本次同步", TimeUtil.format(endMillis));
+        if (endTime.isBefore(LocalDateTime.now())) {
+            logger.info("[fix-sync-task] 当前时间小于结束时间[{}], 跳过本次同步", TimeUtil.formatLocalDate(endTime));
             return;
         }
 
@@ -132,48 +124,37 @@ public class FixedOrderSyncTask {
             syncBindOrder();
 
             //更新时间游标
-            updateTimeCursor();
+            updateSyncOrderTimeOffset();
         } catch(Exception e) {
             logger.info("[fix-sync-task] error to sync order", e);
         }
     }
 
     /**
-     * 更新时间游标
-     */
-    private void updateTimeCursor() {
-        //更改游标，并更新数据库
-        startTime = new Date(startTime.getTime() + secondStep * 1000);
-        endTime = new Date(endTime.getTime() + secondStep * 1000);
-        positionIndex = null;
-        timeCursorPositionService.saveOrUpdateTimeCursor(startTime, secondStep, orderScene, queryType, TimeCursorPositionService.TimeType.ORDER_SYNC);
-    }
-
-    /**
      * 执行订单同步
-     * query_type - 查询时间类型，1-订单创建时间，2-订单支付时间，3-订单结算时间，4-订单更新时间
-     * 场景订单类型，1-常规订单，2-渠道订单，3-会员运营订单，0-都查
-     * 查询时间场景 - 查询时间类型，1-订单创建时间，2-订单支付时间，3-订单结算时间，4-订单更新时间，0-都查
+     * sync_time_type - 查询时间类型，1-订单创建时间，2-订单支付时间，3-订单结算时间，4-订单更新时间
+     * syncOrderType - 场景订单类型，1-常规订单，2-渠道订单，3-会员运营订单，0-都查
+     * syncTimeType - 查询时间场景 - 查询时间类型，1-订单创建时间，2-订单支付时间，3-订单结算时间，4-订单更新时间，0-都查
      */
     private void syncOrder() {
-        logger.info("[fix-sync-task] sync order - time range[{}, {}], scene[{}], queryType[{}]",
-                TimeUtil.format(startTime), TimeUtil.format(endTime), orderScene, queryType);
+        logger.info("[fix-sync-task] sync order - time range[{}, {}], syncOrderType[{}], syncTimeType[{}]",
+                TimeUtil.formatLocalDate(startTime), TimeUtil.formatLocalDate(endTime), syncOrderType, syncTimeType);
 
         //重构订单场景
-        int[] orderScenes = new int[]{orderScene};
-        if (orderScene == 0) {
-            orderScenes = new int[]{1, 3};
+        int[] syncOrderTypes = new int[]{syncOrderType};
+        if (syncOrderType == 0) {
+            syncOrderTypes = new int[]{1, 3};
         }
 
         //重构查询场景
-        int[] queryTypes = new int[]{queryType};
-        if (queryType == 0) {
-            queryTypes = new int[]{1, 2, 3, 4};
+        int[] syncTimeTypes = new int[]{syncTimeType};
+        if (syncTimeType == 0) {
+            syncTimeTypes = new int[]{1, 2, 3, 4};
         }
 
         //循环
-        for (int i = 0; i < orderScenes.length; i++) {
-            for (int j = 0; j < queryTypes.length; j++) {
+        for (int i = 0; i < syncOrderTypes.length; i++) {
+            for (int j = 0; j < syncTimeTypes.length; j++) {
                 boolean hasNext = true;
                 int pageNo = 1;
                 int pageSize = 50;
@@ -188,10 +169,10 @@ public class FixedOrderSyncTask {
                     Map<String, Object> params = new HashMap<String, Object>();
                     params.put("appKey", DtkConfig.dtkAppkey);
                     params.put("version", "v1.0.0");
-                    params.put("startTime", TimeUtil.format(startTime));
-                    params.put("endTime", TimeUtil.format(endTime));
-                    params.put("queryType", queryTypes[j]);
-                    params.put("orderScene", orderScenes[i]);
+                    params.put("startTime", TimeUtil.formatLocalDate(startTime));
+                    params.put("endTime", TimeUtil.formatLocalDate(endTime));
+                    params.put("queryType", syncTimeTypes[j]);
+                    params.put("orderScene", syncOrderTypes[i]);
 
                     if (positionIndex != null) {
                         params.put("positionIndex", positionIndex);
@@ -212,7 +193,7 @@ public class FixedOrderSyncTask {
                     //全部数据，存储到数据库
                     String affectedMsg = saveOrUpdateToOrderDetail(jsonObject);
                     logger.info("[fix-sync-task] 同步存入数据:{}, start:{}, end:{}, position:{}, orderScene:{}, queryType:{}", affectedMsg,
-                            TimeUtil.format(startTime), TimeUtil.format(endTime), positionIndex, orderScenes[i], queryTypes[j]);
+                            TimeUtil.formatLocalDate(startTime), TimeUtil.formatLocalDate(endTime), positionIndex, syncOrderTypes[i], syncTimeTypes[j]);
 
                     //看下是否还有数据
                     hasNext = jsonObject.getJSONObject("data").getBoolean("has_next");
@@ -229,19 +210,19 @@ public class FixedOrderSyncTask {
      */
     private void syncBindOrder() {
         //为了防止覆盖不全，这里自动自起始日期，往前多扫描1个周期
-        Date localStartTime = new Date(startTime.getTime() - secondStep * 1000);
+        LocalDateTime localStartTime = startTime.minusSeconds(secondStep);;
         long localSecondStep = 2 * secondStep;
 
         logger.info("[fix-order-sync-task] sync bind order - time range[{}, {}]",
-                TimeUtil.format(localStartTime), TimeUtil.format(endTime));
+                TimeUtil.formatLocalDate(localStartTime), TimeUtil.formatLocalDate(endTime));
 
         //调用服务，按时间范围查找并绑定
-        List<OrderBindResultVO> orderBindResultVOS = orderBindService.bindByTimeRange(null, null, TimeUtil.format(localStartTime), localSecondStep / 60);
+        List<OrderBindResultVO> orderBindResultVOS = v2TaobaoOrderBindService.bindByTimeRange(TimeUtil.formatLocalDate(localStartTime), localSecondStep / 60);
 
         //log输出
         if (EmptyUtils.isEmpty(orderBindResultVOS)) {
             logger.info("[fix-order-sync-task] sync bind order - time range[{}, {}], no any bind order",
-                    TimeUtil.format(localStartTime), TimeUtil.format(endTime));
+                    TimeUtil.formatLocalDate(localStartTime), TimeUtil.formatLocalDate(endTime));
             return;
         }
 
@@ -253,8 +234,19 @@ public class FixedOrderSyncTask {
             List<String> tradeIdItemIdList = orderBindResultVO.getTradeIdItemIdList();
             String tradeIds = tradeIdItemIdList.stream().collect(Collectors.joining(","));
             logger.info("[fix-order-sync-task] sync bind order - time range[{}, {}], openId:{}, specialId:{}, tradeParentId:{}, tradeIds:{}",
-                    TimeUtil.format(localStartTime), TimeUtil.format(endTime), openId, specialId, tradeParentId, tradeIds);
+                    TimeUtil.formatLocalDate(localStartTime), TimeUtil.formatLocalDate(endTime), openId, specialId, tradeParentId, tradeIds);
         }
+    }
+
+    /**
+     * 更新时间游标
+     */
+    private void updateSyncOrderTimeOffset() {
+        //更改游标，并更新数据库
+        startTime = startTime.plusSeconds(secondStep);
+        endTime = startTime.plusSeconds(secondStep);
+        positionIndex = null;
+        v2TaobaoSyncOrderOffsetInfoService.upsertSyncStartTimeOffset(startTime, secondStep, syncOrderType, syncTimeType);
     }
 
     /**
@@ -279,42 +271,32 @@ public class FixedOrderSyncTask {
             JSONObject orderItem = jsonArray.getJSONObject(i);
             String tradeId = orderItem.getString("trade_id");
             String parentTradeId = orderItem.getString("trade_parent_id");//应该是trade_parent_id，而不是parent_trade_id
-            List<OrderDetail> orderDetails = orderService.selectByTradeId(parentTradeId, tradeId);
+            List<V2TaobaoOrderDetailInfo> orderDetails = v2TaobaoOrderService.selectByTradeId(parentTradeId, tradeId);
 
             //插入
-            OrderDetail newOrderDetail = buildOrderDetail(orderItem, tradeId, parentTradeId);
+            V2TaobaoOrderDetailInfo newOrderDetail = buildOrderDetail(orderItem, tradeId, parentTradeId);
             if (EmptyUtils.isEmpty(orderDetails)) {
-                orderService.save(newOrderDetail);
+                v2TaobaoOrderService.save(newOrderDetail);
                 saveCnt++;
                 continue;
             }
 
             //更新 - 决定是否更新 - 12-付款，13-关闭，14-确认收货，3-结算成功
-            OrderDetail orderDetail = orderDetails.get(0);
+            V2TaobaoOrderDetailInfo orderDetail = orderDetails.get(0);
             Integer oldTkStatus = orderDetail.getTkStatus();
             Integer newTkStatus = newOrderDetail.getTkStatus();
 
-            boolean updateFlag = false;
-            if (oldTkStatus == null) {
-                updateFlag = true;
+            //如果已经结算成功了，那么就不不更新了
+            boolean updateFlag = true;
+            if (oldTkStatus != null && (oldTkStatus == 3 || oldTkStatus == 13)) {
+                updateFlag = false;
             }
 
-            //原始状态只是付款
-            else if (oldTkStatus == 12 && newTkStatus != 12) {
-                updateFlag = true;
-            }
-
-            //确认到结算，确认到关闭
-            else if (oldTkStatus == 14 && (newTkStatus == 3 || newTkStatus == 13)) {
-                updateFlag = true;
-            }
-
-            //执行更新 - 直接全部更新 - todo 测试一下
-            updateFlag = true;
+            //执行更新
             if (updateFlag) {
                 newOrderDetail.setId(orderDetail.getId());
-                newOrderDetail.setGmtModified(new Date());
-                orderService.update(newOrderDetail);
+                newOrderDetail.setGmtModified(LocalDateTime.now());
+                v2TaobaoOrderService.update(newOrderDetail);
                 updateCnt++;
             }
             else {
@@ -332,16 +314,16 @@ public class FixedOrderSyncTask {
      * @param parentTradeId
      * @return
      */
-    private OrderDetail buildOrderDetail(JSONObject orderItem, String tradeId, String parentTradeId) {
-        OrderDetail orderDetail = new OrderDetail();
-        orderDetail.setGmtCreated(new Date());
-        orderDetail.setGmtModified(new Date());
+    private V2TaobaoOrderDetailInfo buildOrderDetail(JSONObject orderItem, String tradeId, String parentTradeId) {
+        V2TaobaoOrderDetailInfo orderDetail = new V2TaobaoOrderDetailInfo();
+        orderDetail.setGmtCreated(LocalDateTime.now());
+        orderDetail.setGmtModified(LocalDateTime.now());
         orderDetail.setTradeId(tradeId);
-        orderDetail.setParentTradeId(parentTradeId);
-        orderDetail.setClickTime(orderItem.getDate("click_time"));
-        orderDetail.setTkCreateTime(orderItem.getDate("tk_create_time"));
-        orderDetail.setTbPaidTime(orderItem.getDate("tb_paid_time"));
-        orderDetail.setTkPaidTime(orderItem.getDate("tk_paid_time"));
+        orderDetail.setTradeParentId(parentTradeId);
+        orderDetail.setClickTime(TimeUtil.parseLocalDate(orderItem.getString("click_time")));
+        orderDetail.setTkCreateTime(TimeUtil.parseLocalDate(orderItem.getString("tk_create_time")));
+        orderDetail.setTbPaidTime(TimeUtil.parseLocalDate(orderItem.getString("tb_paid_time")));
+        orderDetail.setTkPaidTime(TimeUtil.parseLocalDate(orderItem.getString("tk_paid_time")));
         orderDetail.setAlipayTotalPrice(orderItem.getString("alipay_total_price"));
         orderDetail.setPayPrice(orderItem.getString("pay_price"));
         orderDetail.setModifiedTime(orderItem.getString("modified_time"));
@@ -350,7 +332,7 @@ public class FixedOrderSyncTask {
         orderDetail.setRefundTag(orderItem.getInteger("refund_tag"));
         orderDetail.setFlowSource(orderItem.getString("flow_source"));
         orderDetail.setTerminalType(orderItem.getString("terminal_type"));
-        orderDetail.setTkEarningTime(orderItem.getDate("tk_earning_time"));
+        orderDetail.setTkEarningTime(TimeUtil.parseLocalDate(orderItem.getString("tk_earning_time")));
         orderDetail.setTkOrderRole(orderItem.getInteger("tk_order_role"));
         orderDetail.setTotalCommissionRate(orderItem.getString("total_commission_rate"));
         orderDetail.setIncomeRate(orderItem.getString("income_rate"));
@@ -384,8 +366,8 @@ public class FixedOrderSyncTask {
         orderDetail.setItemNum(orderItem.getInteger("item_num"));
         //orderDetail.setTkDepositTime(orderItem.getDate("tk_deposit_time"));
         //orderDetail.setTbDepositTime(orderItem.getDate("tb_deposit_time"));
-        orderDetail.setTkDepositTime(TimeUtil.parseDate(orderItem.getString("tk_deposit_time")));
-        orderDetail.setTbDepositTime(TimeUtil.parseDate(orderItem.getString("tb_deposit_time")));
+        orderDetail.setTkDepositTime(TimeUtil.parseLocalDate(orderItem.getString("tk_deposit_time")));
+        orderDetail.setTbDepositTime(TimeUtil.parseLocalDate(orderItem.getString("tb_deposit_time")));
         orderDetail.setDepositPrice(orderItem.getString("deposit_price"));
         orderDetail.setAlscId(orderItem.getString("alsc_id"));
         orderDetail.setAlscPid(orderItem.getString("alsc_pid"));
@@ -396,39 +378,35 @@ public class FixedOrderSyncTask {
         if (orderItem.containsKey("is_lx")){    //大淘客接口没有返回is_lx
             orderDetail.setIsLx(orderItem.getString("is_lx"));
         }
-        orderDetail.setStatus(0);
+        orderDetail.setStatus((byte) 0);
         return orderDetail;
     }
 
     /**
      * 获取时间点位
      */
-    private void fetchSyncTime() {
-        TimeCursorPosition timeCursorPosition = timeCursorPositionService.fetchOrderSyncTimePosition(TimeCursorPositionService.TimeType.ORDER_SYNC);
-        if (timeCursorPosition == null) {
+    private void selectSyncTimeOffset() {
+        V2TaobaoSyncOrderOffsetInfo v2TaobaoSyncOrderOffsetInfo = v2TaobaoSyncOrderOffsetInfoService.selectOrderSyncTimeOffset();
+        if (v2TaobaoSyncOrderOffsetInfo == null) {
             return;
         }
 
-        this.startTime = timeCursorPosition.getStartTime();
-        this.endTime = timeCursorPosition.getEndTime();
-        this.secondStep = timeCursorPosition.getStep();
-        this.orderScene = timeCursorPosition.getSubType();
-        this.queryType = timeCursorPosition.getQueryType();
+        this.startTime = v2TaobaoSyncOrderOffsetInfo.getStartTime();
+        this.endTime = v2TaobaoSyncOrderOffsetInfo.getEndTime();
+        this.secondStep = v2TaobaoSyncOrderOffsetInfo.getStep();
+        this.syncOrderType = v2TaobaoSyncOrderOffsetInfo.getSyncOrderType();
+        this.syncTimeType = v2TaobaoSyncOrderOffsetInfo.getSyncTimeType();
     }
 
     /**
-     *
-     * @param orderUpdateTime
-     * @param minuteStep
-     * @param orderScene
-     * @param queryType
+     * 重置点位
      * @param running
      */
-    public void cleanContext(String orderUpdateTime, Long minuteStep, int orderScene, Integer queryType, Boolean running) {
+    public void resetScheduleContext(Boolean running) {
         this.startTime = null;
         this.endTime = null;
-        this.orderScene = 0;
-        this.queryType = 0;
+        this.syncOrderType = 0;
+        this.syncTimeType = 0;
         this.running = running;
         this.positionIndex = null;
     }

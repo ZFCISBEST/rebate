@@ -5,6 +5,7 @@ import com.help.rebate.dao.entity.OrderDetail;
 import com.help.rebate.dao.entity.OrderDetailExample;
 import com.help.rebate.dao.entity.OrderOpenidMap;
 import com.help.rebate.dao.entity.OrderOpenidMapExample;
+import com.help.rebate.dao.entity.V2TaobaoOrderOpenidMapInfo;
 import com.help.rebate.utils.Checks;
 import com.help.rebate.utils.EmptyUtils;
 import com.help.rebate.utils.NumberUtil;
@@ -25,8 +26,8 @@ import java.util.stream.Collectors;
  * @date 21/11/14
  */
 @Service
-public class OrderOpenidMapService {
-    private static final Logger logger = LoggerFactory.getLogger(OrderOpenidMapService.class);
+public class V2TaobaoOrderOpenidMapService {
+    private static final Logger logger = LoggerFactory.getLogger(V2TaobaoOrderOpenidMapService.class);
 
     /**
      * 订单映射详情接口
@@ -35,7 +36,7 @@ public class OrderOpenidMapService {
     private OrderOpenidMapDao orderOpenidMapDao;
 
     @Resource
-    private OrderService orderService;
+    private V2TaobaoOrderService v2TaobaoOrderService;
 
 
     /**
@@ -74,7 +75,7 @@ public class OrderOpenidMapService {
      * @param specialId
      * @return
      */
-    public List<OrderOpenidMap> selectBy(String tradeParentId, String openId, String specialId) {
+    public List<V2TaobaoOrderOpenidMapInfo> queryBindInfoByTradeParentId(String tradeParentId, String openId, String specialId) {
         OrderOpenidMapExample orderOpenidMapExample = new OrderOpenidMapExample();
         orderOpenidMapExample.setLimit(50);
         OrderOpenidMapExample.Criteria criteria = orderOpenidMapExample.createCriteria();
@@ -285,7 +286,7 @@ public class OrderOpenidMapService {
      */
     private void filterByTimeRange(String payStartTime, String payEndTime, List<OrderOpenidMap> orderOpenidMapList) {
         List<String> tradeParentIdList = orderOpenidMapList.stream().map(a -> a.getParentTradeId()).distinct().collect(Collectors.toList());
-        List<OrderDetail> orderDetailList = orderService.selectByTradeParentIds(tradeParentIdList, payStartTime, payEndTime);
+        List<OrderDetail> orderDetailList = v2TaobaoOrderService.selectByTradeParentIds(tradeParentIdList, payStartTime, payEndTime);
 
         //过滤 - 这些是符合条件的
         logger.info("[filter-by-time-range] 过滤前大小 - {}", orderOpenidMapList.size());

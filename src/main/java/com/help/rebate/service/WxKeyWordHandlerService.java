@@ -74,13 +74,13 @@ public class WxKeyWordHandlerService {
     private DdxMeiTuanActivityConverter ddxMeiTuanActivityConverter;
 
     @Autowired
-    private OrderBindService orderBindService;
+    private V2TaobaoOrderBindService v2TaobaoOrderBindService;
 
     @Autowired
-    private OrderOpenidMapService orderOpenidMapService;
+    private V2TaobaoOrderOpenidMapService v2TaobaoOrderOpenidMapService;
 
     @Autowired
-    private OrderService orderService;
+    private V2TaobaoOrderService v2TaobaoOrderService;
 
     /**
      * keyword
@@ -298,21 +298,21 @@ public class WxKeyWordHandlerService {
 
         //查询 - 付款
         int index = 1;
-        CommissionVO commissionByFuKuan = orderOpenidMapService.selectCommissionBy(fromUserName, specialId, "12", "待提取", payStartTime, payEndTime);
+        CommissionVO commissionByFuKuan = v2TaobaoOrderOpenidMapService.selectCommissionBy(fromUserName, specialId, "12", "待提取", payStartTime, payEndTime);
         if (commissionByFuKuan != null && commissionByFuKuan.getPubFee() != null) {
             message += index + "、已付款待确认: ￥" + commissionByFuKuan.getPubFee() + "元\n";
             index++;
         }
 
         //查询 - 确认收货
-        CommissionVO commissionByQuRen = orderOpenidMapService.selectCommissionBy(fromUserName, specialId, "14", "待提取",  payStartTime, payEndTime);
+        CommissionVO commissionByQuRen = v2TaobaoOrderOpenidMapService.selectCommissionBy(fromUserName, specialId, "14", "待提取",  payStartTime, payEndTime);
         if (commissionByQuRen != null && commissionByQuRen.getPubFee() != null) {
             message += index + "、已确认待结算: ￥" + commissionByQuRen.getPubFee() + "元\n";
             index++;
         }
 
         //查询 - 结算成功
-        CommissionVO commissionByJieSuan = orderOpenidMapService.selectCommissionBy(fromUserName, specialId, "3", "待提取,提取失败,提取超时",  payStartTime, payEndTime);
+        CommissionVO commissionByJieSuan = v2TaobaoOrderOpenidMapService.selectCommissionBy(fromUserName, specialId, "3", "待提取,提取失败,提取超时",  payStartTime, payEndTime);
         if (commissionByJieSuan != null && commissionByJieSuan.getPubFee() != null) {
             message += index + "、已结算可提现: ￥" + commissionByJieSuan.getPubFee() + "元\n";
             index++;
@@ -354,7 +354,7 @@ public class WxKeyWordHandlerService {
 
         //执行绑定
         try {
-            OrderBindResultVO orderBindResultVO = orderBindService.bindByTradeId(tradeParentId, openId, specialId, null);
+            OrderBindResultVO orderBindResultVO = v2TaobaoOrderBindService.bindByTradeParentId(tradeParentId, openId, specialId);
             List<String> tradeIdItemIdList = orderBindResultVO.getTradeIdItemIdList();
             return "成功绑定商品数 - " + tradeIdItemIdList.size();
         } catch (Exception ex) {
@@ -396,7 +396,7 @@ public class WxKeyWordHandlerService {
 
         //执行绑定
         try {
-            List<OrderOpenidMap> orderOpenidMapList = orderOpenidMapService.selectBy(tradeParentId, openId, specialId);
+            List<OrderOpenidMap> orderOpenidMapList = v2TaobaoOrderOpenidMapService.queryBindInfoByTradeParentId(tradeParentId, openId, specialId);
             if (!EmptyUtils.isEmpty(orderOpenidMapList)) {
                 return "已绑定";
             }
@@ -432,7 +432,7 @@ public class WxKeyWordHandlerService {
         //统计返利
         BigDecimal allFee = new BigDecimal(0.0);
         if (genericType == null) {
-            List<OrderOpenidMap> orderOpenidMapList = orderOpenidMapService.selectByTradeId(tradeParentIdContent, null);
+            List<OrderOpenidMap> orderOpenidMapList = v2TaobaoOrderOpenidMapService.selectByTradeId(tradeParentIdContent, null);
             if (EmptyUtils.isEmpty(orderOpenidMapList)) {
                 return "未查询到绑定信息，不符合查询条件，请先手动执行订单绑定";
             }
@@ -472,7 +472,7 @@ public class WxKeyWordHandlerService {
         }
 
         //泛化查询 - 直接查询订单
-        List<OrderDetail> orderDetailList = orderService.selectByTradeId(tradeParentId, null);
+        List<OrderDetail> orderDetailList = v2TaobaoOrderService.selectByTradeId(tradeParentId, null);
         for (OrderDetail orderDetail : orderDetailList) {
             //默认呢，就是预返利，哪怕是关闭
             BigDecimal fee = new BigDecimal(0.0);
@@ -594,7 +594,7 @@ public class WxKeyWordHandlerService {
         }
 
         //查询
-        PickCommissionVO pickCommissionVO = orderBindService.mockPickMoney(openId, specialId, mockStatus, startTime, endTime);
+        PickCommissionVO pickCommissionVO = v2TaobaoOrderBindService.mockPickMoney(openId, specialId, mockStatus, startTime, endTime);
         String message = "操作: " + pickCommissionVO.getAction() + "\n";
         message += "返利: " + pickCommissionVO.getCommission() + "\n";
         return message;

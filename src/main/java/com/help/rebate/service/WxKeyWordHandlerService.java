@@ -1,20 +1,16 @@
 package com.help.rebate.service;
 
-import com.help.rebate.dao.OrderDetailDao;
-import com.help.rebate.service.ddx.jd.DdxJDItemConverter;
-import com.help.rebate.service.ddx.mt.DdxMeiTuanActivityConverter;
-import com.help.rebate.service.ddx.pdd.DdxPddItemConverter;
-import com.help.rebate.service.ddx.tb.DdxElemeActivityConverter;
+import com.help.rebate.dao.entity.V2TaobaoOrderDetailInfo;
+import com.help.rebate.dao.entity.V2TaobaoOrderOpenidMapInfo;
+import com.help.rebate.dao.entity.V2TaobaoUserInfo;
 import com.help.rebate.service.exception.ConvertException;
 import com.help.rebate.utils.EmptyUtils;
 import com.help.rebate.utils.NumberUtil;
 import com.help.rebate.vo.CommissionVO;
 import com.help.rebate.vo.OrderBindResultVO;
-import com.help.rebate.vo.PickCommissionVO;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,47 +36,26 @@ public class WxKeyWordHandlerService {
     /**
      * 用户信息服务
      */
-    @Autowired
+    @Resource
     private V2TaobaoUserInfoService v2TaobaoUserInfoService;
 
     /**
      * 淘口令转链服务
      */
-    @Autowired
+    @Resource
     private V2TaobaoTklConvertService v2TaobaoTklConvertService;
 
-    /**
-     * 京东转链接
-     */
     @Resource
-    private DdxJDItemConverter ddxJDItemConverter;
-
-    /**
-     * 拼多多转链接
-     */
-    @Resource
-    private DdxPddItemConverter ddxPddItemConverter;
-
-    /**
-     * 饿了么转链接
-     */
-    @Resource
-    private DdxElemeActivityConverter ddxElemeActivityConverter;
-
-    /**
-     * 美团转链接
-     */
-    @Resource
-    private DdxMeiTuanActivityConverter ddxMeiTuanActivityConverter;
-
-    @Autowired
     private V2TaobaoOrderBindService v2TaobaoOrderBindService;
 
-    @Autowired
+    @Resource
     private V2TaobaoOrderOpenidMapService v2TaobaoOrderOpenidMapService;
 
-    @Autowired
+    @Resource
     private V2TaobaoOrderService v2TaobaoOrderService;
+
+    @Resource
+    private V2TaobaoCommissionAccountService v2TaobaoCommissionAccountService;
 
     /**
      * keyword
@@ -178,11 +153,6 @@ public class WxKeyWordHandlerService {
             return doHandleRangeYuE(fromUserName, content.split(":", 2)[1]);
         }
 
-        //其他状态 - 模拟，触发提取、提取成功，提取失败, 提取超时
-        if (content.startsWith("模拟:")) {
-            return doHandleTriggerPickMoney(fromUserName, content.split(":", 2)[1]);
-        }
-
         //其他状态 - 会员查询
         if (content.startsWith("会员查询:")) {
             return doHandleVipQuery(fromUserName, content.split(":", 2)[1]);
@@ -255,7 +225,7 @@ public class WxKeyWordHandlerService {
         }
 
         //查询
-        UserInfos userInfos = v2TaobaoUserInfoService.selectByOpenIdAndSpecialIdAndExternalId(openId, specialId, externalId);
+        V2TaobaoUserInfo userInfos = v2TaobaoUserInfoService.selectByOpenIdAndSpecialIdAndExternalId(openId, specialId, externalId);
         if (userInfos == null) {
             return "不存在该用户信息";
         }
@@ -298,21 +268,21 @@ public class WxKeyWordHandlerService {
 
         //查询 - 付款
         int index = 1;
-        CommissionVO commissionByFuKuan = v2TaobaoOrderOpenidMapService.selectCommissionBy(fromUserName, specialId, "12", "待提取", payStartTime, payEndTime);
+        CommissionVO commissionByFuKuan = v2TaobaoCommissionAccountService.selectCommissionBy(fromUserName, specialId, "12", "待提取", payStartTime, payEndTime);
         if (commissionByFuKuan != null && commissionByFuKuan.getPubFee() != null) {
             message += index + "、已付款待确认: ￥" + commissionByFuKuan.getPubFee() + "元\n";
             index++;
         }
 
         //查询 - 确认收货
-        CommissionVO commissionByQuRen = v2TaobaoOrderOpenidMapService.selectCommissionBy(fromUserName, specialId, "14", "待提取",  payStartTime, payEndTime);
+        CommissionVO commissionByQuRen = v2TaobaoCommissionAccountService.selectCommissionBy(fromUserName, specialId, "14", "待提取",  payStartTime, payEndTime);
         if (commissionByQuRen != null && commissionByQuRen.getPubFee() != null) {
             message += index + "、已确认待结算: ￥" + commissionByQuRen.getPubFee() + "元\n";
             index++;
         }
 
         //查询 - 结算成功
-        CommissionVO commissionByJieSuan = v2TaobaoOrderOpenidMapService.selectCommissionBy(fromUserName, specialId, "3", "待提取,提取失败,提取超时",  payStartTime, payEndTime);
+        CommissionVO commissionByJieSuan = v2TaobaoCommissionAccountService.selectCommissionBy(fromUserName, specialId, "3", "待提取,提取失败,提取超时",  payStartTime, payEndTime);
         if (commissionByJieSuan != null && commissionByJieSuan.getPubFee() != null) {
             message += index + "、已结算可提现: ￥" + commissionByJieSuan.getPubFee() + "元\n";
             index++;
@@ -396,7 +366,7 @@ public class WxKeyWordHandlerService {
 
         //执行绑定
         try {
-            List<OrderOpenidMap> orderOpenidMapList = v2TaobaoOrderOpenidMapService.queryBindInfoByTradeParentId(tradeParentId, openId, specialId);
+            List<V2TaobaoOrderOpenidMapInfo> orderOpenidMapList = v2TaobaoOrderOpenidMapService.selectBindInfoByTradeParentId(tradeParentId, openId);
             if (!EmptyUtils.isEmpty(orderOpenidMapList)) {
                 return "已绑定";
             }
@@ -432,12 +402,12 @@ public class WxKeyWordHandlerService {
         //统计返利
         BigDecimal allFee = new BigDecimal(0.0);
         if (genericType == null) {
-            List<OrderOpenidMap> orderOpenidMapList = v2TaobaoOrderOpenidMapService.selectByTradeId(tradeParentIdContent, null);
+            List<V2TaobaoOrderOpenidMapInfo> orderOpenidMapList = v2TaobaoOrderOpenidMapService.selectBindInfoByTradeId(tradeParentIdContent, null);
             if (EmptyUtils.isEmpty(orderOpenidMapList)) {
                 return "未查询到绑定信息，不符合查询条件，请先手动执行订单绑定";
             }
 
-            for (OrderOpenidMap orderDetail : orderOpenidMapList) {
+            for (V2TaobaoOrderOpenidMapInfo orderDetail : orderOpenidMapList) {
 
                 //默认呢，就是预返利，哪怕是关闭
                 BigDecimal fee = new BigDecimal(0.0);
@@ -472,8 +442,8 @@ public class WxKeyWordHandlerService {
         }
 
         //泛化查询 - 直接查询订单
-        List<OrderDetail> orderDetailList = v2TaobaoOrderService.selectByTradeId(tradeParentId, null);
-        for (OrderDetail orderDetail : orderDetailList) {
+        List<V2TaobaoOrderDetailInfo> orderDetailList = v2TaobaoOrderService.selectByTradeId(tradeParentId, null);
+        for (V2TaobaoOrderDetailInfo orderDetail : orderDetailList) {
             //默认呢，就是预返利，哪怕是关闭
             BigDecimal fee = new BigDecimal(0.0);
 
@@ -548,59 +518,6 @@ public class WxKeyWordHandlerService {
     }
 
     /**
-     * 处理触发模拟提现相关操作 openId;specialId;mockStatus;startTime;endTime
-     * @param fromUserName
-     * @param content
-     * @return
-     */
-    private String doHandleTriggerPickMoney(String fromUserName, String content) {
-        //管理员操作
-        String[] openidAndSpecialIdAndTimeRange = content.split(";");
-
-        //倒数第1位是endTime
-        String endTime = null;
-        endTime = openidAndSpecialIdAndTimeRange[openidAndSpecialIdAndTimeRange.length - 1];
-
-        //倒数第2位是startTime
-        String startTime = null;
-        startTime = openidAndSpecialIdAndTimeRange[openidAndSpecialIdAndTimeRange.length - 2];
-
-        //倒数第3位是 mockStatus
-        String mockStatus = null;
-        mockStatus = openidAndSpecialIdAndTimeRange[openidAndSpecialIdAndTimeRange.length - 3];
-
-
-        //倒数第2位是 specialId
-        String specialId = null;
-        if (openidAndSpecialIdAndTimeRange.length >= 4) {
-            specialId = openidAndSpecialIdAndTimeRange[openidAndSpecialIdAndTimeRange.length - 4];
-            if (EmptyUtils.isEmpty(specialId)) {
-                specialId = null;
-            }
-        }
-
-        //倒数第三位是openId
-        String openId = null;
-        if (openidAndSpecialIdAndTimeRange.length >= 5) {
-            openId = openidAndSpecialIdAndTimeRange[openidAndSpecialIdAndTimeRange.length - 5];
-            if (EmptyUtils.isEmpty(openId)) {
-                openId = null;
-            }
-        }
-
-        //都为空
-        if (specialId == null && openId == null) {
-            openId = fromUserName;
-        }
-
-        //查询
-        PickCommissionVO pickCommissionVO = v2TaobaoOrderBindService.mockPickMoney(openId, specialId, mockStatus, startTime, endTime);
-        String message = "操作: " + pickCommissionVO.getAction() + "\n";
-        message += "返利: " + pickCommissionVO.getCommission() + "\n";
-        return message;
-    }
-
-    /**
      * 转链接处理
      * @param fromUserName
      * @param toUserName
@@ -630,49 +547,11 @@ public class WxKeyWordHandlerService {
      * @return
      */
     private String doConvert(String fromUserName, String toUserName, String content) {
-        //如果是京东的链接
-        if (content.contains("jd.com")) {
-            String materialId = content;
-            String subUnionId = "wx_" + fromUserName;
-            Long positionId = Long.valueOf(Math.abs(subUnionId.hashCode()));
-            Double tempReturnRate = 0.9;
-            DdxJDItemConverter.JDLinkDO jdLinkDO = ddxJDItemConverter.generateReturnPriceInfo(materialId, positionId, subUnionId, tempReturnRate);
-            return jdLinkDO.getLinkInfo();
-        }
-
-        //解析为pdd的链接
-        else if (content.contains("pdd") || content.contains("pinduoduo") || content.contains("yangkeduo")) {
-            String url = content;
-            String customId = "wx_" + fromUserName;
-            Double tempReturnRate = 0.9;
-
-            DdxPddItemConverter.PddLinkDO pddLinkDO = ddxPddItemConverter.generateReturnPriceInfo(url, customId, tempReturnRate);
-            return pddLinkDO.getLinkInfo();
-        }
-
-        //解析为饿了么 - 外卖、活动、生鲜 - 这个暂时没法跟踪，只能订单绑定
-        else if(content.contains("饿了么")) {
-            String keyword = content;
-            String link = ddxElemeActivityConverter.generateReturnPriceInfo(keyword);
-            return link;
-        }
-
-        //解析为美团
-        else if(content.contains("美团")) {
-            String keyword = content;
-            String link = ddxMeiTuanActivityConverter.generateReturnPriceInfo(keyword, fromUserName);
-            return link;
-        }
-
-        //默认就是淘宝的链接
-        else {
-            //淘口令转链接
-            String tkl = content;
-            String openId = fromUserName;
-            String tklType = "virtual";
-            String newTkl = v2TaobaoTklConvertService.convert(tkl, openId, null, tklType, "tb");
-            return newTkl;
-        }
-
+        //淘口令转链接
+        String tkl = content;
+        String openId = fromUserName;
+        String pubSiteType = "virtual";
+        String newTkl = v2TaobaoTklConvertService.convert(tkl, openId, pubSiteType);
+        return newTkl;
     }
 }

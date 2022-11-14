@@ -2,6 +2,7 @@ package com.help.rebate.service;
 
 import com.help.rebate.dao.V2TaobaoCommissionAccountFlowInfoDao;
 import com.help.rebate.dao.V2TaobaoCommissionAccountInfoDao;
+import com.help.rebate.vo.CommissionVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -37,5 +38,17 @@ public class V2TaobaoCommissionAccountService {
     private V2TaobaoCommissionRatioInfoService v2TaobaoCommissionRatioInfoService;
 
 
-
+    /**
+     * 查询返利信息
+     * @param fromUserName
+     * @param specialId
+     * @param s
+     * @param 待提取
+     * @param payStartTime
+     * @param payEndTime
+     * @return
+     */
+    public CommissionVO selectCommissionBy(String fromUserName, String specialId, String s, String 待提取, String payStartTime, String payEndTime) {
+        return null;
+    }
 }

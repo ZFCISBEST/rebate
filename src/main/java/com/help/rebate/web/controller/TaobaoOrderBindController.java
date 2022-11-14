@@ -86,16 +86,15 @@ public class TaobaoOrderBindController {
     @ApiOperation("根据给定的父订单号，以及用户信息（openId或者指定specialId），查询绑定情况")
     @RequestMapping("/queryBindByTradeParentId")
     public SafeServiceResponse queryBindInfoByTradeParentId(@ApiParam(name = "openId", value = "微信openId") @RequestParam String openId,
-                                                   @ApiParam(name = "specialId", value = "淘宝联盟私域会员ID") @RequestParam(required = false) String specialId,
                                                    @ApiParam(name = "tradeParentId", value = "交易父单号") @RequestParam String tradeParentId) {
         try{
             SafeServiceResponse.startBiz();
 
             //校验
-            Checks.isTrue(!EmptyUtils.isEmpty(openId) || !EmptyUtils.isEmpty(specialId), "openId和specialId不能同时为空");
+            Checks.isTrue(!EmptyUtils.isEmpty(openId), "openId和specialId不能同时为空");
 
             //插入
-            List<V2TaobaoOrderOpenidMapInfo> orderOpenidMapList = v2TaobaoOrderOpenidMapService.queryBindInfoByTradeParentId(tradeParentId, openId, specialId);
+            List<V2TaobaoOrderOpenidMapInfo> orderOpenidMapList = v2TaobaoOrderOpenidMapService.selectBindInfoByTradeParentId(tradeParentId, openId);
             if (EmptyUtils.isEmpty(orderOpenidMapList)) {
                 return SafeServiceResponse.success("尚未绑定");
             }
@@ -116,7 +115,7 @@ public class TaobaoOrderBindController {
             SafeServiceResponse.startBiz();
 
             //插入或者更新
-            v2TaobaoOrderBindService.bindRefundFee(tradeId, refundFee);
+            v2TaobaoOrderBindService.recordRefundFee(tradeId, refundFee);
 
             //返回
             return SafeServiceResponse.success("更新成功");

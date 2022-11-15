@@ -100,13 +100,7 @@ public class MessageServiceImpl implements MessageService {
                         logger.info("发送红包给[{}]失败", fromUserName, e);
                         replyMessage = wrapReturnMsg(fromUserName, toUserName, "红包发送失败，请稍后重试", "text");
                     }
-                } else if (eventKey.equals("V001_VIP")) {
-                    // 绑定会员
-                    replyMessage = wrapReturnMsg(fromUserName, toUserName, wxKeyWordHandlerService.handleKeyWord(fromUserName, toUserName, "会员"), "text");
-
-                    logger.info("returnOther="+replyMessage);
                 }
-
             }
         } else if (msgType.equals("text")) {
             String returnContent;

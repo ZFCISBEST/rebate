@@ -42,13 +42,14 @@ public class V2TaobaoCommissionAccountService {
      * 查询返利信息
      * @param fromUserName
      * @param specialId
-     * @param s
-     * @param 待提取
+     * @param orderStatus
+     * @param commissionStatusMsg
      * @param payStartTime
      * @param payEndTime
      * @return
      */
-    public CommissionVO selectCommissionBy(String fromUserName, String specialId, String s, String 待提取, String payStartTime, String payEndTime) {
+    public CommissionVO selectCommissionBy(String fromUserName, String specialId, String orderStatus,
+                                           String commissionStatusMsg, String payStartTime, String payEndTime) {
         return null;
     }
 }

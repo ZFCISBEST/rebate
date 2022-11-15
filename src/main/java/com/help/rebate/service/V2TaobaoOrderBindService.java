@@ -58,67 +58,6 @@ public class V2TaobaoOrderBindService {
     private V2TaobaoOrderOpenidMapFailureService v2TaobaoOrderOpenidMapFailureService;
 
     /**
-     * 指定一段时间，执行订单绑定
-     * @param orderModifiedTime 订单的绑定日期
-     * @param minuteStep
-     * @return
-     */
-    public List<OrderBindResultVO> bindByTimeRange(String orderModifiedTime, Long minuteStep) {
-        //看一下openId，暂时不用
-
-        //确定时间范围
-        LocalDateTime startTime = TimeUtil.parseLocalDate(orderModifiedTime);
-        String endTime = TimeUtil.formatLocalDate(startTime.plusMinutes(minuteStep));
-
-        //查询
-        V2TaobaoOrderDetailInfoExample example = new V2TaobaoOrderDetailInfoExample();
-        V2TaobaoOrderDetailInfoExample.Criteria criteria = example.createCriteria();
-        criteria.andModifiedTimeGreaterThanOrEqualTo(orderModifiedTime);
-        criteria.andModifiedTimeLessThanOrEqualTo(endTime);
-
-        //订单的付款时间，也必须不能晚于当前的时间
-        criteria.andTbPaidTimeGreaterThanOrEqualTo(TimeUtil.parseLocalDate("2021-12-25 00:00:00"));
-
-        //查询数量
-        long orderNum = v2TaobaoOrderDetailInfoDao.countByExample(example);
-        if (orderNum == 0) {
-            return Collections.EMPTY_LIST;
-        }
-
-        //确定循环次数
-        Map<String, OrderBindResultVO> tradeParentId2OrderBindResultVOMap = new HashMap<String, OrderBindResultVO>(16);
-        long offset = 0;
-        while (offset < orderNum) {
-            example.setOffset(offset);
-            example.setLimit(100);
-
-            //查询
-            List<V2TaobaoOrderDetailInfo> orderDetailList = v2TaobaoOrderDetailInfoDao.selectByExample(example);
-
-            //判定
-            if (EmptyUtils.isEmpty(orderDetailList)) {
-                //增加offset
-                offset += 100;
-                continue;
-            }
-
-            //处理 - 有优化空间
-            List<String> allTradeParentIdList = orderDetailList.stream().map(a -> a.getTradeParentId()).distinct().collect(Collectors.toList());
-            for (String tradeParentId : allTradeParentIdList) {
-                //绑定
-                OrderBindResultVO orderBindResultVO = bindByTradeParentId(tradeParentId);
-                tradeParentId2OrderBindResultVOMap.put(tradeParentId, orderBindResultVO);
-            }
-
-            //增加offset
-            offset += 100;
-        }
-
-        //结果返回
-        return tradeParentId2OrderBindResultVOMap.values().stream().collect(Collectors.toList());
-    }
-
-    /**
      * 用户通过前端，直接发送过来的，期望绑定的订单
      * 如果按照订单，没有查到，那么给用户报相应提示，这里不做任何缓存，提示用户稍后再试，因为可能还没来得及订单同步，或者订单输入错误了
      * @param parentTradeId
@@ -183,6 +122,66 @@ public class V2TaobaoOrderBindService {
         return orderBindResultVO;
     }
 
+    /**
+     * 指定一段时间，执行订单绑定
+     * @param orderModifiedTime 订单的绑定日期
+     * @param minuteStep
+     * @return
+     */
+    public List<OrderBindResultVO> bindByTimeRange(String orderModifiedTime, Long minuteStep) {
+        //看一下openId，暂时不用
+
+        //确定时间范围
+        LocalDateTime startTime = TimeUtil.parseLocalDate(orderModifiedTime);
+        String endTime = TimeUtil.formatLocalDate(startTime.plusMinutes(minuteStep));
+
+        //查询
+        V2TaobaoOrderDetailInfoExample example = new V2TaobaoOrderDetailInfoExample();
+        V2TaobaoOrderDetailInfoExample.Criteria criteria = example.createCriteria();
+        criteria.andModifiedTimeGreaterThanOrEqualTo(orderModifiedTime);
+        criteria.andModifiedTimeLessThanOrEqualTo(endTime);
+
+        //订单的付款时间，也必须不能晚于当前的时间
+        criteria.andTbPaidTimeGreaterThanOrEqualTo(TimeUtil.parseLocalDate("2021-12-25 00:00:00"));
+
+        //查询数量
+        long orderNum = v2TaobaoOrderDetailInfoDao.countByExample(example);
+        if (orderNum == 0) {
+            return Collections.EMPTY_LIST;
+        }
+
+        //确定循环次数
+        Map<String, OrderBindResultVO> tradeParentId2OrderBindResultVOMap = new HashMap<String, OrderBindResultVO>(16);
+        long offset = 0;
+        while (offset < orderNum) {
+            example.setOffset(offset);
+            example.setLimit(100);
+
+            //查询
+            List<V2TaobaoOrderDetailInfo> orderDetailList = v2TaobaoOrderDetailInfoDao.selectByExample(example);
+
+            //判定
+            if (EmptyUtils.isEmpty(orderDetailList)) {
+                //增加offset
+                offset += 100;
+                continue;
+            }
+
+            //处理 - 有优化空间
+            List<String> allTradeParentIdList = orderDetailList.stream().map(a -> a.getTradeParentId()).distinct().collect(Collectors.toList());
+            for (String tradeParentId : allTradeParentIdList) {
+                //绑定
+                OrderBindResultVO orderBindResultVO = bindByTradeParentId(tradeParentId);
+                tradeParentId2OrderBindResultVOMap.put(tradeParentId, orderBindResultVO);
+            }
+
+            //增加offset
+            offset += 100;
+        }
+
+        //结果返回
+        return tradeParentId2OrderBindResultVOMap.values().stream().collect(Collectors.toList());
+    }
 
     /**
      * 通过交易单号，进行绑定操作
@@ -232,6 +231,115 @@ public class V2TaobaoOrderBindService {
     }
 
     /**
+     * 普通用户，通过推广位和商品的ID去查询转链记录表，看是否转过
+     * 通过这个方法的绑定，一定不是会员，就是那种普通的订单而已
+     * @param orderDetailList
+     * @param orderBindResultVO
+     */
+    private void bindByPubSite(List<V2TaobaoOrderDetailInfo> orderDetailList, OrderBindResultVO orderBindResultVO) {
+        BindOpenidInfo openidInfo = detectBindedOpenidInfoByConvertHistory(orderDetailList);
+        if (openidInfo == null) {
+            v2TaobaoOrderOpenidMapFailureService.insertOrDoNoneOrderInfo(orderDetailList, "无淘口令转换记录");
+            return;
+        }
+
+        //根据openid查询用户信息
+        V2TaobaoUserInfo userInfos = v2TaobaoUserInfoService.selectByOpenId(openidInfo.getOpenid());
+        for (V2TaobaoOrderDetailInfo orderDetail : orderDetailList) {
+            //获取mapType
+            MapType mapType;
+
+            //用作匹配的那个id
+            if (openidInfo.getItemIds().contains(orderDetail.getItemId())) {
+                mapType = MapType.pubsite;
+            }
+            else {
+                mapType = MapType.one_item_pubsite_extend;
+            }
+
+            //先查询，万一存在，就得更新，防止操作错误
+            insertOrUpdateOrderOpenidMap(openidInfo.getOpenid(), mapType, userInfos, orderDetail);
+
+            //内容
+            orderBindResultVO.setOpenId(userInfos.getOpenId());
+            orderBindResultVO.setSpecialId(userInfos.getSpecialId());
+            orderBindResultVO.getTradeIdItemIdList().add(orderDetail.getTradeId());
+        }
+
+    }
+
+    /**
+     * 会员用户，通过specialId进行绑定
+     * @param orderDetailList
+     * @param orderBindResultVO
+     */
+    private void bindBySpecialId(List<V2TaobaoOrderDetailInfo> orderDetailList, OrderBindResultVO orderBindResultVO) {
+        //第一种，这里的所有商品，至少有被转链过，那么查出来，那么这种情况，是可以建立openid和specialid的关系并存入用户表的
+        BindOpenidInfo openidInfo = detectBindedOpenidInfoByConvertHistory(orderDetailList);
+        if (openidInfo != null) {
+            //起始这里有个问题，如果转码是A通过微信转的，但是发给了B去买，B正好是会员，此时是不可以将openId和specialId识别为一对的
+            //所以此时，就将mapType记录一下，openId-specialId
+            String specialIdByOrderDetail = orderDetailList.get(0).getSpecialId();
+            V2TaobaoUserInfo userInfosBySpecialId = v2TaobaoUserInfoService.selectBySpecialId(specialIdByOrderDetail);
+
+            //判定一下
+            V2TaobaoUserInfo userInfos = v2TaobaoUserInfoService.selectByOpenId(openidInfo.getOpenid());
+            //String specialIdByUserInfo = userInfos.getSpecialId();
+
+            //存储
+            for (V2TaobaoOrderDetailInfo orderDetail : orderDetailList) {
+                //先查询，万一存在，就得更新，防止操作错误
+                insertOrUpdateOrderOpenidMap(userInfos.getOpenId(), MapType.specialid_with_pubsite, userInfosBySpecialId, orderDetail);
+
+                //内容
+                orderBindResultVO.setOpenId(userInfos.getOpenId());
+                orderBindResultVO.setSpecialId(userInfosBySpecialId.getSpecialId());
+                orderBindResultVO.getTradeIdItemIdList().add(orderDetail.getTradeId());
+            }
+
+            return;
+        }
+
+        //第二种，这里所有的商品，都没有被转链过，那么只能存入specialid字段，其他openid这些数据不填写，mapType就是specialid，表示只是会员
+        V2TaobaoUserInfo userInfos = v2TaobaoUserInfoService.selectBySpecialId(orderDetailList.get(0).getSpecialId());
+        for (V2TaobaoOrderDetailInfo orderDetail : orderDetailList) {
+            //先查询，万一存在，就得更新，防止操作错误
+            insertOrUpdateOrderOpenidMap(userInfos.getOpenId(), MapType.specialid, userInfos, orderDetail);
+
+            //内容
+            orderBindResultVO.setOpenId(userInfos.getOpenId());
+            orderBindResultVO.setSpecialId(userInfos.getSpecialId());
+            orderBindResultVO.getTradeIdItemIdList().add(orderDetail.getTradeId());
+        }
+    }
+
+    /**
+     * 根据给定的绑定关系，将已知的其他订单绑定到相同的用户信息上
+     * 已知的用户绑定条件
+     * 1、绑定到openid上，这个是主流的
+     * 2、绑定到special上，这个是小众的
+     * 3、绑定到openid和special上，这个就是正好可以关联上
+     * @param orderOpenidMap
+     * @param tradeId2OrderDetailMap
+     * @param orderBindResultVO
+     */
+    private void createOrderOpenidMapBy(V2TaobaoOrderOpenidMapInfo orderOpenidMap, Map<String, V2TaobaoOrderDetailInfo> tradeId2OrderDetailMap, OrderBindResultVO orderBindResultVO) {
+        //用户信息
+        V2TaobaoUserInfo v2TaobaoUserInfo = v2TaobaoUserInfoService.selectByOpenId(orderOpenidMap.getOpenId());
+
+        //循环每个订单，插入到绑定表中去
+        Collection<V2TaobaoOrderDetailInfo> allOrderDetails = tradeId2OrderDetailMap.values();
+        for (V2TaobaoOrderDetailInfo orderDetail : allOrderDetails) {
+            //先查询，万一存在，就得更新，防止操作错误
+            insertOrUpdateOrderOpenidMap(v2TaobaoUserInfo.getOpenId(), MapType.tradeparentid_extend, v2TaobaoUserInfo, orderDetail);
+        }
+
+        //内容
+        orderBindResultVO.setOpenId(orderOpenidMap.getOpenId());
+        orderBindResultVO.getTradeIdItemIdList().add(orderOpenidMap.getTradeId());
+    }
+
+    /**
      * 根据需要，做绑定的更新
      * 如果订单状态还没有结束，那么需要前向走，更新订单状态
      * 如果我们平台给用户的状态已经结算，或者关闭，那么不用更新
@@ -272,13 +380,6 @@ public class V2TaobaoOrderBindService {
         if (lastTkStatus != 3 && tkStatus == 3) {
             updateFlag = true;
         }
-        //判定 - 如果旧状态是付款、确认收货，或者新状态为关闭，那么更新
-        else if (lastTkStatus == 12 && (tkStatus == 13 || tkStatus == 14 || tkStatus == 3)) {
-            updateFlag = true;
-        }
-        else if (lastTkStatus == 14 && (tkStatus == 13 || tkStatus == 3)) {
-            updateFlag = true;
-        }
 
         //是否更新
         if (updateFlag) {
@@ -300,70 +401,6 @@ public class V2TaobaoOrderBindService {
     }
 
     /**
-     * 根据给定的绑定关系，将已知的其他订单绑定到相同的用户信息上
-     * 已知的用户绑定条件
-     * 1、绑定到openid上，这个是主流的
-     * 2、绑定到special上，这个是小众的
-     * 3、绑定到openid和special上，这个就是正好可以关联上
-     * @param orderOpenidMap
-     * @param tradeId2OrderDetailMap
-     * @param orderBindResultVO
-     */
-    private void createOrderOpenidMapBy(V2TaobaoOrderOpenidMapInfo orderOpenidMap, Map<String, V2TaobaoOrderDetailInfo> tradeId2OrderDetailMap, OrderBindResultVO orderBindResultVO) {
-        //用户信息
-        V2TaobaoUserInfo v2TaobaoUserInfo = v2TaobaoUserInfoService.selectByOpenId(orderOpenidMap.getOpenId());
-
-        //循环每个订单，插入到绑定表中去
-        Collection<V2TaobaoOrderDetailInfo> allOrderDetails = tradeId2OrderDetailMap.values();
-        for (V2TaobaoOrderDetailInfo orderDetail : allOrderDetails) {
-            //先查询，万一存在，就得更新，防止操作错误
-            insertOrUpdateOrderOpenidMap(v2TaobaoUserInfo.getOpenId(), MapType.tradeparentid_extend, v2TaobaoUserInfo, orderDetail);
-        }
-
-        //内容
-        orderBindResultVO.setOpenId(orderOpenidMap.getOpenId());
-        orderBindResultVO.getTradeIdItemIdList().add(orderOpenidMap.getTradeId());
-    }
-
-    /**
-     * 普通用户，通过推广位和商品的ID去查询转链记录表，看是否转过
-     * 通过这个方法的绑定，一定不是会员，就是那种普通的订单而已
-     * @param orderDetailList
-     * @param orderBindResultVO
-     */
-    private void bindByPubSite(List<V2TaobaoOrderDetailInfo> orderDetailList, OrderBindResultVO orderBindResultVO) {
-        BindOpenidInfo openidInfo = resolveBindOpenidInfoByConvertHistory(orderDetailList);
-        if (openidInfo == null) {
-            v2TaobaoOrderOpenidMapFailureService.insertOrDoNoneOrderInfo(orderDetailList, "无淘口令转换记录");
-            return;
-        }
-
-        //根据openid查询用户信息
-        V2TaobaoUserInfo userInfos = v2TaobaoUserInfoService.selectByOpenId(openidInfo.getOpenid());
-        for (V2TaobaoOrderDetailInfo orderDetail : orderDetailList) {
-            //获取mapType
-            MapType mapType;
-
-            //用作匹配的那个id
-            if (openidInfo.getItemIds().contains(orderDetail.getItemId())) {
-                mapType = MapType.pubsite;
-            }
-            else {
-                mapType = MapType.one_item_pubsite_extend;
-            }
-
-            //先查询，万一存在，就得更新，防止操作错误
-            insertOrUpdateOrderOpenidMap(openidInfo.getOpenid(), mapType, userInfos, orderDetail);
-
-            //内容
-            orderBindResultVO.setOpenId(userInfos.getOpenId());
-            orderBindResultVO.setSpecialId(userInfos.getSpecialId());
-            orderBindResultVO.getTradeIdItemIdList().add(orderDetail.getTradeId());
-        }
-
-    }
-
-    /**
      * 执行插入或者更新
      * @param openId
      * @param mapType
@@ -376,8 +413,6 @@ public class V2TaobaoOrderBindService {
         List<V2TaobaoOrderOpenidMapInfo> orderOpenidMapList = v2TaobaoOrderOpenidMapService.selectBindInfoByTradeId(orderDetail.getTradeParentId(), orderDetail.getTradeId());
         if (!orderOpenidMapList.isEmpty()) {
             newOrderOpenidMap = orderOpenidMapList.get(0);
-
-            //初步判定，绑定的用户得是一样的
         }
         else {
             newOrderOpenidMap = new V2TaobaoOrderOpenidMapInfo();
@@ -412,57 +447,13 @@ public class V2TaobaoOrderBindService {
         }
     }
 
-    /**
-     * 会员用户，通过specialId进行绑定
-     * @param orderDetailList
-     * @param orderBindResultVO
-     */
-    private void bindBySpecialId(List<V2TaobaoOrderDetailInfo> orderDetailList, OrderBindResultVO orderBindResultVO) {
-        //第一种，这里的所有商品，至少有被转链过，那么查出来，那么这种情况，是可以建立openid和specialid的关系并存入用户表的
-        BindOpenidInfo openidInfo = resolveBindOpenidInfoByConvertHistory(orderDetailList);
-        if (openidInfo != null) {
-            //起始这里有个问题，如果转码是A通过微信转的，但是发给了B去买，B正好是会员，此时是不可以将openId和specialId识别为一对的
-            //所以此时，就将mapType记录一下，openId-specialId
-            String specialIdByOrderDetail = orderDetailList.get(0).getSpecialId();
-            V2TaobaoUserInfo userInfosBySpecialId = v2TaobaoUserInfoService.selectBySpecialId(specialIdByOrderDetail);
-
-            //判定一下
-            V2TaobaoUserInfo userInfos = v2TaobaoUserInfoService.selectByOpenId(openidInfo.getOpenid());
-            //String specialIdByUserInfo = userInfos.getSpecialId();
-
-            //存储
-            for (V2TaobaoOrderDetailInfo orderDetail : orderDetailList) {
-                //先查询，万一存在，就得更新，防止操作错误
-                insertOrUpdateOrderOpenidMap(userInfos.getOpenId(), MapType.specialid_with_pubsite, userInfosBySpecialId, orderDetail);
-
-                //内容
-                orderBindResultVO.setOpenId(userInfos.getOpenId());
-                orderBindResultVO.setSpecialId(userInfosBySpecialId.getSpecialId());
-                orderBindResultVO.getTradeIdItemIdList().add(orderDetail.getTradeId());
-            }
-
-            return;
-        }
-
-        //第二种，这里所有的商品，都没有被转链过，那么只能存入specialid字段，其他openid这些数据不填写，mapType就是specialid，表示只是会员
-        V2TaobaoUserInfo userInfos = v2TaobaoUserInfoService.selectBySpecialId(orderDetailList.get(0).getSpecialId());
-        for (V2TaobaoOrderDetailInfo orderDetail : orderDetailList) {
-            //先查询，万一存在，就得更新，防止操作错误
-            insertOrUpdateOrderOpenidMap(userInfos.getOpenId(), MapType.specialid, userInfos, orderDetail);
-
-            //内容
-            orderBindResultVO.setOpenId(userInfos.getOpenId());
-            orderBindResultVO.setSpecialId(userInfos.getSpecialId());
-            orderBindResultVO.getTradeIdItemIdList().add(orderDetail.getTradeId());
-        }
-    }
 
     /**
      * 根据这个用户购买的所有订单，去确定，是那个微信用户在转码和购买
      * @param orderDetailList
      * @return
      */
-    private BindOpenidInfo resolveBindOpenidInfoByConvertHistory(List<V2TaobaoOrderDetailInfo> orderDetailList) {
+    private BindOpenidInfo detectBindedOpenidInfoByConvertHistory(List<V2TaobaoOrderDetailInfo> orderDetailList) {
         //查询几天内的数据
         int days = 7;
 

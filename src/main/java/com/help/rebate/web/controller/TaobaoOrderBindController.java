@@ -55,7 +55,7 @@ public class TaobaoOrderBindController {
             Checks.isTrue(!EmptyUtils.isEmpty(openId) || !EmptyUtils.isEmpty(specialId), "openId和specialId不能同时为空");
 
             //插入
-            OrderBindResultVO orderBindResultVO = v2TaobaoOrderBindService.bindByTradeParentId(tradeParentId, openId, specialId, null);
+            OrderBindResultVO orderBindResultVO = v2TaobaoOrderBindService.bindByTradeParentId(tradeParentId, openId, specialId);
 
             //返回
             return SafeServiceResponse.success(orderBindResultVO);

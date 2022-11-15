@@ -210,7 +210,7 @@ public class FixedOrderSyncTask {
      */
     private void syncBindOrder() {
         //为了防止覆盖不全，这里自动自起始日期，往前多扫描1个周期
-        LocalDateTime localStartTime = startTime.minusSeconds(secondStep);;
+        LocalDateTime localStartTime = startTime.minusSeconds(secondStep);
         long localSecondStep = 2 * secondStep;
 
         logger.info("[fix-order-sync-task] sync bind order - time range[{}, {}]",

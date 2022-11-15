@@ -455,7 +455,7 @@ public class V2TaobaoOrderBindService {
      */
     private BindOpenidInfo detectBindedOpenidInfoByConvertHistory(List<V2TaobaoOrderDetailInfo> orderDetailList) {
         //查询几天内的数据
-        int days = 7;
+        int days = 3;
 
         //首先需要明确，有的没有转链接，而是跟随父订单过来的，所以如果查不到，需要循环，都查找一遍
         Map<Integer, List<String>> convertNum2ItemsMap = new HashMap<Integer, List<String>>(16, 1);
@@ -472,10 +472,10 @@ public class V2TaobaoOrderBindService {
 
             //起止时间
             LocalDateTime clickTime = orderDetail.getClickTime();
-            LocalDateTime startTime = clickTime.minusDays(1);
+            LocalDateTime startTime = clickTime.minusDays(days);
             LocalDateTime endTime = clickTime;
 
-            //查询看看，是否有转链接记录
+            //查询看看，是否有转链接记录 todo 更改了逻辑，这里不可能只有一个转链记录了
             List<V2TaobaoTklConvertHistoryInfo> tklConvertHistories = v2TaobaoTklConvertHistoryService.selectByItemId(itemId, pubSite, startTime, endTime);
             item2ConvertHistoryMap.put(itemId, tklConvertHistories);
             if (!EmptyUtils.isEmpty(tklConvertHistories)) {

@@ -47,9 +47,10 @@ public class V2TaobaoTklConvertHistoryService {
         V2TaobaoTklConvertHistoryInfoExample.Criteria criteria01 = tklConvertHistoryExample.or();
         V2TaobaoTklConvertHistoryInfoExample.Criteria criteria02 = tklConvertHistoryExample.or();
 
+        List<String> staticAndDynamicItemId = convertDynamicItemId(itemId);
         if (!EmptyUtils.isEmpty(itemId)) {
-            criteria01.andItemIdEqualTo(itemId);
-            criteria02.andItemIdEqualTo(itemId);
+            criteria01.andItemIdIn(staticAndDynamicItemId);
+            criteria02.andItemIdIn(staticAndDynamicItemId);
         }
         if (!EmptyUtils.isEmpty(pubSite)) {
             //这里现在只默认查询的是 虚拟virtual，会员ID为唯一的virtualId //virtualId|mm_120037479_18710025_65896653
@@ -138,11 +139,7 @@ public class V2TaobaoTklConvertHistoryService {
         if (limit > 0) {
             historyExample.setLimit(limit);
         }
-
-        //针对动态itemId，重构一下
-        String[] itemIds = itemId.split("-");
-        itemIds[0] = itemId;
-        List<String> staticAndDynamicItemId = Arrays.stream(itemIds).collect(Collectors.toList());
+        List<String> staticAndDynamicItemId = convertDynamicItemId(itemId);
 
         V2TaobaoTklConvertHistoryInfoExample.Criteria criteria = historyExample.createCriteria();
         criteria.andItemIdIn(staticAndDynamicItemId);
@@ -161,5 +158,12 @@ public class V2TaobaoTklConvertHistoryService {
         //查询
         List<V2TaobaoTklConvertHistoryInfo> tklConvertHistories = v2TaobaoTklConvertHistoryInfoDao.selectByExample(historyExample);
         return tklConvertHistories;
+    }
+
+    public static List<String> convertDynamicItemId(String itemId) {
+        //针对动态itemId，重构一下
+        String[] itemIds = itemId.split("-");
+        itemIds[0] = itemId;
+        return Arrays.stream(itemIds).collect(Collectors.toList());
     }
 }

@@ -221,10 +221,10 @@ public class V2TaobaoOrderBindService {
         //按照普通用户的方式来处理
         if (EmptyUtils.isEmpty(specialId)) {
             //通过商品&推广位来绑定
-            bindByPubSite(orderDetailList, orderBindResultVO);
+            bindByPubSite(parentTradeId, orderDetailList, orderBindResultVO);
         }
         else {
-            bindBySpecialId(orderDetailList, orderBindResultVO);
+            bindBySpecialId(parentTradeId, orderDetailList, orderBindResultVO);
         }
 
         return orderBindResultVO;
@@ -233,13 +233,14 @@ public class V2TaobaoOrderBindService {
     /**
      * 普通用户，通过推广位和商品的ID去查询转链记录表，看是否转过
      * 通过这个方法的绑定，一定不是会员，就是那种普通的订单而已
+     * @param parentTradeId
      * @param orderDetailList
      * @param orderBindResultVO
      */
-    private void bindByPubSite(List<V2TaobaoOrderDetailInfo> orderDetailList, OrderBindResultVO orderBindResultVO) {
-        BindOpenidInfo openidInfo = detectBindedOpenidInfoByConvertHistory(orderDetailList);
+    private void bindByPubSite(String parentTradeId, List<V2TaobaoOrderDetailInfo> orderDetailList, OrderBindResultVO orderBindResultVO) {
+        BindOpenidInfo openidInfo = detectBindedOpenidInfoByConvertHistory(parentTradeId, orderDetailList);
         if (openidInfo == null) {
-            v2TaobaoOrderOpenidMapFailureService.insertOrDoNoneOrderInfo(orderDetailList, "无淘口令转换记录");
+            v2TaobaoOrderOpenidMapFailureService.insertOrDoNoneOrderInfo(orderDetailList, "有多人转链接或无淘口令转换记录");
             return;
         }
 
@@ -247,15 +248,15 @@ public class V2TaobaoOrderBindService {
         V2TaobaoUserInfo userInfos = v2TaobaoUserInfoService.selectByOpenId(openidInfo.getOpenid());
         for (V2TaobaoOrderDetailInfo orderDetail : orderDetailList) {
             //获取mapType
-            MapType mapType;
+            MapType mapType = MapType.pubsite;
 
-            //用作匹配的那个id
-            if (openidInfo.getItemIds().contains(orderDetail.getItemId())) {
+            //用作匹配的那个id - 这里只有一种匹配方式
+            /*if (openidInfo.getItemIds().contains(orderDetail.getItemId())) {
                 mapType = MapType.pubsite;
             }
             else {
                 mapType = MapType.one_item_pubsite_extend;
-            }
+            }*/
 
             //先查询，万一存在，就得更新，防止操作错误
             insertOrUpdateOrderOpenidMap(openidInfo.getOpenid(), mapType, userInfos, orderDetail);
@@ -270,12 +271,13 @@ public class V2TaobaoOrderBindService {
 
     /**
      * 会员用户，通过specialId进行绑定
+     * @param parentTradeId
      * @param orderDetailList
      * @param orderBindResultVO
      */
-    private void bindBySpecialId(List<V2TaobaoOrderDetailInfo> orderDetailList, OrderBindResultVO orderBindResultVO) {
+    private void bindBySpecialId(String parentTradeId, List<V2TaobaoOrderDetailInfo> orderDetailList, OrderBindResultVO orderBindResultVO) {
         //第一种，这里的所有商品，至少有被转链过，那么查出来，那么这种情况，是可以建立openid和specialid的关系并存入用户表的
-        BindOpenidInfo openidInfo = detectBindedOpenidInfoByConvertHistory(orderDetailList);
+        BindOpenidInfo openidInfo = detectBindedOpenidInfoByConvertHistory(parentTradeId, orderDetailList);
         if (openidInfo != null) {
             //起始这里有个问题，如果转码是A通过微信转的，但是发给了B去买，B正好是会员，此时是不可以将openId和specialId识别为一对的
             //所以此时，就将mapType记录一下，openId-specialId
@@ -450,16 +452,20 @@ public class V2TaobaoOrderBindService {
 
     /**
      * 根据这个用户购买的所有订单，去确定，是那个微信用户在转码和购买
+     * 限制：一定要是，相同的parentTradeId
+     * 逻辑：多个商品，可能不一定是同一个推广位，但是如果找到一个没有任何歧义项的，那么可以认为，这里所有的商品都是一个用户的
      * @param orderDetailList
+     * @param parentTradeId
      * @return
      */
-    private BindOpenidInfo detectBindedOpenidInfoByConvertHistory(List<V2TaobaoOrderDetailInfo> orderDetailList) {
+    private BindOpenidInfo detectBindedOpenidInfoByConvertHistory(String parentTradeId, List<V2TaobaoOrderDetailInfo> orderDetailList) {
         //查询几天内的数据
         int days = 3;
 
+        //openId
+        String targetOpenId = null;
+
         //首先需要明确，有的没有转链接，而是跟随父订单过来的，所以如果查不到，需要循环，都查找一遍
-        Map<Integer, List<String>> convertNum2ItemsMap = new HashMap<Integer, List<String>>(16, 1);
-        Map<String, List<V2TaobaoTklConvertHistoryInfo>> item2ConvertHistoryMap = new HashMap<>(16, 1);
         for (V2TaobaoOrderDetailInfo orderDetail : orderDetailList) {
             //商品ID
             String itemId = orderDetail.getItemId();
@@ -475,34 +481,24 @@ public class V2TaobaoOrderBindService {
             LocalDateTime startTime = clickTime.minusDays(days);
             LocalDateTime endTime = clickTime;
 
-            //查询看看，是否有转链接记录 todo 更改了逻辑，这里不可能只有一个转链记录了
+            //查询看看，是否有转链接记录 - 更改了逻辑，这里不可能只有一个转链记录了
             List<V2TaobaoTklConvertHistoryInfo> tklConvertHistories = v2TaobaoTklConvertHistoryService.selectByItemId(itemId, pubSite, startTime, endTime);
-            item2ConvertHistoryMap.put(itemId, tklConvertHistories);
-            if (!EmptyUtils.isEmpty(tklConvertHistories)) {
-                List<String> itemIds = convertNum2ItemsMap.getOrDefault(tklConvertHistories.size(), new ArrayList<>());
-                itemIds.add(itemId);
-                convertNum2ItemsMap.put(tklConvertHistories.size(), itemIds);
+            if (tklConvertHistories.isEmpty()) {
+                //没转过
+                continue;
             }
-            else {
-                List<String> itemIds = convertNum2ItemsMap.getOrDefault(0, new ArrayList<>());
-                itemIds.add(itemId);
-                convertNum2ItemsMap.put(0, itemIds);
-            }
-        }
 
-        //convertNum2ItemsMap判定，看看里面有没有只有一个的
-        List<String> itemIds = convertNum2ItemsMap.get(1);
-        if (itemIds == null) {
-            //说明，要么有歧义，要么没有记录，这里需要记录一下日志
-            logger.warn("[order-bind] fail to bind by tradeParentId[{}]", orderDetailList.get(0).getTradeParentId());
-            return null;
+            //判断，这个里面，是不是只有一个人转过链接
+            List<String> allOpenIds = tklConvertHistories.stream().map(a -> a.getOpenId()).filter(a -> !a.trim().isEmpty()).distinct().collect(Collectors.toList());
+            if (allOpenIds.size() == 1) {
+                targetOpenId = allOpenIds.get(0);
+                break;
+            }
         }
 
         //存在，那么同一绑定到一起
-        String matchItemId = itemIds.get(0);
-        V2TaobaoTklConvertHistoryInfo tklConvertHistory = item2ConvertHistoryMap.get(matchItemId).get(0);
-        String openId = tklConvertHistory.getOpenId();
-        BindOpenidInfo openidInfo = BindOpenidInfo.build(openId, itemIds);
+        List<String> itemIds = orderDetailList.stream().map(a -> a.getItemId()).collect(Collectors.toList());
+        BindOpenidInfo openidInfo = BindOpenidInfo.build(targetOpenId, itemIds);
         return openidInfo;
     }
 

@@ -4,10 +4,6 @@ import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 /**
  * 返利信息封装
  */
@@ -16,23 +12,12 @@ public class CommissionVO {
     private static final Logger logger = LoggerFactory.getLogger(CommissionVO.class);
 
     /**
-     * 状态提示
+     * 可提取的返利
      */
-    private String label;
+    private String remainCommission;
 
     /**
-     * 商家预计或者已经给的返利费用
+     * 将来可提取的返利，尚未走到结算态的数据
      */
-    private String pubFee;
-
-    /**
-     * 本平台给用户返利的钱
-     */
-    private String commission;
-
-    /**
-     * 父订单 对 详细的商品列表
-     */
-    private Map<String, List<String>> tradeParentId2ItemIdsMap = new HashMap<String, List<String>>();
-    private Map<String, List<String>> tradeParentId2TradeIdsMap = new HashMap<String, List<String>>();
+    private String futureCommission;
 }

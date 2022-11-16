@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import com.help.rebate.dao.V2TaobaoCommissionAccountFlowInfoDao;
 import com.help.rebate.dao.V2TaobaoCommissionAccountInfoDao;
 import com.help.rebate.dao.entity.*;
+import com.help.rebate.utils.NumberUtil;
 import com.help.rebate.utils.TimeUtil;
 import com.help.rebate.vo.CommissionVO;
 import org.slf4j.Logger;
@@ -55,11 +56,15 @@ public class V2TaobaoCommissionAccountService {
      * 2、尚未走到结算的所有钱（剔除关闭的）
      * 3、所以，需要两者叠加给用户
      * @param openId
-     * @param specialId
      * @return
      */
-    public CommissionVO selectCommissionBy(String openId, String specialId) {
-        return null;
+    public CommissionVO selectCommissionBy(String openId) {
+        V2TaobaoCommissionAccountInfo v2TaobaoCommissionAccountInfo = selectV2TaobaoCommissionAccountInfo(openId);
+
+        CommissionVO commissionVO = new CommissionVO();
+        commissionVO.setRemainCommission(NumberUtil.format(v2TaobaoCommissionAccountInfo.getRemainCommission()));
+        commissionVO.setFutureCommission("待开发");
+        return commissionVO;
     }
 
     /**
@@ -107,20 +112,7 @@ public class V2TaobaoCommissionAccountService {
 
         //查询账户数据
         String openId = allEligiableOrderMapInfos.get(0).getOpenId();
-        V2TaobaoCommissionAccountInfoExample accountInfoExample = new V2TaobaoCommissionAccountInfoExample();
-        accountInfoExample.setLimit(1);
-        accountInfoExample.setOrderByClause("id asc");
-        V2TaobaoCommissionAccountInfoExample.Criteria criteria = accountInfoExample.createCriteria();
-        criteria.andOpenIdEqualTo(openId);
-        criteria.andStatusEqualTo((byte) 0);
-        List<V2TaobaoCommissionAccountInfo> v2TaobaoCommissionAccountInfos = v2TaobaoCommissionAccountInfoDao.selectByExample(accountInfoExample);
-        V2TaobaoCommissionAccountInfo currentAccountInfo = null;
-        if (v2TaobaoCommissionAccountInfos.isEmpty()) {
-            currentAccountInfo = insertNewOpenIdAccount(openId);
-        }
-        else {
-            currentAccountInfo = v2TaobaoCommissionAccountInfos.get(0);
-        }
+        V2TaobaoCommissionAccountInfo currentAccountInfo = selectV2TaobaoCommissionAccountInfo(openId);
 
         //更新结算流水
         BigDecimal sumCommssionOfBigDecimal = new BigDecimal(sumCommission);
@@ -153,6 +145,29 @@ public class V2TaobaoCommissionAccountService {
         currentAccountInfo.setTotalCommission(currentAccountInfo.getTotalCommission().add(sumCommssionOfBigDecimal));
         currentAccountInfo.setRemainCommission(currentAccountInfo.getRemainCommission().add(sumCommssionOfBigDecimal));
         int affectedCnt = v2TaobaoCommissionAccountInfoDao.updateByPrimaryKeySelective(currentAccountInfo);
+    }
+
+    /**
+     * 查询一个账户信息
+     * @param openId
+     * @return
+     */
+    public V2TaobaoCommissionAccountInfo selectV2TaobaoCommissionAccountInfo(String openId) {
+        V2TaobaoCommissionAccountInfoExample accountInfoExample = new V2TaobaoCommissionAccountInfoExample();
+        accountInfoExample.setLimit(1);
+        accountInfoExample.setOrderByClause("id asc");
+        V2TaobaoCommissionAccountInfoExample.Criteria criteria = accountInfoExample.createCriteria();
+        criteria.andOpenIdEqualTo(openId);
+        criteria.andStatusEqualTo((byte) 0);
+        List<V2TaobaoCommissionAccountInfo> v2TaobaoCommissionAccountInfos = v2TaobaoCommissionAccountInfoDao.selectByExample(accountInfoExample);
+        V2TaobaoCommissionAccountInfo currentAccountInfo = null;
+        if (v2TaobaoCommissionAccountInfos.isEmpty()) {
+            currentAccountInfo = insertNewOpenIdAccount(openId);
+        }
+        else {
+            currentAccountInfo = v2TaobaoCommissionAccountInfos.get(0);
+        }
+        return currentAccountInfo;
     }
 
     /**

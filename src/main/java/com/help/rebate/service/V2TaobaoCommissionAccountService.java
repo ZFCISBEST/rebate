@@ -40,6 +40,9 @@ public class V2TaobaoCommissionAccountService {
 
     /**
      * 查询返利信息
+     * 1、账户里的总值
+     * 2、尚未走到结算的所有钱（剔除关闭的）
+     * 3、所以，需要两者叠加给用户
      * @param openId
      * @param specialId
      * @return

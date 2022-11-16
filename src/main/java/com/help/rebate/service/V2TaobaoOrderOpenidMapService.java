@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -106,6 +107,27 @@ public class V2TaobaoOrderOpenidMapService {
     }
 
     /**
+     *
+     * 通过交易单号查询
+     * @param parentTradeIds
+     * @return
+     */
+    public List<V2TaobaoOrderOpenidMapInfo> selectBindInfoByTradeId(List<String> parentTradeIds) {
+        if (EmptyUtils.isEmpty(parentTradeIds)) {
+            return Collections.emptyList();
+        }
+
+        V2TaobaoOrderOpenidMapInfoExample orderOpenidMapExample = new V2TaobaoOrderOpenidMapInfoExample();
+        V2TaobaoOrderOpenidMapInfoExample.Criteria criteria = orderOpenidMapExample.createCriteria();
+        criteria.andTradeParentIdIn(parentTradeIds);
+        criteria.andStatusEqualTo((byte) 0);
+
+        //查询
+        List<V2TaobaoOrderOpenidMapInfo> orderDetails = v2TaobaoOrderOpenidMapInfoDao.selectByExample(orderOpenidMapExample);
+        return orderDetails;
+    }
+
+    /**
      * 更改绑定的订单状态
      * @param openId
      * @param tradeParentId2TradeIdsMap
@@ -149,5 +171,25 @@ public class V2TaobaoOrderOpenidMapService {
 
         //返回
         return orderOpenidMapList.size();
+    }
+
+    /**
+     * 订单结算状态更新
+     * @param ids
+     * @param commissionStatusMsg
+     * @return
+     */
+    public int updateCommissionStatusMsgByPrimaryKey(List<Integer> ids, String commissionStatusMsg) {
+        V2TaobaoOrderOpenidMapInfoExample example = new V2TaobaoOrderOpenidMapInfoExample();
+        V2TaobaoOrderOpenidMapInfoExample.Criteria criteria = example.createCriteria();
+        criteria.andIdIn(ids);
+
+        V2TaobaoOrderOpenidMapInfo v2TaobaoOrderOpenidMapInfo = new V2TaobaoOrderOpenidMapInfo();
+        v2TaobaoOrderOpenidMapInfo.setCommissionStatusMsg(commissionStatusMsg);
+
+        //更新 - 后面再写一个批量更新
+        int affected = v2TaobaoOrderOpenidMapInfoDao.updateByExampleSelective(v2TaobaoOrderOpenidMapInfo, example);
+        Checks.isTrue(affected == ids.size(), "更新失败");
+        return affected;
     }
 }

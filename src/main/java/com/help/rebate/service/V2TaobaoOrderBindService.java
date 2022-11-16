@@ -124,59 +124,25 @@ public class V2TaobaoOrderBindService {
 
     /**
      * 指定一段时间，执行订单绑定
-     * @param orderModifiedTime 订单的绑定日期
+     * @param orderStartModifiedTime 订单的绑定日期
      * @param minuteStep
      * @return
      */
-    public List<OrderBindResultVO> bindByTimeRange(String orderModifiedTime, Long minuteStep) {
-        //看一下openId，暂时不用
-
+    public List<OrderBindResultVO> bindByTimeRange(String orderStartModifiedTime, Long minuteStep) {
         //确定时间范围
-        LocalDateTime startTime = TimeUtil.parseLocalDate(orderModifiedTime);
+        LocalDateTime startTime = TimeUtil.parseLocalDate(orderStartModifiedTime);
         String endTime = TimeUtil.formatLocalDate(startTime.plusMinutes(minuteStep));
 
         //查询
-        V2TaobaoOrderDetailInfoExample example = new V2TaobaoOrderDetailInfoExample();
-        V2TaobaoOrderDetailInfoExample.Criteria criteria = example.createCriteria();
-        criteria.andModifiedTimeGreaterThanOrEqualTo(orderModifiedTime);
-        criteria.andModifiedTimeLessThanOrEqualTo(endTime);
+        List<V2TaobaoOrderDetailInfo> orderDetailList = v2TaobaoOrderService.selectByModifiedTimeRange(orderStartModifiedTime, endTime);
 
-        //订单的付款时间，也必须不能晚于当前的时间
-        criteria.andTbPaidTimeGreaterThanOrEqualTo(TimeUtil.parseLocalDate("2021-12-25 00:00:00"));
-
-        //查询数量
-        long orderNum = v2TaobaoOrderDetailInfoDao.countByExample(example);
-        if (orderNum == 0) {
-            return Collections.EMPTY_LIST;
-        }
-
-        //确定循环次数
+        //处理 - 有优化空间
         Map<String, OrderBindResultVO> tradeParentId2OrderBindResultVOMap = new HashMap<String, OrderBindResultVO>(16);
-        long offset = 0;
-        while (offset < orderNum) {
-            example.setOffset(offset);
-            example.setLimit(100);
-
-            //查询
-            List<V2TaobaoOrderDetailInfo> orderDetailList = v2TaobaoOrderDetailInfoDao.selectByExample(example);
-
-            //判定
-            if (EmptyUtils.isEmpty(orderDetailList)) {
-                //增加offset
-                offset += 100;
-                continue;
-            }
-
-            //处理 - 有优化空间
-            List<String> allTradeParentIdList = orderDetailList.stream().map(a -> a.getTradeParentId()).distinct().collect(Collectors.toList());
-            for (String tradeParentId : allTradeParentIdList) {
-                //绑定
-                OrderBindResultVO orderBindResultVO = bindByTradeParentId(tradeParentId);
-                tradeParentId2OrderBindResultVOMap.put(tradeParentId, orderBindResultVO);
-            }
-
-            //增加offset
-            offset += 100;
+        List<String> allTradeParentIdList = orderDetailList.stream().map(a -> a.getTradeParentId()).distinct().collect(Collectors.toList());
+        for (String tradeParentId : allTradeParentIdList) {
+            //绑定
+            OrderBindResultVO orderBindResultVO = bindByTradeParentId(tradeParentId);
+            tradeParentId2OrderBindResultVOMap.put(tradeParentId, orderBindResultVO);
         }
 
         //结果返回

@@ -67,13 +67,13 @@ public class TaobaoOrderBindController {
 
     @ApiOperation("指定一段时间，执行订单绑定")
     @RequestMapping("/by_time_range")
-    public SafeServiceResponse bindByTimeRange(@ApiParam(name = "orderBindTime", value = "订单绑定的起始时间 yyyy-MM-dd HH:mm:ss，为空时直接取数据库的数据") @RequestParam(required = false) String orderBindTime,
+    public SafeServiceResponse bindByTimeRange(@ApiParam(name = "orderModifiedTime", value = "订单的修改起始时间 yyyy-MM-dd HH:mm:ss，为空时直接取数据库的数据") @RequestParam(required = false) String orderModifiedTime,
                                                @ApiParam(name = "minuteStep", value = "取数据时长 范围[1-180]，为空取默认5") @RequestParam(required = false) Long minuteStep) {
         try{
             SafeServiceResponse.startBiz();
 
             //绑定
-            List<OrderBindResultVO> orderBindResultVOS = v2TaobaoOrderBindService.bindByTimeRange(orderBindTime, minuteStep);
+            List<OrderBindResultVO> orderBindResultVOS = v2TaobaoOrderBindService.bindByTimeRange(orderModifiedTime, minuteStep);
 
             //返回
             return SafeServiceResponse.success(orderBindResultVOS);

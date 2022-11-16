@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -172,6 +173,48 @@ public class V2TaobaoOrderService {
         if (!EmptyUtils.isEmpty(payEndTime)) {
             criteria.andTbPaidTimeLessThanOrEqualTo(TimeUtil.parseLocalDate(payEndTime));
         }
+
+        //查询
+        List<V2TaobaoOrderDetailInfo> orderDetails = v2TaobaoOrderDetailInfoDao.selectByExample(orderDetailExample);
+        return orderDetails;
+    }
+
+    /**
+     * 筛选符合条件的订单
+     * @param payStartTime
+     * @param payEndTime
+     * @return
+     */
+    public List<V2TaobaoOrderDetailInfo> selectByPayTimeRange(LocalDateTime payStartTime, LocalDateTime payEndTime) {
+        V2TaobaoOrderDetailInfoExample orderDetailExample = new V2TaobaoOrderDetailInfoExample();
+        V2TaobaoOrderDetailInfoExample.Criteria criteria = orderDetailExample.createCriteria();
+
+        criteria.andTbPaidTimeGreaterThanOrEqualTo(payStartTime);
+        criteria.andTbPaidTimeLessThanOrEqualTo(payEndTime);
+
+        //订单的付款时间，也必须不能晚于当前的时间
+        criteria.andTbPaidTimeGreaterThanOrEqualTo(TimeUtil.parseLocalDate("2021-12-25 00:00:00"));
+
+        //查询
+        List<V2TaobaoOrderDetailInfo> orderDetails = v2TaobaoOrderDetailInfoDao.selectByExample(orderDetailExample);
+        return orderDetails;
+    }
+
+    /**
+     * 筛选符合条件的订单
+     * @param payModifiedStartTime
+     * @param payModifiedEndTime
+     * @return
+     */
+    public List<V2TaobaoOrderDetailInfo> selectByModifiedTimeRange(String payModifiedStartTime, String payModifiedEndTime) {
+        V2TaobaoOrderDetailInfoExample orderDetailExample = new V2TaobaoOrderDetailInfoExample();
+        V2TaobaoOrderDetailInfoExample.Criteria criteria = orderDetailExample.createCriteria();
+
+        criteria.andModifiedTimeGreaterThanOrEqualTo(payModifiedStartTime);
+        criteria.andModifiedTimeLessThanOrEqualTo(payModifiedEndTime);
+
+        //订单的付款时间，也必须不能晚于当前的时间
+        criteria.andTbPaidTimeGreaterThanOrEqualTo(TimeUtil.parseLocalDate("2021-12-25 00:00:00"));
 
         //查询
         List<V2TaobaoOrderDetailInfo> orderDetails = v2TaobaoOrderDetailInfoDao.selectByExample(orderDetailExample);

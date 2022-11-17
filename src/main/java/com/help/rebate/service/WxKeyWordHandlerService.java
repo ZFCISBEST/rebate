@@ -2,6 +2,7 @@ package com.help.rebate.service;
 
 import com.help.rebate.service.exception.ConvertException;
 import com.help.rebate.utils.EmptyUtils;
+import com.help.rebate.vo.CommissionVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -98,22 +99,17 @@ public class WxKeyWordHandlerService {
      * @return
      */
     private String doHandleQueryYuE(String fromUserName) {
-        //表示，期限不限，全部查出来
-        return doHandleQueryYuE(fromUserName, null, null, null);
-    }
+        //账户数据
+        CommissionVO commissionVO = v2TaobaoCommissionAccountService.selectCommissionBy(fromUserName);
 
-    /**
-     * 查询余额
-     * @param fromUserName
-     * @return
-     */
-    private String doHandleQueryYuE(String fromUserName, String specialId, String payStartTime, String payEndTime) {
-        //orderStatuss 订单状态 - 12-付款，13-关闭，14-确认收货，3-结算成功
-        //commissionStatuss 给用户的结算状态 - 待提取、提取中，提取成功，提取失败, 提取超时
+        //可提现 + 尚不可提现
+        String remainCommission = commissionVO.getRemainCommission();
+        String futureCommission = commissionVO.getFutureCommission();
+
+        //结果
         String message = "当前账户余额:\n";
-
-        //总账户 + 查询详情中的返利
-
+        message += "\t可提现:" + remainCommission;
+        message += "\t待确认:" + futureCommission;
         return message;
     }
 

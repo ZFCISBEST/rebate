@@ -48,4 +48,21 @@ public class TaobaoCommissionAccountController {
             return SafeServiceResponse.fail(e.toString());
         }
     }
+
+    @ApiOperation("根据OpenId，触发提现10元")
+    @RequestMapping("/triggerWithdrawal")
+    public SafeServiceResponse<CommissionVO> triggerWithdrawal(@ApiParam(name = "openId", value = "微信openId") @RequestParam String openId) {
+        try{
+            SafeServiceResponse.startBiz();
+
+            //插入
+            v2TaobaoCommissionAccountService.triggerWithdrawal(openId, "1000");
+
+            //返回
+            return SafeServiceResponse.success("触发提现成功");
+        }catch(Exception e){
+            logger.error("fail to create user[/tbk/triggerWithdrawal]", e);
+            return SafeServiceResponse.fail(e.toString());
+        }
+    }
 }

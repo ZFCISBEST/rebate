@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import com.help.rebate.dao.V2TaobaoCommissionAccountFlowInfoDao;
 import com.help.rebate.dao.V2TaobaoCommissionAccountInfoDao;
 import com.help.rebate.dao.entity.*;
+import com.help.rebate.utils.Checks;
 import com.help.rebate.utils.NumberUtil;
 import com.help.rebate.utils.TimeUtil;
 import com.help.rebate.vo.CommissionVO;
@@ -13,8 +14,11 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 提现服务
@@ -61,10 +65,95 @@ public class V2TaobaoCommissionAccountService {
     public CommissionVO selectCommissionBy(String openId) {
         V2TaobaoCommissionAccountInfo v2TaobaoCommissionAccountInfo = selectV2TaobaoCommissionAccountInfo(openId);
 
+        //首先获取到账户总信息
         CommissionVO commissionVO = new CommissionVO();
         commissionVO.setRemainCommission(NumberUtil.format(v2TaobaoCommissionAccountInfo.getRemainCommission()));
-        commissionVO.setFutureCommission("待开发");
+
+        //12-付款，13-关闭，14-确认收货，3-结算成功
+        List<Integer> orderStatusList = Stream.of(12, 14).collect(Collectors.toList());
+        //待提取、[提取中，提取成功，提取失败, 提取超时]不用了，结算中，结算成功，结算失败
+        List<String> commissionStatusMsgList = Stream.of("待提取").collect(Collectors.toList());
+        List<V2TaobaoOrderOpenidMapInfo> v2TaobaoOrderOpenidMapInfos = v2TaobaoOrderOpenidMapService.selectBindInfoByOpenId(openId, orderStatusList, commissionStatusMsgList);
+
+        //这些订单是需要提取的
+        double sumCommission = v2TaobaoOrderOpenidMapInfos.stream().map(a -> {
+            Integer commissionRatio = a.getCommissionRatio();
+            if (commissionRatio == null) {
+                commissionRatio = 900;
+            }
+            double ratio = commissionRatio * 1.0 / 1000.0;
+            double pubShareFee = Double.parseDouble(a.getPubShareFee());
+            return ratio * pubShareFee;
+        }).mapToDouble(a -> a).sum();
+
+        //未来待结算金额
+        commissionVO.setFutureCommission(NumberUtil.format(sumCommission));
         return commissionVO;
+    }
+
+    /**
+     * 查询一个账户信息
+     * @param openId
+     * @return
+     */
+    public V2TaobaoCommissionAccountInfo selectV2TaobaoCommissionAccountInfo(String openId) {
+        V2TaobaoCommissionAccountInfoExample accountInfoExample = new V2TaobaoCommissionAccountInfoExample();
+        accountInfoExample.setLimit(1);
+        accountInfoExample.setOrderByClause("id asc");
+        V2TaobaoCommissionAccountInfoExample.Criteria criteria = accountInfoExample.createCriteria();
+        criteria.andOpenIdEqualTo(openId);
+        criteria.andStatusEqualTo((byte) 0);
+        List<V2TaobaoCommissionAccountInfo> v2TaobaoCommissionAccountInfos = v2TaobaoCommissionAccountInfoDao.selectByExample(accountInfoExample);
+        V2TaobaoCommissionAccountInfo currentAccountInfo = null;
+        if (v2TaobaoCommissionAccountInfos.isEmpty()) {
+            currentAccountInfo = insertNewOpenIdAccount(openId);
+        }
+        else {
+            currentAccountInfo = v2TaobaoCommissionAccountInfos.get(0);
+        }
+        return currentAccountInfo;
+    }
+
+    /**
+     * 触发提现操作
+     * @param openId
+     * @param withdrawalAmount 精确到分，如100分，就是一元钱
+     * @return
+     */
+    public void triggerWithdrawal(String openId, String withdrawalAmount) {
+        V2TaobaoCommissionAccountInfo v2TaobaoCommissionAccountInfo = selectV2TaobaoCommissionAccountInfo(openId);
+        BigDecimal remainCommission = v2TaobaoCommissionAccountInfo.getRemainCommission();
+
+        //判断，是不是金额太大了
+        BigDecimal withdrawalAmountDecimal = new BigDecimal(new Integer(withdrawalAmount) * 1.0 / 100);
+        Checks.isTrue(remainCommission.compareTo(withdrawalAmountDecimal) >= 0, "提现金额高于账户余额");
+
+        //产生一个流水
+        V2TaobaoCommissionAccountFlowInfo accountFlowInfo = new V2TaobaoCommissionAccountFlowInfo();
+        accountFlowInfo.setGmtCreated(LocalDateTime.now());
+        accountFlowInfo.setGmtModified(LocalDateTime.now());
+        accountFlowInfo.setOpenId(openId);
+        accountFlowInfo.setTotalCommission(v2TaobaoCommissionAccountInfo.getTotalCommission());
+        accountFlowInfo.setRemainCommission(v2TaobaoCommissionAccountInfo.getRemainCommission());
+        accountFlowInfo.setFrozenCommission(v2TaobaoCommissionAccountInfo.getFrozenCommission());
+        accountFlowInfo.setFlowAmount(withdrawalAmountDecimal);
+        //0-结算，1-维权退回，2-提现，3-冻结金额
+        accountFlowInfo.setFlowAmountType((byte)2);
+        accountFlowInfo.setFlowAmountTypeMsg("账户提现");
+        accountFlowInfo.setCommissionTradeId(null);
+        accountFlowInfo.setRefundTradeId(null);
+        //0-成功、1-失败、2-进行中
+        accountFlowInfo.setAccountFlowStatus((byte)0);
+        accountFlowInfo.setAccountFlowStatusMsg("成功");
+        accountFlowInfo.setStatus((byte)0);
+        //插入
+        v2TaobaoCommissionAccountFlowInfoDao.insertSelective(accountFlowInfo);
+
+        //构建金额
+        v2TaobaoCommissionAccountInfo.setFinishCommission(v2TaobaoCommissionAccountInfo.getFinishCommission().add(withdrawalAmountDecimal));
+        v2TaobaoCommissionAccountInfo.setRemainCommission(v2TaobaoCommissionAccountInfo.getRemainCommission().subtract(withdrawalAmountDecimal));
+        v2TaobaoCommissionAccountInfo.setGmtModified(LocalDateTime.now());
+        v2TaobaoCommissionAccountInfoDao.updateByPrimaryKey(v2TaobaoCommissionAccountInfo);
     }
 
     /**
@@ -95,8 +184,28 @@ public class V2TaobaoCommissionAccountService {
             return;
         }
 
+        //按照openId做划分
+        Map<String, List<V2TaobaoOrderOpenidMapInfo>> openId2OrderBindMap = allEligiableOrderMapInfos.stream().collect(Collectors.groupingBy(a -> a.getOpenId()));
+        Iterator<Map.Entry<String, List<V2TaobaoOrderOpenidMapInfo>>> iterator = openId2OrderBindMap.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, List<V2TaobaoOrderOpenidMapInfo>> entry = iterator.next();
+            String openId = entry.getKey();
+            List<V2TaobaoOrderOpenidMapInfo> orderBindList = entry.getValue();
+
+            //单个openId的统计计算
+            logger.info("[统计总返利] openId:{}, 订单详情:{}", openId, orderBindList.stream().map(a -> a.getTradeId()).collect(Collectors.joining(",")));
+            computeOrderDetailToAccountForOpenId(openId, orderBindList);
+        }
+    }
+
+    /**
+     * 为专门的openId来统计
+     * @param openId
+     * @param orderBindList
+     */
+    private void computeOrderDetailToAccountForOpenId(String openId, List<V2TaobaoOrderOpenidMapInfo> orderBindList) {
         //这些订单是需要提取的
-        double sumCommission = allEligiableOrderMapInfos.stream().map(a -> {
+        double sumCommission = orderBindList.stream().map(a -> {
             Integer commissionRatio = a.getCommissionRatio();
             if (commissionRatio == null) {
                 commissionRatio = 900;
@@ -106,17 +215,16 @@ public class V2TaobaoCommissionAccountService {
             return ratio * pubShareFee;
         }).mapToDouble(a -> a).sum();
 
-        //订单更新
-        List<Integer> ids = allEligiableOrderMapInfos.stream().map(a -> a.getId()).collect(Collectors.toList());
+        //订单更新，先更新为结算成功
+        List<Integer> ids = orderBindList.stream().map(a -> a.getId()).collect(Collectors.toList());
         v2TaobaoOrderOpenidMapService.updateCommissionStatusMsgByPrimaryKey(ids, "结算成功");
 
         //查询账户数据
-        String openId = allEligiableOrderMapInfos.get(0).getOpenId();
         V2TaobaoCommissionAccountInfo currentAccountInfo = selectV2TaobaoCommissionAccountInfo(openId);
 
         //更新结算流水
         BigDecimal sumCommssionOfBigDecimal = new BigDecimal(sumCommission);
-        for (V2TaobaoOrderOpenidMapInfo openidMapInfo : allEligiableOrderMapInfos) {
+        for (V2TaobaoOrderOpenidMapInfo openidMapInfo : orderBindList) {
             V2TaobaoCommissionAccountFlowInfo accountFlowInfo = new V2TaobaoCommissionAccountFlowInfo();
             accountFlowInfo.setGmtCreated(LocalDateTime.now());
             accountFlowInfo.setGmtModified(LocalDateTime.now());
@@ -145,29 +253,6 @@ public class V2TaobaoCommissionAccountService {
         currentAccountInfo.setTotalCommission(currentAccountInfo.getTotalCommission().add(sumCommssionOfBigDecimal));
         currentAccountInfo.setRemainCommission(currentAccountInfo.getRemainCommission().add(sumCommssionOfBigDecimal));
         int affectedCnt = v2TaobaoCommissionAccountInfoDao.updateByPrimaryKeySelective(currentAccountInfo);
-    }
-
-    /**
-     * 查询一个账户信息
-     * @param openId
-     * @return
-     */
-    public V2TaobaoCommissionAccountInfo selectV2TaobaoCommissionAccountInfo(String openId) {
-        V2TaobaoCommissionAccountInfoExample accountInfoExample = new V2TaobaoCommissionAccountInfoExample();
-        accountInfoExample.setLimit(1);
-        accountInfoExample.setOrderByClause("id asc");
-        V2TaobaoCommissionAccountInfoExample.Criteria criteria = accountInfoExample.createCriteria();
-        criteria.andOpenIdEqualTo(openId);
-        criteria.andStatusEqualTo((byte) 0);
-        List<V2TaobaoCommissionAccountInfo> v2TaobaoCommissionAccountInfos = v2TaobaoCommissionAccountInfoDao.selectByExample(accountInfoExample);
-        V2TaobaoCommissionAccountInfo currentAccountInfo = null;
-        if (v2TaobaoCommissionAccountInfos.isEmpty()) {
-            currentAccountInfo = insertNewOpenIdAccount(openId);
-        }
-        else {
-            currentAccountInfo = v2TaobaoCommissionAccountInfos.get(0);
-        }
-        return currentAccountInfo;
     }
 
     /**

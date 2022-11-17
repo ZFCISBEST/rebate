@@ -1,6 +1,7 @@
 package com.help.rebate.service.wx;
 
 import com.alibaba.fastjson.JSON;
+import com.help.rebate.service.V2TaobaoCommissionAccountService;
 import com.help.rebate.service.WxKeyWordHandlerService;
 import com.help.rebate.utils.MsgUtil;
 import com.help.rebate.vo.WeChartTextMessage;
@@ -30,6 +31,12 @@ public class MessageServiceImpl implements MessageService {
      */
     @Resource
     private SendRedPackageService sendRedPackageService;
+
+    /**
+     * 账户服务
+     */
+    @Resource
+    private V2TaobaoCommissionAccountService v2TaobaoCommissionAccountService;
 
     @Override
     public String newMessageRequest(HttpServletRequest request) {
@@ -66,9 +73,8 @@ public class MessageServiceImpl implements MessageService {
                 if (eventKey.equals("V001_CHECK_MONEY")) {
                     //查看余额
                     WeChartTextMessage text = new WeChartTextMessage();
-                    //String tips = "待开发查看余额功能";
-                    String tips = WxKeyWordHandlerService.tips;
-                    text.setContent(wxKeyWordHandlerService.handleKeyWord(fromUserName, toUserName, "余额") + "\n"+tips);
+                    String tips = "待开发查看余额功能";
+                    text.setContent(wxKeyWordHandlerService.handleKeyWord(fromUserName, toUserName, "余额") + "\n" + tips);
                     text.setToUserName(fromUserName);
                     text.setFromUserName(toUserName);
                     text.setCreateTime(new Date().getTime());
@@ -85,21 +91,8 @@ public class MessageServiceImpl implements MessageService {
                         return replyMessage;
                     }
 
-                    //发个红包试试
-                    try {
-                        SendRedPackageService.SendPackReturnMsgWrapper returnMsgWrapper = sendRedPackageService.sendRedPack2(fromUserName, 200);
-                        if (returnMsgWrapper.judgeSuccessful()) {
-                            replyMessage = wrapReturnMsg(fromUserName, toUserName, "红包已发出，请领取(24小时有效)", "text");
-                            logger.info("发送红包给[{}]成功: {}", fromUserName, JSON.toJSONString(returnMsgWrapper));
-                        }
-                        else {
-                            replyMessage = wrapReturnMsg(fromUserName, toUserName, "红包发送失败，请稍后重试", "text");
-                            logger.info("发送红包给[{}]失败: {}", fromUserName, JSON.toJSONString(returnMsgWrapper));
-                        }
-                    } catch (Exception e) {
-                        logger.info("发送红包给[{}]失败", fromUserName, e);
-                        replyMessage = wrapReturnMsg(fromUserName, toUserName, "红包发送失败，请稍后重试", "text");
-                    }
+                    //触发发红包
+                    replyMessage = triggerSendConpon(fromUserName, toUserName);
                 }
             }
         } else if (msgType.equals("text")) {
@@ -150,6 +143,37 @@ public class MessageServiceImpl implements MessageService {
         text.setCreateTime(new Date().getTime());
         text.setMsgType(msgType);
         replyMessage = MsgUtil.textMessageToXML(text);
+        return replyMessage;
+    }
+
+    /**
+     * 触发发红包
+     * 发个红包，每次只能1000分
+     * @param fromUserName
+     * @param toUserName
+     * @return
+     */
+    private String triggerSendConpon(String fromUserName, String toUserName) {
+        String replyMessage;
+
+        try {
+            //触发提现
+            v2TaobaoCommissionAccountService.triggerWithdrawal(fromUserName, "1000");
+
+            //实际发红包
+            SendRedPackageService.SendPackReturnMsgWrapper returnMsgWrapper = sendRedPackageService.sendRedPack2(fromUserName, 200);
+            if (returnMsgWrapper.judgeSuccessful()) {
+                replyMessage = wrapReturnMsg(fromUserName, toUserName, "红包已发出，请领取(24小时有效)", "text");
+                logger.info("发送红包给[{}]成功: {}", fromUserName, JSON.toJSONString(returnMsgWrapper));
+            }
+            else {
+                replyMessage = wrapReturnMsg(fromUserName, toUserName, "红包发送失败，请稍后重试", "text");
+                logger.info("发送红包给[{}]失败: {}", fromUserName, JSON.toJSONString(returnMsgWrapper));
+            }
+        } catch (Exception e) {
+            logger.info("发送红包给[{}]失败", fromUserName, e);
+            replyMessage = wrapReturnMsg(fromUserName, toUserName, "红包发送失败，请稍后重试", "text");
+        }
         return replyMessage;
     }
 }

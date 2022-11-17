@@ -1,6 +1,7 @@
 package com.help.rebate.service;
 
 import com.help.rebate.dao.V2TaobaoOrderOpenidMapInfoDao;
+import com.help.rebate.dao.entity.V2TaobaoOrderDetailInfo;
 import com.help.rebate.dao.entity.V2TaobaoOrderOpenidMapInfo;
 import com.help.rebate.dao.entity.V2TaobaoOrderOpenidMapInfoExample;
 import com.help.rebate.utils.Checks;
@@ -56,6 +57,26 @@ public class V2TaobaoOrderOpenidMapService {
     public int update(V2TaobaoOrderOpenidMapInfo orderOpenidMap) {
         int affectedCnt = v2TaobaoOrderOpenidMapInfoDao.updateByPrimaryKeySelective(orderOpenidMap);
         return affectedCnt;
+    }
+
+    /**
+     * 订单结算状态更新
+     * @param ids
+     * @param commissionStatusMsg
+     * @return
+     */
+    public int updateCommissionStatusMsgByPrimaryKey(List<Integer> ids, String commissionStatusMsg) {
+        V2TaobaoOrderOpenidMapInfoExample example = new V2TaobaoOrderOpenidMapInfoExample();
+        V2TaobaoOrderOpenidMapInfoExample.Criteria criteria = example.createCriteria();
+        criteria.andIdIn(ids);
+
+        V2TaobaoOrderOpenidMapInfo v2TaobaoOrderOpenidMapInfo = new V2TaobaoOrderOpenidMapInfo();
+        v2TaobaoOrderOpenidMapInfo.setCommissionStatusMsg(commissionStatusMsg);
+
+        //更新 - 后面再写一个批量更新
+        int affected = v2TaobaoOrderOpenidMapInfoDao.updateByExampleSelective(v2TaobaoOrderOpenidMapInfo, example);
+        Checks.isTrue(affected == ids.size(), "更新失败");
+        return affected;
     }
 
     /**
@@ -128,68 +149,34 @@ public class V2TaobaoOrderOpenidMapService {
     }
 
     /**
-     * 更改绑定的订单状态
+     * 查询这个用户所有的数据
+     *
      * @param openId
-     * @param tradeParentId2TradeIdsMap
-     * @param commissionStatusMsg
+     * @param orderStatusList         订单状态列表
+     * @param commissionStatusMsgList 结算状态信息列表
      * @return
      */
-    public int changeCommissionStatusMsgByTradeParentIds(String openId, Map<String, List<String>> tradeParentId2TradeIdsMap, String commissionStatusMsg) {
-        //条件
-        V2TaobaoOrderOpenidMapInfoExample example = new V2TaobaoOrderOpenidMapInfoExample();
-        V2TaobaoOrderOpenidMapInfoExample.Criteria criteria = example.createCriteria();
+    public List<V2TaobaoOrderOpenidMapInfo> selectBindInfoByOpenId(String openId, List<Integer> orderStatusList, List<String> commissionStatusMsgList) {
+        if (EmptyUtils.isEmpty(orderStatusList) || EmptyUtils.isEmpty(commissionStatusMsgList)) {
+            return Collections.emptyList();
+        }
+
+        //按理应该查询订单的下单时间，但是可以查询最近30天的
+        LocalDateTime lastModifiedTime = LocalDateTime.now().minusDays(30);
+
+        //先查询订单
+        //List<V2TaobaoOrderDetailInfo> orderList = v2TaobaoOrderService.selectOrderListByOpenId(originalTbPayTime, orderStatusList);
+
+        V2TaobaoOrderOpenidMapInfoExample orderOpenidMapExample = new V2TaobaoOrderOpenidMapInfoExample();
+        V2TaobaoOrderOpenidMapInfoExample.Criteria criteria = orderOpenidMapExample.createCriteria();
+        criteria.andOpenIdEqualTo(openId);
+        criteria.andOrderStatusIn(orderStatusList);
+        criteria.andCommissionStatusMsgIn(commissionStatusMsgList);
+        criteria.andGmtModifiedGreaterThanOrEqualTo(lastModifiedTime);
         criteria.andStatusEqualTo((byte) 0);
-        if (!EmptyUtils.isEmpty(openId)) {
-            criteria.andOpenIdEqualTo(openId);
-        }
-        if (!EmptyUtils.isEmpty(tradeParentId2TradeIdsMap.keySet())) {
-            List<String> tradeIds = tradeParentId2TradeIdsMap.values().stream().flatMap(a -> a.stream()).collect(Collectors.toList());
-            if (!tradeIds.isEmpty()) {
-                criteria.andTradeIdIn(tradeIds);
-            }
-        }
-        List<V2TaobaoOrderOpenidMapInfo> orderOpenidMapList = v2TaobaoOrderOpenidMapInfoDao.selectByExample(example);
-        for (V2TaobaoOrderOpenidMapInfo openidMap : orderOpenidMapList) {
-            openidMap.setGmtModified(LocalDateTime.now());
 
-            //只能正向走 - 待提取 -> 提取中 -> 提取失败, 提取超时 -> 提取成功
-            if (commissionStatusMsg.equalsIgnoreCase(openidMap.getCommissionStatusMsg())) {
-                continue;
-            }
-
-            //已经成功了
-            if ("提取成功".equalsIgnoreCase(openidMap.getCommissionStatusMsg())) {
-                continue;
-            }
-
-            openidMap.setCommissionStatusMsg(commissionStatusMsg);
-
-            //更新 - 后面再写一个批量更新
-            int affected = v2TaobaoOrderOpenidMapInfoDao.updateByPrimaryKeySelective(openidMap);
-            Checks.isTrue(affected == 1, "更新失败");
-        }
-
-        //返回
-        return orderOpenidMapList.size();
-    }
-
-    /**
-     * 订单结算状态更新
-     * @param ids
-     * @param commissionStatusMsg
-     * @return
-     */
-    public int updateCommissionStatusMsgByPrimaryKey(List<Integer> ids, String commissionStatusMsg) {
-        V2TaobaoOrderOpenidMapInfoExample example = new V2TaobaoOrderOpenidMapInfoExample();
-        V2TaobaoOrderOpenidMapInfoExample.Criteria criteria = example.createCriteria();
-        criteria.andIdIn(ids);
-
-        V2TaobaoOrderOpenidMapInfo v2TaobaoOrderOpenidMapInfo = new V2TaobaoOrderOpenidMapInfo();
-        v2TaobaoOrderOpenidMapInfo.setCommissionStatusMsg(commissionStatusMsg);
-
-        //更新 - 后面再写一个批量更新
-        int affected = v2TaobaoOrderOpenidMapInfoDao.updateByExampleSelective(v2TaobaoOrderOpenidMapInfo, example);
-        Checks.isTrue(affected == ids.size(), "更新失败");
-        return affected;
+        //查询
+        List<V2TaobaoOrderOpenidMapInfo> orderDetails = v2TaobaoOrderOpenidMapInfoDao.selectByExample(orderOpenidMapExample);
+        return orderDetails;
     }
 }

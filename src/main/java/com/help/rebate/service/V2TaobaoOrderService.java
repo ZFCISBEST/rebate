@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -215,6 +216,29 @@ public class V2TaobaoOrderService {
 
         //订单的付款时间，也必须不能晚于当前的时间
         criteria.andTbPaidTimeGreaterThanOrEqualTo(TimeUtil.parseLocalDate("2021-12-25 00:00:00"));
+
+        //查询
+        List<V2TaobaoOrderDetailInfo> orderDetails = v2TaobaoOrderDetailInfoDao.selectByExample(orderDetailExample);
+        return orderDetails;
+    }
+
+    /**
+     * 查询指定用户的订单
+     * @param originalTbPayTime 用户的最早支付时间
+     * @param orderStatusList
+     * @return
+     */
+    public List<V2TaobaoOrderDetailInfo> selectOrderListByOpenId(LocalDateTime originalTbPayTime, List<Integer> orderStatusList) {
+        if (EmptyUtils.isEmpty(orderStatusList)) {
+            return Collections.emptyList();
+        }
+
+        V2TaobaoOrderDetailInfoExample orderDetailExample = new V2TaobaoOrderDetailInfoExample();
+        V2TaobaoOrderDetailInfoExample.Criteria criteria = orderDetailExample.createCriteria();
+
+        criteria.andTbPaidTimeGreaterThanOrEqualTo(originalTbPayTime);
+        criteria.andTkStatusIn(orderStatusList);
+        criteria.andStatusEqualTo((byte) 0);
 
         //查询
         List<V2TaobaoOrderDetailInfo> orderDetails = v2TaobaoOrderDetailInfoDao.selectByExample(orderDetailExample);

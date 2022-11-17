@@ -41,4 +41,13 @@ public class NumberUtil {
 
         return decimalFormat.format(BigDecimal);
     }
+
+    /**
+     * 直接格式化
+     * @param BigDecimal
+     * @return
+     */
+    public static String format(double BigDecimal) {
+        return decimalFormat.format(BigDecimal);
+    }
 }

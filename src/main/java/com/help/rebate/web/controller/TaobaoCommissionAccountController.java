@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 用户返利账户信息操作类
@@ -51,7 +53,7 @@ public class TaobaoCommissionAccountController {
 
     @ApiOperation("根据OpenId，触发提现10元")
     @RequestMapping("/triggerWithdrawal")
-    public SafeServiceResponse<CommissionVO> triggerWithdrawal(@ApiParam(name = "openId", value = "微信openId") @RequestParam String openId) {
+    public SafeServiceResponse<String> triggerWithdrawal(@ApiParam(name = "openId", value = "微信openId") @RequestParam String openId) {
         try{
             SafeServiceResponse.startBiz();
 
@@ -68,17 +70,17 @@ public class TaobaoCommissionAccountController {
 
     @ApiOperation("根据订单更新时间，计算该范围的可转为结算的订单")
     @RequestMapping("/computeOrderDetailToAccount")
-    public SafeServiceResponse<CommissionVO> computeOrderDetailToAccount(
+    public SafeServiceResponse<String> computeOrderDetailToAccount(
             @ApiParam(name = "orderStartModifiedTime", value = "起始的订单状态更新时间") @RequestParam String orderStartModifiedTime,
             @ApiParam(name = "minuteStep", value = "向后查询多长时间的数据") @RequestParam Long minuteStep) {
         try{
             SafeServiceResponse.startBiz();
 
             //插入
-            v2TaobaoCommissionAccountService.computeOrderDetailToAccount(orderStartModifiedTime, minuteStep);
+            List<String> tradeParentIds = v2TaobaoCommissionAccountService.computeOrderDetailToAccount(orderStartModifiedTime, minuteStep);
 
             //返回
-            return SafeServiceResponse.success("转结算成功");
+            return SafeServiceResponse.success("转结算成功: " + tradeParentIds.stream().collect(Collectors.joining(",")));
         }catch(Exception e){
             logger.error("fail to create user[/tbk/computeOrderDetailToAccount]", e);
             return SafeServiceResponse.fail(e.toString());

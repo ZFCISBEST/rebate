@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -161,7 +162,7 @@ public class V2TaobaoCommissionAccountService {
      * @param orderStartModifiedTime
      * @param minuteStep
      */
-    public void computeOrderDetailToAccount(String orderStartModifiedTime, Long minuteStep) {
+    public List<String> computeOrderDetailToAccount(String orderStartModifiedTime, Long minuteStep) {
         //确定时间范围
         LocalDateTime startTime = TimeUtil.parseLocalDate(orderStartModifiedTime);
         String endTime = TimeUtil.formatLocalDate(startTime.plusMinutes(minuteStep));
@@ -181,7 +182,7 @@ public class V2TaobaoCommissionAccountService {
                 .filter(a -> a.getCommissionStatusMsg() != null && "待提取,结算失败".contains(a.getCommissionStatusMsg()))
                 .collect(Collectors.toList());
         if (allEligiableOrderMapInfos.isEmpty()) {
-            return;
+            return Collections.emptyList();
         }
 
         //按照openId做划分
@@ -196,6 +197,10 @@ public class V2TaobaoCommissionAccountService {
             logger.info("[统计总返利] openId:{}, 订单详情:{}", openId, orderBindList.stream().map(a -> a.getTradeId()).collect(Collectors.joining(",")));
             computeOrderDetailToAccountForOpenId(openId, orderBindList);
         }
+
+        //订单数返回
+        List<String> tradeParentIdList = allEligiableOrderMapInfos.stream().map(a -> a.getTradeParentId()).distinct().collect(Collectors.toList());
+        return tradeParentIdList;
     }
 
     /**

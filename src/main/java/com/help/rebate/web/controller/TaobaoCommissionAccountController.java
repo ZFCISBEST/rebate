@@ -65,4 +65,23 @@ public class TaobaoCommissionAccountController {
             return SafeServiceResponse.fail(e.toString());
         }
     }
+
+    @ApiOperation("根据订单更新时间，计算该范围的可转为结算的订单")
+    @RequestMapping("/computeOrderDetailToAccount")
+    public SafeServiceResponse<CommissionVO> computeOrderDetailToAccount(
+            @ApiParam(name = "orderStartModifiedTime", value = "起始的订单状态更新时间") @RequestParam String orderStartModifiedTime,
+            @ApiParam(name = "minuteStep", value = "向后查询多长时间的数据") @RequestParam Long minuteStep) {
+        try{
+            SafeServiceResponse.startBiz();
+
+            //插入
+            v2TaobaoCommissionAccountService.computeOrderDetailToAccount(orderStartModifiedTime, minuteStep);
+
+            //返回
+            return SafeServiceResponse.success("转结算成功");
+        }catch(Exception e){
+            logger.error("fail to create user[/tbk/computeOrderDetailToAccount]", e);
+            return SafeServiceResponse.fail(e.toString());
+        }
+    }
 }

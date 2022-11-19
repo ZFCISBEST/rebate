@@ -295,6 +295,7 @@ public class FixedOrderSyncTask {
             //执行更新
             if (updateFlag) {
                 newOrderDetail.setId(orderDetail.getId());
+                newOrderDetail.setGmtCreated(orderDetail.getGmtCreated());
                 newOrderDetail.setGmtModified(LocalDateTime.now());
                 v2TaobaoOrderService.update(newOrderDetail);
                 updateCnt++;

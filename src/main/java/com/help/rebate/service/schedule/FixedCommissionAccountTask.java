@@ -1,20 +1,9 @@
 package com.help.rebate.service.schedule;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
-import com.help.rebate.commons.DtkConfig;
-import com.help.rebate.dao.entity.V2TaobaoOrderDetailInfo;
-import com.help.rebate.dao.entity.V2TaobaoSyncOrderOffsetInfo;
 import com.help.rebate.service.V2TaobaoCommissionAccountService;
 import com.help.rebate.service.V2TaobaoOrderBindService;
 import com.help.rebate.service.V2TaobaoOrderService;
-import com.help.rebate.service.V2TaobaoSyncOrderOffsetInfoService;
-import com.help.rebate.utils.EmptyUtils;
-import com.help.rebate.utils.PropertyValueResolver;
 import com.help.rebate.utils.TimeUtil;
-import com.help.rebate.utils.dtk.ApiClient;
-import com.help.rebate.vo.OrderBindResultVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -22,13 +11,8 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
-import static com.google.common.util.concurrent.Uninterruptibles.sleepUninterruptibly;
 
 /**
  * 固定时间将订单转结算
@@ -36,7 +20,7 @@ import static com.google.common.util.concurrent.Uninterruptibles.sleepUninterrup
  * @author zfcisbest
  * @date 21/11/14
  */
-@Component
+//@Component
 public class FixedCommissionAccountTask {
     private static final Logger logger = LoggerFactory.getLogger(FixedCommissionAccountTask.class);
 

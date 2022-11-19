@@ -50,8 +50,8 @@ public class FixedOrderSyncTask {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private int secondStep;
-    private int syncOrderType;
-    private int syncTimeType;
+    private int syncOrderType = 0;
+    private int syncTimeType = 4;
     private String positionIndex;
 
     /**

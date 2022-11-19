@@ -124,7 +124,7 @@ public class V2TaobaoOrderBindService {
 
     /**
      * 指定一段时间，执行订单绑定
-     * @param orderStartModifiedTime 订单的绑定日期
+     * @param orderStartModifiedTime 订单的修改日期
      * @param minuteStep
      * @return
      */

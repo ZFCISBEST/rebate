@@ -462,6 +462,11 @@ public class V2TaobaoOrderBindService {
             }
         }
 
+        //没有唯一可用的
+        if (targetOpenId == null) {
+            return null;
+        }
+
         //存在，那么同一绑定到一起
         List<String> itemIds = orderDetailList.stream().map(a -> a.getItemId()).collect(Collectors.toList());
         BindOpenidInfo openidInfo = BindOpenidInfo.build(targetOpenId, itemIds);

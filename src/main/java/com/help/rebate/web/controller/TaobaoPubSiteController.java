@@ -75,7 +75,7 @@ public class TaobaoPubSiteController {
      * @param vipIds 各种对应类型下的Id，或者virtualId、noneId
      * @return
      */
-    @ApiOperation("构建推广位组合")
+    @ApiOperation("列出所有的推广位组合")
     @RequestMapping("/listAll")
     public SafeServiceResponse<List<V2TaobaoPubsiteCombinationInfo>> listAll(@ApiParam(name = "pubSiteType", value = "淘口令类型 渠道(relation)、虚拟(virtual)，默认为空，差全部") @RequestParam(required = false) String pubSiteType,
                                                                        @ApiParam(name = "vipIds", value = "对应类型下的Id，默认为空，查全部") @RequestParam(required = false) String vipIds) {

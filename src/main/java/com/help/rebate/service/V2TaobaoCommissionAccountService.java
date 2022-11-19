@@ -83,7 +83,7 @@ public class V2TaobaoCommissionAccountService {
                 commissionRatio = 900;
             }
             double ratio = commissionRatio * 1.0 / 1000.0;
-            double pubShareFee = Double.parseDouble(a.getPubShareFee());
+            double pubShareFee = Double.parseDouble(a.getOrderStatus() == 3 ? a.getPubShareFee() : a.getPubSharePreFee());
             return ratio * pubShareFee;
         }).mapToDouble(a -> a).sum();
 
@@ -210,15 +210,18 @@ public class V2TaobaoCommissionAccountService {
      */
     private void computeOrderDetailToAccountForOpenId(String openId, List<V2TaobaoOrderOpenidMapInfo> orderBindList) {
         //这些订单是需要提取的
-        double sumCommission = orderBindList.stream().map(a -> {
+        Map<String, Double> tradeId2FeeMap = orderBindList.stream().map(a -> {
             Integer commissionRatio = a.getCommissionRatio();
             if (commissionRatio == null) {
                 commissionRatio = 900;
             }
             double ratio = commissionRatio * 1.0 / 1000.0;
             double pubShareFee = Double.parseDouble(a.getPubShareFee());
-            return ratio * pubShareFee;
-        }).mapToDouble(a -> a).sum();
+            return new Object[]{a.getTradeId(), ratio * pubShareFee};
+        }).collect(Collectors.toMap(a -> (String) a[0], a -> (Double) a[1]));
+
+        //总钱数
+        double sumCommission = tradeId2FeeMap.values().stream().mapToDouble(a -> a).sum();
 
         //订单更新，先更新为结算成功
         List<Integer> ids = orderBindList.stream().map(a -> a.getId()).collect(Collectors.toList());
@@ -237,7 +240,7 @@ public class V2TaobaoCommissionAccountService {
             accountFlowInfo.setTotalCommission(currentAccountInfo.getTotalCommission());
             accountFlowInfo.setRemainCommission(currentAccountInfo.getRemainCommission());
             accountFlowInfo.setFrozenCommission(currentAccountInfo.getFrozenCommission());
-            accountFlowInfo.setFlowAmount(sumCommssionOfBigDecimal);
+            accountFlowInfo.setFlowAmount(new BigDecimal(tradeId2FeeMap.get(openidMapInfo.getTradeId())));
 
             //0-结算，1-维权退回，2-提现，3-冻结金额
             accountFlowInfo.setFlowAmountType((byte)0);

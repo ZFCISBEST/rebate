@@ -110,8 +110,8 @@ public class FixedOrderSyncTask {
         }
 
         //时间判定
-        if (endTime.isBefore(LocalDateTime.now())) {
-            logger.info("[fix-sync-task] 当前时间小于结束时间[{}], 跳过本次同步", TimeUtil.formatLocalDate(endTime));
+        if (endTime.isAfter(LocalDateTime.now())) {
+            logger.info("[fix-sync-task] 当前时间[{}]小于结束时间[{}], 跳过本次同步", TimeUtil.formatLocalDate(LocalDateTime.now()), TimeUtil.formatLocalDate(endTime));
             return;
         }
 
@@ -257,8 +257,15 @@ public class FixedOrderSyncTask {
      */
     private String saveOrUpdateToOrderDetail(JSONObject responseObj) {
         //JSONArray jsonArray = responseObj.getJSONArray("data");//订单侠
-        JSONArray jsonArray = responseObj.getJSONObject("data").getJSONObject("results").getJSONArray("publisher_order_dto");//大淘客
-        if (jsonArray == null || jsonArray.size() == 0) {
+        JSONArray jsonArray = null;
+        try {
+            jsonArray = responseObj.getJSONObject("data").getJSONObject("results").getJSONArray("publisher_order_dto");//大淘客
+            if (jsonArray == null || jsonArray.size() == 0) {
+                return "0";
+            }
+        }
+        catch (Exception ex) {
+            logger.error("[fix-order-sync-task] 保存同步的订单失败, 订单内容: {}", JSON.toJSONString(responseObj), ex);
             return "0";
         }
 
@@ -288,7 +295,7 @@ public class FixedOrderSyncTask {
 
             //如果已经结算成功了，那么就不不更新了
             boolean updateFlag = true;
-            if (oldTkStatus != null && (oldTkStatus == 3 || oldTkStatus == 13)) {
+            if (oldTkStatus != null && (oldTkStatus == 3 || oldTkStatus == 13) || oldTkStatus == newTkStatus) {
                 updateFlag = false;
             }
 
@@ -298,10 +305,12 @@ public class FixedOrderSyncTask {
                 newOrderDetail.setGmtCreated(orderDetail.getGmtCreated());
                 newOrderDetail.setGmtModified(LocalDateTime.now());
                 v2TaobaoOrderService.update(newOrderDetail);
+                logger.info("[fix-sync-task] 更新 - parent:{}， trade:{}, oldStatus:{}, newStatus:{}", parentTradeId, tradeId, oldTkStatus, newTkStatus);
                 updateCnt++;
             }
             else {
                 skipCnt++;
+                logger.info("[fix-sync-task] 跳过 - parent:{}， trade:{}, oldStatus:{}, newStatus:{}", parentTradeId, tradeId, oldTkStatus, newTkStatus);
             }
         }
 

@@ -55,8 +55,8 @@ public class DtkItemConverter {
             }
             catch(Exception e) {
                 logger.error("重新解析商品ID出错，无法重新解析", e);
+                throw new RuntimeException("无法解析出商品ID");
             }
-            throw new RuntimeException("无法解析出商品ID");
         }
 
         try{

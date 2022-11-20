@@ -144,7 +144,9 @@ public class V2TaobaoTklConvertHistoryService {
         V2TaobaoTklConvertHistoryInfoExample.Criteria criteria = historyExample.createCriteria();
         criteria.andItemIdIn(staticAndDynamicItemId);
         criteria.andPubSiteTypeEqualTo(pubSiteType);
-        criteria.andOpenIdEqualTo(openId);
+        if (openId != null) {
+            criteria.andOpenIdEqualTo(openId);
+        }
 
         //这种表示，只查某个特定推广位的
         if (pubSiteCombination != null) {

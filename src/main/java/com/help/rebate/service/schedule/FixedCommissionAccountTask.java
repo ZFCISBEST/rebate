@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
  * @author zfcisbest
  * @date 21/11/14
  */
-//@Component
+@Component
 public class FixedCommissionAccountTask {
     private static final Logger logger = LoggerFactory.getLogger(FixedCommissionAccountTask.class);
 
@@ -65,7 +65,6 @@ public class FixedCommissionAccountTask {
 
         //执行
         try {
-
             //当前时间
             LocalDateTime tenMinuteAgo = LocalDateTime.now().minusMinutes(30);
 
@@ -73,7 +72,7 @@ public class FixedCommissionAccountTask {
             String orderStartModifiedTime = TimeUtil.formatLocalDate(tenMinuteAgo);
             List<String> tradeParentIds = v2TaobaoCommissionAccountService.computeOrderDetailToAccount(orderStartModifiedTime, 30L);
 
-            logger.info("[fix-commission-account-task] 转结算执行成功，时间范围:[{}, 分钟数:], 父订单列表:{}",
+            logger.info("[fix-commission-account-task] 转结算执行成功，时间范围:[{}, 分钟数:{}], 父订单列表:{}",
                     orderStartModifiedTime, 30, tradeParentIds.stream().collect(Collectors.joining(",")));
         } catch(Exception e) {
             logger.error("[fix-commission-account-task] 将绑定订单转结算发生错误", e);

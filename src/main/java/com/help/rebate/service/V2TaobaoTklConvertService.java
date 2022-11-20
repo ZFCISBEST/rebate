@@ -6,6 +6,7 @@ import com.help.rebate.service.dtk.tb.DtkReturnPriceService;
 import com.help.rebate.utils.Checks;
 import com.help.rebate.utils.EmptyUtils;
 import com.help.rebate.utils.MD5Utils;
+import com.help.rebate.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -68,6 +69,9 @@ public class V2TaobaoTklConvertService {
     public String convert(String tkl, String openId, String pubSiteType) {
         //暂时不支持渠道的
         Checks.isTrue("virtual".equals(pubSiteType), "只能为virtual");
+
+        //链接重置
+        tkl = StringUtil.filterEmoji(tkl);
 
         //查询openId的用户信息，如果不存在，那么重新插入
         V2TaobaoUserInfo v2TaobaoUserInfo = v2TaobaoUserInfoService.selectByOpenId(openId);

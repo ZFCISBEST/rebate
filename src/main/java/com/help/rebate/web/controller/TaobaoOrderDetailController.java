@@ -45,7 +45,7 @@ public class TaobaoOrderDetailController {
     @ApiOperation("订单同步")
     @RequestMapping("/scheduleSyncOrder")
     public SafeServiceResponse scheduleSyncOrder(
-                                     @ApiParam(name = "syncStartTime", value = "订单同步起始时间 yyyy-MM-dd HH:mm:ss，为空时直接取数据库的数据") @RequestParam(required = false) String orderUpdateTime,
+                                     @ApiParam(name = "syncStartTime", value = "订单同步起始时间 yyyy-MM-dd HH:mm:ss，为空时直接取数据库的数据") @RequestParam(required = false) String syncStartTime,
                                      @ApiParam(name = "minuteStep", value = "取数据时长 范围[1-180]，为空取默认180") @RequestParam(required = false) Long minuteStep,
                                      @ApiParam(name = "orderType", value = "订单类型 1-常规订单、2-渠道订单、3-会员运营订单、0-都查，默认0都查") @RequestParam(required = false) Integer orderType,
                                      @ApiParam(name = "queryTimeType", value = "时间的属性1-创建时间、2-付款时间、3-结算时间、4-更新时间、0-都使用，默认2付款时间") @RequestParam(required = false) Integer queryTimeType,
@@ -70,7 +70,7 @@ public class TaobaoOrderDetailController {
             Checks.isIn(queryTimeType, new int[]{0, 1, 2, 3, 4}, "可选数组[0-4]");
 
             //插入
-            int affectedCnt = v2TaobaoOrderService.scheduleSyncOrder(orderUpdateTime, minuteStep, orderType, queryTimeType, running);
+            int affectedCnt = v2TaobaoOrderService.scheduleSyncOrder(syncStartTime, minuteStep, orderType, queryTimeType, running);
 
             //返回
             return SafeServiceResponse.success("启动成功 - " + affectedCnt);

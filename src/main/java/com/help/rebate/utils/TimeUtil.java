@@ -47,6 +47,9 @@ public class TimeUtil {
      * @return
      */
     public static LocalDateTime parseLocalDate(String date) {
+        if (date == null || date.trim().isEmpty() || date.equals("--")) {
+            return null;
+        }
         return LocalDateTime.parse(date, local_ymd_hms);
     }
 

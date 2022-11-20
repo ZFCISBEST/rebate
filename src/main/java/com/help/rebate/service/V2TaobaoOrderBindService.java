@@ -269,7 +269,7 @@ public class V2TaobaoOrderBindService {
         }
 
         //第二种，这里所有的商品，都没有被转链过，那么只能存入specialid字段，其他openid这些数据不填写，mapType就是specialid，表示只是会员
-        V2TaobaoUserInfo userInfos = v2TaobaoUserInfoService.selectBySpecialId(orderDetailList.get(0).getSpecialId());
+        /*V2TaobaoUserInfo userInfos = v2TaobaoUserInfoService.selectBySpecialId(orderDetailList.get(0).getSpecialId());
         for (V2TaobaoOrderDetailInfo orderDetail : orderDetailList) {
             //先查询，万一存在，就得更新，防止操作错误
             insertOrUpdateOrderOpenidMap(userInfos.getOpenId(), MapType.specialid, userInfos, orderDetail);
@@ -278,7 +278,11 @@ public class V2TaobaoOrderBindService {
             orderBindResultVO.setOpenId(userInfos.getOpenId());
             orderBindResultVO.setSpecialId(userInfos.getSpecialId());
             orderBindResultVO.getTradeIdItemIdList().add(orderDetail.getTradeId());
-        }
+        }*/
+
+        //没有openId的，不存储
+        v2TaobaoOrderOpenidMapFailureService.insertOrDoNoneOrderInfo(orderDetailList, "商品未转链或多人转链，但是均无openId");
+        return;
     }
 
     /**

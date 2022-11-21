@@ -59,6 +59,8 @@ public class V2TaobaoOrderBindService {
     private V2TaobaoOrderOpenidMapService v2TaobaoOrderOpenidMapService;
     @Resource
     private V2TaobaoOrderOpenidMapFailureService v2TaobaoOrderOpenidMapFailureService;
+    @Resource
+    private V2TaobaoCommissionAccountService v2TaobaoCommissionAccountService;
 
     /**
      * 用户通过前端，直接发送过来的，期望绑定的订单
@@ -519,7 +521,9 @@ public class V2TaobaoOrderBindService {
         int affectedCnt = v2TaobaoOrderOpenidMapService.update(orderOpenidMap);
         Checks.isTrue(affectedCnt == 1, "更新失败，影响条数:" + affectedCnt);
 
-        // TODO: 2022/11/14 更改了维权金额，是要更新账户信息的
+        // 如果已经结算成功了，那么需要更新到总账户中，并产生流水
+        String openId = orderOpenidMap.getOpenId();
+        v2TaobaoCommissionAccountService.computeOrderRefundFeeToAccountForOpenId(openId, orderOpenidMapList);
     }
 
     /**

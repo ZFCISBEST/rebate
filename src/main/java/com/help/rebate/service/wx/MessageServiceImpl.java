@@ -169,7 +169,7 @@ public class MessageServiceImpl implements MessageService {
             }
         } catch (Exception e) {
             logger.info("发送红包给[{}]失败", fromUserName, e);
-            replyMessage = wrapReturnMsg(fromUserName, toUserName, "红包发送失败，请稍后重试", "text");
+            replyMessage = wrapReturnMsg(fromUserName, toUserName, "红包发送失败[" + e.getMessage() + "]", "text");
         }
         return replyMessage;
     }

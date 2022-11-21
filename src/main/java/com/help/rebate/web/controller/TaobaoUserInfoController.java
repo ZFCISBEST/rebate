@@ -33,10 +33,10 @@ public class TaobaoUserInfoController {
 
     @ApiOperation("添加一个新的用户映射信息")
     @RequestMapping("/addNewUser")
-    public SafeServiceResponse<V2TaobaoUserInfo> create(@ApiParam(name = "openId", value = "微信openId 和externalId不能同时为空") @RequestParam(required = true) String openId,
+    public SafeServiceResponse<V2TaobaoUserInfo> create(@ApiParam(name = "openId", value = "微信openId") @RequestParam(required = true) String openId,
                                       @ApiParam(name = "relationId", value = "渠道ID 同步自淘宝联盟") @RequestParam(required = false) String relationId,
                                       @ApiParam(name = "specialId", value = "会员ID 同步自淘宝联盟") @RequestParam(required = false) String specialId,
-                                      @ApiParam(name = "externalId", value = "外部关联ID 默认和openId一致，和openId不能同时为空") @RequestParam(required = false) String externalId) {
+                                      @ApiParam(name = "externalId", value = "外部关联ID") @RequestParam(required = false) String externalId) {
         try{
             SafeServiceResponse.startBiz();
 

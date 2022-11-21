@@ -66,13 +66,13 @@ public class WxKeyWordHandlerService {
         }
 
         //关键字
-        Optional<Boolean> first = Arrays.stream(keywords).map(a -> a.equalsIgnoreCase(content)).filter(a -> a).findFirst();
+        Optional<String> first = Arrays.stream(keywords).filter(a -> a.equalsIgnoreCase(content)).findFirst();
         if (first.isPresent()) {
             return true;
         }
 
         //前缀部分的
-        Optional<Boolean> first1 = Arrays.stream(keywordPrefixs).map(a -> content.startsWith(a)).findFirst();
+        Optional<String> first1 = Arrays.stream(keywordPrefixs).filter(a -> content.startsWith(a)).findFirst();
         if (first1.isPresent()) {
             return true;
         }
@@ -138,9 +138,9 @@ public class WxKeyWordHandlerService {
         String futureCommission = commissionVO.getFutureCommission();
 
         //结果
-        String message = "当前账户余额:\n";
-        message += "\t可提现:" + remainCommission;
-        message += "\t待确认:" + futureCommission;
+        String message = "【当前账户余额】";
+        message += "\t\n可提现:" + remainCommission;
+        message += "\t\n待确认:" + futureCommission;
         return message;
     }
 

@@ -141,9 +141,10 @@ CREATE TABLE `v2_taobao_order_openid_map_info` (
   `refund_tag` int(11) DEFAULT '0' COMMENT '维权标签，0 含义为非维权 1 含义为维权订单',
   `refund_fee` varchar(16) DEFAULT NULL COMMENT '维权以后，返回给商家的金额。此字段用于后期重新计算损益情况',
   `map_type_msg` varchar(45) NOT NULL COMMENT '映射类型信息，pubsite(推广位绑定), specialid(会员ID绑定), extend(扩展而来，通过parent订单扩展的其他购买商品，可能也转过码)，pubsite_specialid(既存在推广位，又有specialid是会员，此时可建立与opened的映射关系)',
+  `commission_status_msg` varchar(16) DEFAULT NULL COMMENT '给用户的结算状态 - 待提取、提取中，提取成功，提取失败, 提取超时',
   `status` tinyint(4) NOT NULL DEFAULT '0' COMMENT '状态字段，0表示不删除，1表示逻辑删除',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1091 DEFAULT CHARSET=utf8 COMMENT='订单关联映射表';
+) ENGINE=InnoDB AUTO_INCREMENT=1039 DEFAULT CHARSET=utf8 COMMENT='订单关联映射表';
 
 
 # 7 淘宝订单映射失败表

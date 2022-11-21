@@ -138,6 +138,9 @@ public class V2TaobaoCommissionAccountService {
         //也不能大于账户总额
         Checks.isTrue(this.bankTotalAccount.doubleValue() - withdrawalAmountDecimal.doubleValue() > 0, "今日剩余提取额度不足，明日再试哦");
 
+        //扣减余额
+        this.bankTotalAccount = this.bankTotalAccount.subtract(withdrawalAmountDecimal);
+
         //产生一个流水
         V2TaobaoCommissionAccountFlowInfo accountFlowInfo = new V2TaobaoCommissionAccountFlowInfo();
         accountFlowInfo.setGmtCreated(LocalDateTime.now());

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -110,5 +111,27 @@ public class V2TaobaoPubSiteService {
 
         List<String> allComb = combinationInfoList.stream().map(a -> a.getVipId() + "|" + a.getPubSite()).collect(Collectors.toList());
         return allComb;
+    }
+
+    /**
+     * 删除推广位
+     * @param ids
+     * @return
+     */
+    public int deletePubSite(String ids) {
+        List<Integer> idList = Arrays.stream(ids.split(",")).map(a -> Integer.parseInt(a)).collect(Collectors.toList());
+
+        //构建
+        V2TaobaoPubsiteCombinationInfoExample pubsiteCombinationExample = new V2TaobaoPubsiteCombinationInfoExample();
+        V2TaobaoPubsiteCombinationInfoExample.Criteria criteria = pubsiteCombinationExample.createCriteria();
+        criteria.andIdIn(idList);
+
+        //设置
+        V2TaobaoPubsiteCombinationInfo v2TaobaoPubsiteCombinationInfo = new V2TaobaoPubsiteCombinationInfo();
+        v2TaobaoPubsiteCombinationInfo.setStatus((byte) 1);
+
+        //更新
+        int affectedCnt = v2TaobaoPubsiteCombinationInfoDao.updateByExampleSelective(v2TaobaoPubsiteCombinationInfo, pubsiteCombinationExample);
+        return affectedCnt;
     }
 }

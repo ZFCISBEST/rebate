@@ -102,4 +102,26 @@ public class TaobaoPubSiteController {
             return SafeServiceResponse.fail(e.toString());
         }
     }
+
+    /**
+     * 删除一个推广位
+     * @param ids
+     * @return
+     */
+    @ApiOperation("删除一个推广位")
+    @RequestMapping("/deletePubSite")
+    public SafeServiceResponse<String> deletePubSite(@ApiParam(name = "ids", value = "逐渐ID列表，逗号隔开") @RequestParam String ids) {
+        try{
+            SafeServiceResponse.startBiz();
+
+            //插入
+            int affectedCnt = v2TaobaoPubSiteService.deletePubSite(ids);
+
+            //返回
+            return SafeServiceResponse.success("删除条数 - " + affectedCnt);
+        }catch(Exception e){
+            logger.error("fail to list all pubsites[/tbk/pubSite/deletePubSite]", e);
+            return SafeServiceResponse.fail(e.toString());
+        }
+    }
 }

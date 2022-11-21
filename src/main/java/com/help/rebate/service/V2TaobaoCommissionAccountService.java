@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Iterator;
@@ -54,6 +55,11 @@ public class V2TaobaoCommissionAccountService {
      */
     @Resource
     private V2TaobaoOrderOpenidMapService v2TaobaoOrderOpenidMapService;
+
+    /**
+     * 银行卡总余额，默认为0
+     */
+    private BigDecimal bankTotalAccount = new BigDecimal("0.00");
 
     /**
      * 查询返利信息
@@ -121,13 +127,16 @@ public class V2TaobaoCommissionAccountService {
      * @param withdrawalAmount 精确到分，如100分，就是一元钱
      * @return
      */
-    public void triggerWithdrawal(String openId, String withdrawalAmount) {
+    public synchronized void triggerWithdrawal(String openId, String withdrawalAmount) {
         V2TaobaoCommissionAccountInfo v2TaobaoCommissionAccountInfo = selectV2TaobaoCommissionAccountInfo(openId);
         BigDecimal remainCommission = v2TaobaoCommissionAccountInfo.getRemainCommission();
 
         //判断，是不是金额太大了
         BigDecimal withdrawalAmountDecimal = new BigDecimal(new Integer(withdrawalAmount) * 1.0 / 100);
         Checks.isTrue(remainCommission.compareTo(withdrawalAmountDecimal) >= 0, "提现金额高于账户余额");
+
+        //也不能大于账户总额
+        Checks.isTrue(this.bankTotalAccount.doubleValue() - withdrawalAmountDecimal.doubleValue() > 0, "今日剩余提取额度不足，明日再试哦");
 
         //产生一个流水
         V2TaobaoCommissionAccountFlowInfo accountFlowInfo = new V2TaobaoCommissionAccountFlowInfo();
@@ -333,5 +342,17 @@ public class V2TaobaoCommissionAccountService {
         //插入
         int affectedCnt = v2TaobaoCommissionAccountInfoDao.insert(commissionAccountInfo);
         return commissionAccountInfo;
+    }
+
+    /**
+     * 银行卡总余额
+     * @param totalAccount
+     */
+    public void setBankTotalAccount(String totalAccount) {
+        this.bankTotalAccount = new BigDecimal(totalAccount);
+    }
+
+    public BigDecimal getBankTotalAccount() {
+        return bankTotalAccount;
     }
 }

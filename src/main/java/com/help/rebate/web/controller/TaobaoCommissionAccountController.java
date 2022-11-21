@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -46,7 +47,7 @@ public class TaobaoCommissionAccountController {
             //返回
             return SafeServiceResponse.success(commissionVO);
         }catch(Exception e){
-            logger.error("fail to create user[/tbk/queryCommission]", e);
+            logger.error("fail to execute[/tbk/queryCommission]", e);
             return SafeServiceResponse.fail(e.toString());
         }
     }
@@ -63,7 +64,7 @@ public class TaobaoCommissionAccountController {
             //返回
             return SafeServiceResponse.success("触发提现成功");
         }catch(Exception e){
-            logger.error("fail to create user[/tbk/triggerWithdrawal]", e);
+            logger.error("fail to execute[/tbk/triggerWithdrawal]", e);
             return SafeServiceResponse.fail(e.toString());
         }
     }
@@ -82,7 +83,42 @@ public class TaobaoCommissionAccountController {
             //返回
             return SafeServiceResponse.success("转结算成功: " + tradeParentIds.stream().collect(Collectors.joining(",")));
         }catch(Exception e){
-            logger.error("fail to create user[/tbk/computeOrderDetailToAccount]", e);
+            logger.error("fail to execute[/tbk/computeOrderDetailToAccount]", e);
+            return SafeServiceResponse.fail(e.toString());
+        }
+    }
+
+    @ApiOperation("设置银行卡总余额(内存)")
+    @RequestMapping("/setBankTotalAccount")
+    public SafeServiceResponse<String> setBankTotalAccount(
+            @ApiParam(name = "totalAccount", value = "银行卡总余额") @RequestParam String totalAccount) {
+        try{
+            SafeServiceResponse.startBiz();
+
+            //插入
+            v2TaobaoCommissionAccountService.setBankTotalAccount(totalAccount);
+
+            //返回
+            return SafeServiceResponse.success("设置银行卡总余额成功");
+        }catch(Exception e){
+            logger.error("fail to execute[/tbk/commission/setBankTotalAccount]", e);
+            return SafeServiceResponse.fail(e.toString());
+        }
+    }
+
+    @ApiOperation("获取银行卡总余额(内存)")
+    @RequestMapping("/getBankTotalAccount")
+    public SafeServiceResponse<String> getBankTotalAccount() {
+        try{
+            SafeServiceResponse.startBiz();
+
+            //插入
+            BigDecimal bankTotalAccount = v2TaobaoCommissionAccountService.getBankTotalAccount();
+
+            //返回
+            return SafeServiceResponse.success("银行卡总余额: " + bankTotalAccount.doubleValue());
+        }catch(Exception e){
+            logger.error("fail to execute[/tbk/commission/getBankTotalAccount]", e);
             return SafeServiceResponse.fail(e.toString());
         }
     }

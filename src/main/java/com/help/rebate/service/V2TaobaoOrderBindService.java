@@ -1,7 +1,10 @@
 package com.help.rebate.service;
 
 import com.help.rebate.dao.V2TaobaoOrderDetailInfoDao;
-import com.help.rebate.dao.entity.*;
+import com.help.rebate.dao.entity.V2TaobaoOrderDetailInfo;
+import com.help.rebate.dao.entity.V2TaobaoOrderOpenidMapInfo;
+import com.help.rebate.dao.entity.V2TaobaoTklConvertHistoryInfo;
+import com.help.rebate.dao.entity.V2TaobaoUserInfo;
 import com.help.rebate.utils.Checks;
 import com.help.rebate.utils.EmptyUtils;
 import com.help.rebate.utils.NumberUtil;
@@ -434,6 +437,7 @@ public class V2TaobaoOrderBindService {
 
         //openId
         String targetOpenId = null;
+        Set<String> allPossibleOpenIdSet = null;
 
         //首先需要明确，有的没有转链接，而是跟随父订单过来的，所以如果查不到，需要循环，都查找一遍
         for (V2TaobaoOrderDetailInfo orderDetail : orderDetailList) {
@@ -463,6 +467,21 @@ public class V2TaobaoOrderBindService {
             if (allOpenIds.size() == 1) {
                 targetOpenId = allOpenIds.get(0);
                 break;
+            }
+
+            //加入
+            if (allPossibleOpenIdSet == null) {
+                allPossibleOpenIdSet = new HashSet<>();
+                allPossibleOpenIdSet.addAll(allOpenIds);
+            }
+            else {
+                allPossibleOpenIdSet.retainAll(allOpenIds);
+
+                //加一层判定
+                if (allPossibleOpenIdSet.size() == 1) {
+                    targetOpenId = allPossibleOpenIdSet.stream().findFirst().get();
+                    break;
+                }
             }
         }
 

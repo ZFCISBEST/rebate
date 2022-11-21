@@ -1,8 +1,10 @@
 package com.help.rebate.service;
 
+import com.help.rebate.dao.entity.V2TaobaoOrderOpenidMapInfo;
 import com.help.rebate.service.exception.ConvertException;
 import com.help.rebate.utils.EmptyUtils;
 import com.help.rebate.vo.CommissionVO;
+import com.help.rebate.vo.OrderBindResultVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -10,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -50,7 +53,8 @@ public class WxKeyWordHandlerService {
     /**
      * keyword
      */
-    private static String[] keywords = new String[]{"余额", "提现", "openId"};
+    private static String[] keywords = new String[]{"余额", "openId"};
+    private static String[] keywordPrefixs = new String[]{"绑定订单:", "查询订单:"};
 
     /**
      * 内容是否是关键字
@@ -62,10 +66,17 @@ public class WxKeyWordHandlerService {
         }
 
         //关键字
-        Optional<Boolean> first = Arrays.stream(keywords).map(a -> a.equals(content)).filter(a -> a).findFirst();
+        Optional<Boolean> first = Arrays.stream(keywords).map(a -> a.equalsIgnoreCase(content)).filter(a -> a).findFirst();
         if (first.isPresent()) {
             return true;
         }
+
+        //前缀部分的
+        Optional<Boolean> first1 = Arrays.stream(keywordPrefixs).map(a -> content.startsWith(a)).findFirst();
+        if (first1.isPresent()) {
+            return true;
+        }
+
         return false;
     }
 
@@ -78,16 +89,36 @@ public class WxKeyWordHandlerService {
      * @return
      */
     public String handleKeyWord(String fromUserName, String toUserName, String content) {
+        //确定的
         if ("余额".equals(content)) {
             return doHandleQueryYuE(fromUserName);
         }
-
-        if ("提现".equals(content)) {
-            return "暂不支持";
+        if ("openid".equalsIgnoreCase(content.toLowerCase())) {
+            return fromUserName;
         }
 
-        if ("openid".equals(content.toLowerCase())) {
-            return "openId - " + fromUserName;
+        //前缀的
+        if (content.startsWith("绑定订单:")) {
+            content = content.replaceFirst("绑定订单:", "");
+
+            String[] split = content.split(";");
+            String tradeParentId = split[0];
+            String specialId = null;
+            if (split.length > 1) {
+                specialId = split[1];
+            }
+            OrderBindResultVO orderBindResultVO = v2TaobaoOrderBindService.bindByTradeParentId(tradeParentId, fromUserName, specialId);
+            if (orderBindResultVO != null && orderBindResultVO.getTradeIdItemIdList() != null) {
+                return "共绑定商品数[" + orderBindResultVO.getTradeIdItemIdList().size() + "]";
+            }
+            else {
+                return "共绑定商品数[0]";
+            }
+        }
+        if (content.startsWith("查询订单:")) {
+            content = content.replaceFirst("查询订单:", "");
+            List<V2TaobaoOrderOpenidMapInfo> v2TaobaoOrderOpenidMapInfos = v2TaobaoOrderOpenidMapService.selectBindInfoByTradeParentId(content, fromUserName);
+            return "共查询到绑定的订单数[" + v2TaobaoOrderOpenidMapInfos.size() + "]";
         }
 
         return "暂不支持的指令";

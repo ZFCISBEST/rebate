@@ -61,11 +61,10 @@ public class MessageServiceImpl implements MessageService {
         // 消息内容
         String content = map.get("Content");
 
-
         if(msgType.equals("event")) {
             if(map.get("Event").equals("subscribe")) {
                 // 订阅
-                replyMessage = wrapReturnMsg(fromUserName, toUserName, "感谢您的关注，本服务号当前提供淘宝/京东/拼多多链接返利功能，将商品链接发送给服务号，使用服务号返回的链接购买商品，确认收货后可以通过平台提取优惠现金。", "text");
+                replyMessage = wrapReturnMsg(fromUserName, toUserName, "感谢您的关注，本服务号当前提供淘宝链接返利功能，将商品链接发送给服务号，使用服务号返回的链接购买商品，确认收货后可以通过平台提取优惠现金。", "text");
 
                 logger.info("returnOther=" + replyMessage);
             } else if (map.get("Event").equals("CLICK")) {
@@ -73,23 +72,21 @@ public class MessageServiceImpl implements MessageService {
                 if (eventKey.equals("V001_CHECK_MONEY")) {
                     //查看余额
                     WeChartTextMessage text = new WeChartTextMessage();
-                    String tips = "待开发查看余额功能";
-                    text.setContent(wxKeyWordHandlerService.handleKeyWord(fromUserName, toUserName, "余额") + "\n" + tips);
+                    text.setContent(wxKeyWordHandlerService.handleKeyWord(fromUserName, toUserName, "余额"));
                     text.setToUserName(fromUserName);
                     text.setFromUserName(toUserName);
                     text.setCreateTime(new Date().getTime());
                     text.setMsgType("text");
 
                     replyMessage = MsgUtil.textMessageToXML(text);
-
                     logger.info("returnOther="+replyMessage);
                 } else if (eventKey.equals("V001_GET_MONEY")) {
-                    boolean sendRedPackFlag = detectSendRedPack(fromUserName);
+                    /*boolean sendRedPackFlag = detectSendRedPack(fromUserName);
                     if (!sendRedPackFlag) {
                         //默认的回复
                         replyMessage = wrapReturnMsg(fromUserName, toUserName, "待开发领取红包功能。", "text");
                         return replyMessage;
-                    }
+                    }*/
 
                     //触发发红包
                     replyMessage = triggerSendConpon(fromUserName, toUserName);

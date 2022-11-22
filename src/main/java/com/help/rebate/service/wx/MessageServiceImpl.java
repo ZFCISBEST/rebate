@@ -3,6 +3,7 @@ package com.help.rebate.service.wx;
 import com.alibaba.fastjson.JSON;
 import com.help.rebate.service.V2TaobaoCommissionAccountService;
 import com.help.rebate.service.WxKeyWordHandlerService;
+import com.help.rebate.utils.Checks;
 import com.help.rebate.utils.MsgUtil;
 import com.help.rebate.vo.WeChartTextMessage;
 import org.slf4j.Logger;
@@ -154,11 +155,12 @@ public class MessageServiceImpl implements MessageService {
         String replyMessage;
 
         try {
-            //触发提现
-            v2TaobaoCommissionAccountService.triggerWithdrawal(fromUserName, "1000");
+            //触发提现, 返回提现的钱（分）
+            int triggerWithdrawal = v2TaobaoCommissionAccountService.triggerWithdrawal(fromUserName);
+            Checks.isTrue(triggerWithdrawal > 0, "提现金额不能为0");
 
             //实际发红包
-            SendRedPackageService.SendPackReturnMsgWrapper returnMsgWrapper = sendRedPackageService.sendRedPack2(fromUserName, 200);
+            SendRedPackageService.SendPackReturnMsgWrapper returnMsgWrapper = sendRedPackageService.sendRedPack2(fromUserName, triggerWithdrawal);
             if (returnMsgWrapper.judgeSuccessful()) {
                 replyMessage = wrapReturnMsg(fromUserName, toUserName, "红包已发出，请领取(24小时有效)", "text");
                 logger.info("发送红包给[{}]成功: {}", fromUserName, JSON.toJSONString(returnMsgWrapper));

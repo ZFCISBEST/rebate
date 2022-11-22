@@ -132,12 +132,14 @@ public class V2TaobaoCommissionAccountService {
     /**
      * 触发提现操作
      * @param openId
-     * @param withdrawalAmount 精确到分，如100分，就是一元钱
      * @return
      */
-    public synchronized void triggerWithdrawal(String openId, String withdrawalAmount) {
+    public synchronized int triggerWithdrawal(String openId) {
         V2TaobaoCommissionAccountInfo v2TaobaoCommissionAccountInfo = selectV2TaobaoCommissionAccountInfo(openId);
         BigDecimal remainCommission = v2TaobaoCommissionAccountInfo.getRemainCommission();
+
+        //提现金额
+        int withdrawalAmount = this.withdrawalAmount;
 
         //判断，是不是金额太大了
         BigDecimal withdrawalAmountDecimal = new BigDecimal(new Integer(withdrawalAmount) * 1.0 / 100);
@@ -175,6 +177,10 @@ public class V2TaobaoCommissionAccountService {
         v2TaobaoCommissionAccountInfo.setRemainCommission(v2TaobaoCommissionAccountInfo.getRemainCommission().subtract(withdrawalAmountDecimal));
         v2TaobaoCommissionAccountInfo.setGmtModified(LocalDateTime.now());
         v2TaobaoCommissionAccountInfoDao.updateByPrimaryKey(v2TaobaoCommissionAccountInfo);
+
+
+        //返回结果
+        return withdrawalAmount;
     }
 
     /**
@@ -424,5 +430,17 @@ public class V2TaobaoCommissionAccountService {
         result.put("maxWithdrawalTimesPerUser", maxWithdrawalTimesPerUser + "");
         result.put("withdrawalAmount", withdrawalAmount + "");
         return result;
+    }
+
+    public BigDecimal getBankTotalAccount() {
+        return bankTotalAccount;
+    }
+
+    public int getMaxWithdrawalTimesPerUser() {
+        return maxWithdrawalTimesPerUser;
+    }
+
+    public int getWithdrawalAmount() {
+        return withdrawalAmount;
     }
 }

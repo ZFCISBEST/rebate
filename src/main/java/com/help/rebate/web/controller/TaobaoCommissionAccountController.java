@@ -60,7 +60,7 @@ public class TaobaoCommissionAccountController {
             SafeServiceResponse.startBiz();
 
             //插入
-            v2TaobaoCommissionAccountService.triggerWithdrawal(openId, "1000");
+            v2TaobaoCommissionAccountService.triggerWithdrawal(openId);
 
             //返回
             return SafeServiceResponse.success("触发提现成功");

@@ -189,7 +189,7 @@ public class V2TaobaoCommissionAccountService {
      * @param withdrawalAmount 精确到分，如100分，就是一元钱
      * @return
      */
-    public synchronized void backingTriggerWithdrawal(String openId, String withdrawalAmount) {
+    public synchronized void backingTriggerWithdrawal(String openId, Integer withdrawalAmount) {
         V2TaobaoCommissionAccountInfo v2TaobaoCommissionAccountInfo = selectV2TaobaoCommissionAccountInfo(openId);
 
         //金额

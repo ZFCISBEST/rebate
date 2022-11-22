@@ -72,12 +72,13 @@ public class TaobaoCommissionAccountController {
 
     @ApiOperation("根据OpenId，逆向触发提现金额回退")
     @RequestMapping("/backingTriggerWithdrawal")
-    public SafeServiceResponse<String> backingTriggerWithdrawal(@ApiParam(name = "openId", value = "微信openId") @RequestParam String openId) {
+    public SafeServiceResponse<String> backingTriggerWithdrawal(@ApiParam(name = "openId", value = "微信openId") @RequestParam String openId,
+                                                                @ApiParam(name = "withdrawalAmount", value = "单次额度（精确到分）") @RequestParam(required = false) Integer withdrawalAmount) {
         try{
             SafeServiceResponse.startBiz();
 
             //插入
-            v2TaobaoCommissionAccountService.backingTriggerWithdrawal(openId, "1000");
+            v2TaobaoCommissionAccountService.backingTriggerWithdrawal(openId, withdrawalAmount);
 
             //返回
             return SafeServiceResponse.success("逆向触发提现金额回退成功");

@@ -86,7 +86,7 @@ public class FixedOrderSyncTask {
     /**
      * 周期调度执行器
      */
-    @Scheduled(cron = "*/2 * * * * ?")
+    @Scheduled(cron = "*/60 * * * * ?")
     public void execute() {
         if (!running) {
             logger.debug("[fix-sync-task] running flag:{}", running);

@@ -56,11 +56,12 @@ public class FixedCommissionAccountTask {
     /**
      * 周期调度执行器
      */
-    @Scheduled(cron = "*/2 * * * * ?")
+    @Scheduled(cron = "*/60 * * * * ?")
     public void execute() {
         //获取令牌
         if (!rateLimiterManager.acquire(tokenCnt)) {
             logger.info("[fix-commission-account-task] rate limit: token is not enough[300]");
+            return;
         }
 
         //执行

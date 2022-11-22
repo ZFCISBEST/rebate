@@ -141,6 +141,11 @@ public class WxKeyWordHandlerService {
         String message = "【当前账户余额】";
         message += "\t\n可提现:" + remainCommission;
         message += "\t\n待确认:" + futureCommission;
+
+        //提示信息
+        message += "\n========================";
+        message += "\n1、手动绑定订单【绑定订单: 订单号】";
+        message += "\n2、查询订单绑定【查询订单: 订单号】";
         return message;
     }
 

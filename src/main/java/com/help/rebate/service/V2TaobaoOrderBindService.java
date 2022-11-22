@@ -21,6 +21,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.help.rebate.service.ddx.tb.DdxInviteCodeManager.PublisherInfoType.specialId;
+
 /**
  * 订单绑定服务
  *
@@ -187,15 +189,22 @@ public class V2TaobaoOrderBindService {
             return orderBindResultVO;
         }
 
-        //所有的都没有绑定过
+        //所有的都没有绑定过 - 探测有没有转过链接
+        BindOpenidInfo openidInfo = detectBindedOpenidInfoByConvertHistory(parentTradeId, orderDetailList);
+        if (openidInfo == null) {
+            v2TaobaoOrderOpenidMapFailureService.insertOrDoNoneOrderInfo(orderDetailList, "有多人转链接或无淘口令转换记录");
+            return orderBindResultVO;
+        }
+
+        //有转链接的记录
         String specialId = orderDetailList.get(0).getSpecialId();
         //按照普通用户的方式来处理
         if (EmptyUtils.isEmpty(specialId)) {
             //通过商品&推广位来绑定
-            bindByPubSite(parentTradeId, orderDetailList, orderBindResultVO);
+            bindByPubSite(openidInfo, parentTradeId, orderDetailList, orderBindResultVO);
         }
         else {
-            bindBySpecialId(parentTradeId, orderDetailList, orderBindResultVO);
+            bindBySpecialId(openidInfo, parentTradeId, orderDetailList, orderBindResultVO);
         }
 
         return orderBindResultVO;
@@ -204,17 +213,12 @@ public class V2TaobaoOrderBindService {
     /**
      * 普通用户，通过推广位和商品的ID去查询转链记录表，看是否转过
      * 通过这个方法的绑定，一定不是会员，就是那种普通的订单而已
+     * @param openidInfo
      * @param parentTradeId
      * @param orderDetailList
      * @param orderBindResultVO
      */
-    private void bindByPubSite(String parentTradeId, List<V2TaobaoOrderDetailInfo> orderDetailList, OrderBindResultVO orderBindResultVO) {
-        BindOpenidInfo openidInfo = detectBindedOpenidInfoByConvertHistory(parentTradeId, orderDetailList);
-        if (openidInfo == null) {
-            v2TaobaoOrderOpenidMapFailureService.insertOrDoNoneOrderInfo(orderDetailList, "有多人转链接或无淘口令转换记录");
-            return;
-        }
-
+    private void bindByPubSite(BindOpenidInfo openidInfo, String parentTradeId, List<V2TaobaoOrderDetailInfo> orderDetailList, OrderBindResultVO orderBindResultVO) {
         //根据openid查询用户信息
         V2TaobaoUserInfo userInfos = v2TaobaoUserInfoService.selectByOpenId(openidInfo.getOpenid());
         for (V2TaobaoOrderDetailInfo orderDetail : orderDetailList) {
@@ -242,52 +246,37 @@ public class V2TaobaoOrderBindService {
 
     /**
      * 会员用户，通过specialId进行绑定
+     * @param openidInfo
      * @param parentTradeId
      * @param orderDetailList
      * @param orderBindResultVO
      */
-    private void bindBySpecialId(String parentTradeId, List<V2TaobaoOrderDetailInfo> orderDetailList, OrderBindResultVO orderBindResultVO) {
-        //第一种，这里的所有商品，至少有被转链过，那么查出来，那么这种情况，是可以建立openid和specialid的关系并存入用户表的
-        BindOpenidInfo openidInfo = detectBindedOpenidInfoByConvertHistory(parentTradeId, orderDetailList);
-        if (openidInfo != null) {
-            //起始这里有个问题，如果转码是A通过微信转的，但是发给了B去买，B正好是会员，此时是不可以将openId和specialId识别为一对的
-            //所以此时，就将mapType记录一下，openId-specialId
-            String specialIdByOrderDetail = orderDetailList.get(0).getSpecialId();
-            V2TaobaoUserInfo userInfosBySpecialId = v2TaobaoUserInfoService.selectBySpecialId(specialIdByOrderDetail);
+    private void bindBySpecialId(BindOpenidInfo openidInfo, String parentTradeId, List<V2TaobaoOrderDetailInfo> orderDetailList, OrderBindResultVO orderBindResultVO) {
+        //这个是一定要存在的
+        V2TaobaoUserInfo userInfos = v2TaobaoUserInfoService.selectByOpenId(openidInfo.getOpenid());
+        String specialIdByUserInfo = userInfos.getSpecialId();
 
-            //判定一下
-            V2TaobaoUserInfo userInfos = v2TaobaoUserInfoService.selectByOpenId(openidInfo.getOpenid());
-            //String specialIdByUserInfo = userInfos.getSpecialId();
+        //订单中的specialId
+        String specialIdByOrderDetail = orderDetailList.get(0).getSpecialId();
 
+        //提前判定，这里为空，说明转链接的人，不是specialId。反正，这里直接得扔掉
+        if (!specialIdByOrderDetail.equalsIgnoreCase(specialIdByUserInfo)) {
+            //还是按照普通的推广位进行绑定
+            bindByPubSite(openidInfo, parentTradeId, orderDetailList, orderBindResultVO);
+        }
+
+        else {
             //存储
             for (V2TaobaoOrderDetailInfo orderDetail : orderDetailList) {
                 //先查询，万一存在，就得更新，防止操作错误
-                insertOrUpdateOrderOpenidMap(userInfos.getOpenId(), MapType.specialid_with_pubsite, userInfosBySpecialId, orderDetail);
+                insertOrUpdateOrderOpenidMap(userInfos.getOpenId(), MapType.specialid_with_pubsite, userInfos, orderDetail);
 
                 //内容
                 orderBindResultVO.setOpenId(userInfos.getOpenId());
-                orderBindResultVO.setSpecialId(userInfosBySpecialId.getSpecialId());
+                orderBindResultVO.setSpecialId(userInfos.getSpecialId());
                 orderBindResultVO.getTradeIdItemIdList().add(orderDetail.getTradeId());
             }
-
-            return;
         }
-
-        //第二种，这里所有的商品，都没有被转链过，那么只能存入specialid字段，其他openid这些数据不填写，mapType就是specialid，表示只是会员
-        /*V2TaobaoUserInfo userInfos = v2TaobaoUserInfoService.selectBySpecialId(orderDetailList.get(0).getSpecialId());
-        for (V2TaobaoOrderDetailInfo orderDetail : orderDetailList) {
-            //先查询，万一存在，就得更新，防止操作错误
-            insertOrUpdateOrderOpenidMap(userInfos.getOpenId(), MapType.specialid, userInfos, orderDetail);
-
-            //内容
-            orderBindResultVO.setOpenId(userInfos.getOpenId());
-            orderBindResultVO.setSpecialId(userInfos.getSpecialId());
-            orderBindResultVO.getTradeIdItemIdList().add(orderDetail.getTradeId());
-        }*/
-
-        //没有openId的，不存储
-        v2TaobaoOrderOpenidMapFailureService.insertOrDoNoneOrderInfo(orderDetailList, "商品未转链或多人转链，但是均无openId");
-        return;
     }
 
     /**
@@ -451,6 +440,12 @@ public class V2TaobaoOrderBindService {
             String siteId = orderDetail.getSiteId();
             String adzoneId = orderDetail.getAdzoneId();
             String pubSite = String.format("mm_%s_%s_%s", pubId, siteId, adzoneId);
+
+            //默认的推广位，手动使用，直接过滤掉
+            if (pubSite.equalsIgnoreCase("mm_120037479_18622324_114562250311")) {
+                targetOpenId = null;
+                break;
+            }
 
             //起止时间
             LocalDateTime clickTime = orderDetail.getClickTime();

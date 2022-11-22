@@ -40,7 +40,12 @@ public class WxHttpService {
             // 实例化密钥库 & 初始化密钥工厂
             KeyStore keyStore = KeyStore.getInstance("PKCS12");
             //证书位置自己定义
-            FileInputStream instream = new FileInputStream(new File("/usr/local/src/apiclient_cert.p12"));
+            File file = new File("/usr/local/src/apiclient_cert.p12");
+            if (!file.exists()) {
+                file = new File("/home/lighthouse/apiclient_cert.p12");
+            }
+
+            FileInputStream instream = new FileInputStream(file);
             try {
                 //填写证书密码，默认为商户号
                 keyStore.load(instream, DecryptMD5.IdOpen(DdxConfig.ID).toCharArray());

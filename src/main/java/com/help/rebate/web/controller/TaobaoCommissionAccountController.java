@@ -69,6 +69,23 @@ public class TaobaoCommissionAccountController {
         }
     }
 
+    @ApiOperation("根据OpenId，逆向触发提现金额回退")
+    @RequestMapping("/backingTriggerWithdrawal")
+    public SafeServiceResponse<String> backingTriggerWithdrawal(@ApiParam(name = "openId", value = "微信openId") @RequestParam String openId) {
+        try{
+            SafeServiceResponse.startBiz();
+
+            //插入
+            v2TaobaoCommissionAccountService.backingTriggerWithdrawal(openId, "1000");
+
+            //返回
+            return SafeServiceResponse.success("逆向触发提现金额回退成功");
+        }catch(Exception e){
+            logger.error("fail to execute[/tbk/backingTriggerWithdrawal]", e);
+            return SafeServiceResponse.fail(e.toString());
+        }
+    }
+
     @ApiOperation("根据订单更新时间，计算该范围的可转为结算的订单")
     @RequestMapping("/computeOrderDetailToAccount")
     public SafeServiceResponse<String> computeOrderDetailToAccount(

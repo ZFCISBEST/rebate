@@ -170,6 +170,46 @@ public class V2TaobaoCommissionAccountService {
     }
 
     /**
+     * 逆向触发提现回退操作
+     * @param openId
+     * @param withdrawalAmount 精确到分，如100分，就是一元钱
+     * @return
+     */
+    public synchronized void backingTriggerWithdrawal(String openId, String withdrawalAmount) {
+        V2TaobaoCommissionAccountInfo v2TaobaoCommissionAccountInfo = selectV2TaobaoCommissionAccountInfo(openId);
+
+        //金额
+        BigDecimal withdrawalAmountDecimal = new BigDecimal(new Integer(withdrawalAmount) * 1.0 / 100);
+
+        //首先产生一个流水
+        V2TaobaoCommissionAccountFlowInfo accountFlowInfo = new V2TaobaoCommissionAccountFlowInfo();
+        accountFlowInfo.setGmtCreated(LocalDateTime.now());
+        accountFlowInfo.setGmtModified(LocalDateTime.now());
+        accountFlowInfo.setOpenId(openId);
+        accountFlowInfo.setTotalCommission(v2TaobaoCommissionAccountInfo.getTotalCommission());
+        accountFlowInfo.setRemainCommission(v2TaobaoCommissionAccountInfo.getRemainCommission());
+        accountFlowInfo.setFrozenCommission(v2TaobaoCommissionAccountInfo.getFrozenCommission());
+        accountFlowInfo.setFlowAmount(withdrawalAmountDecimal);
+        //0-结算，1-维权退回，2-提现，3-冻结金额，4-提现回退
+        accountFlowInfo.setFlowAmountType((byte)4);
+        accountFlowInfo.setFlowAmountTypeMsg("提现回退");
+        accountFlowInfo.setCommissionTradeId(null);
+        accountFlowInfo.setRefundTradeId(null);
+        //0-成功、1-失败、2-进行中
+        accountFlowInfo.setAccountFlowStatus((byte)0);
+        accountFlowInfo.setAccountFlowStatusMsg("成功");
+        accountFlowInfo.setStatus((byte)0);
+        //插入
+        v2TaobaoCommissionAccountFlowInfoDao.insertSelective(accountFlowInfo);
+
+        //构建金额
+        v2TaobaoCommissionAccountInfo.setFinishCommission(v2TaobaoCommissionAccountInfo.getFinishCommission().subtract(withdrawalAmountDecimal));
+        v2TaobaoCommissionAccountInfo.setRemainCommission(v2TaobaoCommissionAccountInfo.getRemainCommission().add(withdrawalAmountDecimal));
+        v2TaobaoCommissionAccountInfo.setGmtModified(LocalDateTime.now());
+        v2TaobaoCommissionAccountInfoDao.updateByPrimaryKey(v2TaobaoCommissionAccountInfo);
+    }
+
+    /**
      * 按照这个时间范围，筛选订单，并计算已经结算成功的订单，转到总账户表中
      * @param orderStartModifiedTime
      * @param minuteStep

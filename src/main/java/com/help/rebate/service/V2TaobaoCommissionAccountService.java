@@ -5,6 +5,7 @@ import com.help.rebate.dao.V2TaobaoCommissionAccountFlowInfoDao;
 import com.help.rebate.dao.V2TaobaoCommissionAccountInfoDao;
 import com.help.rebate.dao.entity.*;
 import com.help.rebate.utils.Checks;
+import com.help.rebate.utils.EmptyUtils;
 import com.help.rebate.utils.NumberUtil;
 import com.help.rebate.utils.TimeUtil;
 import com.help.rebate.vo.CommissionVO;
@@ -15,10 +16,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.math.BigInteger;
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -60,6 +58,16 @@ public class V2TaobaoCommissionAccountService {
      * 银行卡总余额，默认为0
      */
     private BigDecimal bankTotalAccount = new BigDecimal("0.00");
+
+    /**
+     * 每个用户，每日最高的提现次数
+     */
+    private int maxWithdrawalTimesPerUser = 3;
+
+    /**
+     * 每次提现，固定的钱数，精确到分
+     */
+    private int withdrawalAmount = 100;
 
     /**
      * 查询返利信息
@@ -390,12 +398,31 @@ public class V2TaobaoCommissionAccountService {
     /**
      * 银行卡总余额
      * @param totalAccount
+     * @param maxWithdrawalTimesPerUser
+     * @param withdrawalAmount
      */
-    public void setBankTotalAccount(String totalAccount) {
-        this.bankTotalAccount = new BigDecimal(totalAccount);
+    public void setWithdrawalConfig(String totalAccount, Integer maxWithdrawalTimesPerUser, Integer withdrawalAmount) {
+        if (!EmptyUtils.isEmpty(totalAccount)) {
+            this.bankTotalAccount = new BigDecimal(totalAccount);
+        }
+
+        if (maxWithdrawalTimesPerUser != null && maxWithdrawalTimesPerUser >= 0) {
+            this.maxWithdrawalTimesPerUser = maxWithdrawalTimesPerUser;
+        }
+
+        if (withdrawalAmount != null && withdrawalAmount >= 0) {
+            this.withdrawalAmount = withdrawalAmount;
+        }
     }
 
-    public BigDecimal getBankTotalAccount() {
-        return bankTotalAccount;
+    /**
+     * 获取提现配置
+     */
+    public Map<String, String> getWithdrawalConfig() {
+        Map<String, String> result = new HashMap<String, String>();
+        result.put("bankTotalAccount", bankTotalAccount.doubleValue() + "");
+        result.put("maxWithdrawalTimesPerUser", maxWithdrawalTimesPerUser + "");
+        result.put("withdrawalAmount", withdrawalAmount + "");
+        return result;
     }
 }

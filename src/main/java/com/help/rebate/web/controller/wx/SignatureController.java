@@ -149,7 +149,7 @@ public class SignatureController {
         return sendRedPackageService.sendRedPack(openID, moneyFen);
     }
 
-
+    // {"type": "click","name": "绑定会员","key": "V001_VIP","sub_button": []},
     @ApiOperation("微信创建菜单")
     @RequestMapping(value = "/createMenu.html")
     @ResponseBody
@@ -159,7 +159,7 @@ public class SignatureController {
         // 拼装创建菜单的url
         String url = menu_create_url.replace("ACCESS_TOKEN", accessToken());
         // 将菜单对象转换成json字符串
-        String menu = "{\"button\": [{\"type\": \"click\",\"name\": \"绑定会员\",\"key\": \"V001_VIP\",\"sub_button\": []},{\"type\": \"click\",\"name\": \"查看余额\",\"key\": \"V001_CHECK_MONEY\",\"sub_button\": []},{\"type\": \"click\",\"name\": \"提取现金\",\"key\": \"V001_GET_MONEY\",\"sub_button\": []}]}";
+        String menu = "{\"button\": [{\"type\": \"click\",\"name\": \"查看余额\",\"key\": \"V001_CHECK_MONEY\",\"sub_button\": []},{\"type\": \"click\",\"name\": \"提取现金\",\"key\": \"V001_GET_MONEY\",\"sub_button\": []}]}";
         // 调用接口创建菜单
         JSONObject jsonObject = WxHttpService.httpsRequest(url, "POST", menu);
 

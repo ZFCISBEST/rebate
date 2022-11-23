@@ -55,7 +55,7 @@ public class DdxConfig {
 
     public static final String SENDNAME = "优惠";
     public static final Integer TOTALNUMBER = 1;
-    public static final String IP = "118.31.113.224";
+    public static final String IP = "43.139.140.118";
     public static final String WISHING = "年年有余";
 
     public static final String ACTNAME = "元亭担详";

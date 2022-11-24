@@ -9,6 +9,7 @@ import com.help.rebate.utils.EmptyUtils;
 import com.help.rebate.utils.NumberUtil;
 import com.help.rebate.utils.TimeUtil;
 import com.help.rebate.vo.CommissionVO;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -132,14 +133,12 @@ public class V2TaobaoCommissionAccountService {
     /**
      * 触发提现操作
      * @param openId
+     * @param withdrawalAmount 精确到分
      * @return
      */
-    public synchronized int triggerWithdrawal(String openId) {
+    public synchronized long triggerWithdrawal(String openId, int withdrawalAmount) {
         V2TaobaoCommissionAccountInfo v2TaobaoCommissionAccountInfo = selectV2TaobaoCommissionAccountInfo(openId);
         BigDecimal remainCommission = v2TaobaoCommissionAccountInfo.getRemainCommission();
-
-        //提现金额
-        int withdrawalAmount = this.withdrawalAmount;
 
         //判断，是不是金额太大了
         BigDecimal withdrawalAmountDecimal = new BigDecimal(new Integer(withdrawalAmount) * 1.0 / 100);
@@ -150,6 +149,50 @@ public class V2TaobaoCommissionAccountService {
 
         //扣减余额
         this.bankTotalAccount = this.bankTotalAccount.subtract(withdrawalAmountDecimal);
+
+        //构建金额
+        logger.info("[触发提现] openId:{}, 准备扣除账户余额:{}分", openId, withdrawalAmount);
+        v2TaobaoCommissionAccountInfo.setFinishCommission(v2TaobaoCommissionAccountInfo.getFinishCommission().add(withdrawalAmountDecimal));
+        v2TaobaoCommissionAccountInfo.setRemainCommission(v2TaobaoCommissionAccountInfo.getRemainCommission().subtract(withdrawalAmountDecimal));
+        v2TaobaoCommissionAccountInfo.setGmtModified(LocalDateTime.now());
+        v2TaobaoCommissionAccountInfoDao.updateByPrimaryKey(v2TaobaoCommissionAccountInfo);
+
+        //产生一个流水
+        long subId = System.nanoTime();
+        V2TaobaoCommissionAccountFlowInfo accountFlowInfo = new V2TaobaoCommissionAccountFlowInfo();
+        accountFlowInfo.setGmtCreated(LocalDateTime.now());
+        accountFlowInfo.setGmtModified(LocalDateTime.now());
+        accountFlowInfo.setOpenId(openId);
+        accountFlowInfo.setTotalCommission(v2TaobaoCommissionAccountInfo.getTotalCommission());
+        accountFlowInfo.setRemainCommission(v2TaobaoCommissionAccountInfo.getRemainCommission());
+        accountFlowInfo.setFrozenCommission(v2TaobaoCommissionAccountInfo.getFrozenCommission());
+        accountFlowInfo.setFlowAmount(withdrawalAmountDecimal);
+        //0-结算，1-维权退回，2-提现，3-冻结金额
+        accountFlowInfo.setFlowAmountType((byte)2);
+        accountFlowInfo.setFlowAmountTypeMsg("账户提现");
+        accountFlowInfo.setCommissionTradeId(null);
+        accountFlowInfo.setRefundTradeId(null);
+        //0-成功、1-失败、2-进行中
+        accountFlowInfo.setAccountFlowStatus((byte)2);
+        accountFlowInfo.setAccountFlowStatusMsg("[" + subId + "]进行中，已扣减余额" + withdrawalAmount + "分");
+        accountFlowInfo.setStatus((byte)0);
+        //插入
+        v2TaobaoCommissionAccountFlowInfoDao.insertSelective(accountFlowInfo);
+
+        //返回结果
+        return subId;
+    }
+
+    /**
+     * 触发提现操作，记录成功还是失败
+     * @param openId
+     * @param withdrawalAmount 分
+     * @return
+     */
+    public synchronized void postTriggerWithdrawal(String openId, int withdrawalAmount, boolean success, String msg, long subId) {
+        V2TaobaoCommissionAccountInfo v2TaobaoCommissionAccountInfo = selectV2TaobaoCommissionAccountInfo(openId);
+
+        BigDecimal withdrawalAmountDecimal = new BigDecimal(new Integer(withdrawalAmount) * 1.0 / 100);
 
         //产生一个流水
         V2TaobaoCommissionAccountFlowInfo accountFlowInfo = new V2TaobaoCommissionAccountFlowInfo();
@@ -166,21 +209,23 @@ public class V2TaobaoCommissionAccountService {
         accountFlowInfo.setCommissionTradeId(null);
         accountFlowInfo.setRefundTradeId(null);
         //0-成功、1-失败、2-进行中
-        accountFlowInfo.setAccountFlowStatus((byte)0);
-        accountFlowInfo.setAccountFlowStatusMsg("成功");
+        if (success) {
+            accountFlowInfo.setAccountFlowStatus((byte)0);
+            accountFlowInfo.setAccountFlowStatusMsg("[" + subId + "]" + msg);
+        }
+        else {
+            accountFlowInfo.setAccountFlowStatus((byte)1);
+            accountFlowInfo.setAccountFlowStatusMsg(StringUtils.substring("[" + subId + "]" + msg, 0, 127));
+        }
         accountFlowInfo.setStatus((byte)0);
         //插入
         v2TaobaoCommissionAccountFlowInfoDao.insertSelective(accountFlowInfo);
 
-        //构建金额
-        v2TaobaoCommissionAccountInfo.setFinishCommission(v2TaobaoCommissionAccountInfo.getFinishCommission().add(withdrawalAmountDecimal));
-        v2TaobaoCommissionAccountInfo.setRemainCommission(v2TaobaoCommissionAccountInfo.getRemainCommission().subtract(withdrawalAmountDecimal));
-        v2TaobaoCommissionAccountInfo.setGmtModified(LocalDateTime.now());
-        v2TaobaoCommissionAccountInfoDao.updateByPrimaryKey(v2TaobaoCommissionAccountInfo);
-
-
-        //返回结果
-        return withdrawalAmount;
+        //准备触发回退操作
+        if (!success) {
+            logger.warn("[提现确认] 提现失败，准备触发提现回退, openId:{}, 回退金额:{}分, 失败信息:{}", openId, withdrawalAmount, msg);
+            backingTriggerWithdrawal(openId, withdrawalAmount, msg, subId);
+        }
     }
 
     /**
@@ -189,7 +234,7 @@ public class V2TaobaoCommissionAccountService {
      * @param withdrawalAmount 精确到分，如100分，就是一元钱
      * @return
      */
-    public synchronized void backingTriggerWithdrawal(String openId, Integer withdrawalAmount) {
+    public synchronized void backingTriggerWithdrawal(String openId, Integer withdrawalAmount, String msg, long subId) {
         V2TaobaoCommissionAccountInfo v2TaobaoCommissionAccountInfo = selectV2TaobaoCommissionAccountInfo(openId);
 
         //金额
@@ -211,7 +256,7 @@ public class V2TaobaoCommissionAccountService {
         accountFlowInfo.setRefundTradeId(null);
         //0-成功、1-失败、2-进行中
         accountFlowInfo.setAccountFlowStatus((byte)0);
-        accountFlowInfo.setAccountFlowStatusMsg("成功");
+        accountFlowInfo.setAccountFlowStatusMsg(StringUtils.substring("[" + subId + "]" + msg, 0, 127));
         accountFlowInfo.setStatus((byte)0);
         //插入
         v2TaobaoCommissionAccountFlowInfoDao.insertSelective(accountFlowInfo);

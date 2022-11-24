@@ -60,7 +60,11 @@ public class TaobaoCommissionAccountController {
             SafeServiceResponse.startBiz();
 
             //插入
-            v2TaobaoCommissionAccountService.triggerWithdrawal(openId);
+            int withdrawalAmount = v2TaobaoCommissionAccountService.getWithdrawalAmount();
+            long stubId = v2TaobaoCommissionAccountService.triggerWithdrawal(openId, withdrawalAmount);
+
+            //直接提现
+            v2TaobaoCommissionAccountService.postTriggerWithdrawal(openId, withdrawalAmount, true, "模拟提现成功", stubId);
 
             //返回
             return SafeServiceResponse.success("触发提现成功");
@@ -78,7 +82,7 @@ public class TaobaoCommissionAccountController {
             SafeServiceResponse.startBiz();
 
             //插入
-            v2TaobaoCommissionAccountService.backingTriggerWithdrawal(openId, withdrawalAmount);
+            v2TaobaoCommissionAccountService.backingTriggerWithdrawal(openId, withdrawalAmount, "手动回退", -1);
 
             //返回
             return SafeServiceResponse.success("逆向触发提现金额回退成功");

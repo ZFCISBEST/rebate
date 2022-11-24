@@ -156,18 +156,28 @@ public class MessageServiceImpl implements MessageService {
 
         try {
             //触发提现, 返回提现的钱（分）
-            int triggerWithdrawal = v2TaobaoCommissionAccountService.triggerWithdrawal(fromUserName);
-            Checks.isTrue(triggerWithdrawal > 0, "提现金额不能为0");
+            int withdrawalAmount = v2TaobaoCommissionAccountService.getWithdrawalAmount();
+            Checks.isTrue(withdrawalAmount > 0, "提现金额不能为0");
+
+            //先扣款
+            long stubId = v2TaobaoCommissionAccountService.triggerWithdrawal(fromUserName, withdrawalAmount);
 
             //实际发红包
-            SendRedPackageService.SendPackReturnMsgWrapper returnMsgWrapper = sendRedPackageService.sendRedPack2(fromUserName, triggerWithdrawal);
+            SendRedPackageService.SendPackReturnMsgWrapper returnMsgWrapper = sendRedPackageService.sendRedPack2(fromUserName, withdrawalAmount);
+            String msg = JSON.toJSONString(returnMsgWrapper);
             if (returnMsgWrapper.judgeSuccessful()) {
                 replyMessage = wrapReturnMsg(fromUserName, toUserName, "红包已发出，请领取(24小时有效)", "text");
-                logger.info("发送红包给[{}]成功: {}", fromUserName, JSON.toJSONString(returnMsgWrapper));
+                logger.info("发送红包给[{}]成功: {}", fromUserName, msg);
+
+                //准备触发提现回退操作
+                v2TaobaoCommissionAccountService.postTriggerWithdrawal(fromUserName, withdrawalAmount, true, returnMsgWrapper.getReturn_msg(), stubId);
             }
             else {
                 replyMessage = wrapReturnMsg(fromUserName, toUserName, "红包发送失败，请稍后重试", "text");
-                logger.info("发送红包给[{}]失败: {}", fromUserName, JSON.toJSONString(returnMsgWrapper));
+                logger.info("发送红包给[{}]失败: {}", fromUserName, msg);
+
+                //准备触发提现回退操作
+                v2TaobaoCommissionAccountService.postTriggerWithdrawal(fromUserName, withdrawalAmount, false, returnMsgWrapper.getReturn_msg(), stubId);
             }
         } catch (Exception e) {
             logger.info("发送红包给[{}]失败", fromUserName, e);

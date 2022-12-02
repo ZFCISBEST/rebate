@@ -2,6 +2,7 @@ package com.help.rebate.web.controller;
 
 import com.help.rebate.service.V2TaobaoCommissionAccountService;
 import com.help.rebate.service.V2TaobaoUserInfoService;
+import com.help.rebate.utils.EmptyUtils;
 import com.help.rebate.vo.CommissionVO;
 import com.help.rebate.web.response.SafeServiceResponse;
 import io.swagger.annotations.Api;
@@ -55,19 +56,23 @@ public class TaobaoCommissionAccountController {
 
     @ApiOperation("根据OpenId，触发提现10元")
     @RequestMapping("/triggerWithdrawal")
-    public SafeServiceResponse<String> triggerWithdrawal(@ApiParam(name = "openId", value = "微信openId") @RequestParam String openId) {
+    public SafeServiceResponse<String> triggerWithdrawal(@ApiParam(name = "openId", value = "微信openId") @RequestParam String openId,
+                                                         @ApiParam(name = "withdrawalAmount", value = "提现金额，单位：分") @RequestParam Integer withdrawalAmount,
+                                                         @ApiParam(name = "msg", value = "提现的说明信息，如：模拟提现、多退金额追回") @RequestParam(required = false) String msg) {
         try{
             SafeServiceResponse.startBiz();
 
             //插入
-            int withdrawalAmount = v2TaobaoCommissionAccountService.getWithdrawalAmount();
+            if (withdrawalAmount <= 0){
+                withdrawalAmount = v2TaobaoCommissionAccountService.getWithdrawalAmount();
+            }
             long stubId = v2TaobaoCommissionAccountService.triggerWithdrawal(openId, withdrawalAmount);
 
             //直接提现
-            v2TaobaoCommissionAccountService.postTriggerWithdrawal(openId, withdrawalAmount, true, "模拟提现成功", stubId);
+            v2TaobaoCommissionAccountService.postTriggerWithdrawal(openId, withdrawalAmount, true, EmptyUtils.isEmpty(msg) ? "模拟提现成功" : msg, stubId);
 
             //返回
-            return SafeServiceResponse.success("触发提现成功");
+            return SafeServiceResponse.success("触发提现成功 - " + withdrawalAmount);
         }catch(Exception e){
             logger.error("fail to execute[/tbk/triggerWithdrawal]", e);
             return SafeServiceResponse.fail(e.toString());

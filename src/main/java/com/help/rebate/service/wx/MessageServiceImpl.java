@@ -6,6 +6,7 @@ import com.help.rebate.service.WxKeyWordHandlerService;
 import com.help.rebate.utils.Checks;
 import com.help.rebate.utils.MsgUtil;
 import com.help.rebate.vo.WeChartTextMessage;
+import com.help.rebate.vo.WeChatImageMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -65,7 +66,7 @@ public class MessageServiceImpl implements MessageService {
         if(msgType.equals("event")) {
             if(map.get("Event").equals("subscribe")) {
                 // 订阅
-                replyMessage = wrapReturnMsg(fromUserName, toUserName, "本公众号致力于给大家薅各种羊毛，参与福利活动，做你的贴心省钱/赚钱小管家。目前有开户即送微信红包活动，点击“个人养老开户”即可参与，不仅送现金红包，现在还抽奖送最新款iPhone！！！", "text");
+                replyMessage = wrapReturnMsg(fromUserName, toUserName, "本公众号致力于给大家薅各种羊毛，参与福利活动，做你的贴心省钱/赚钱小管家。目前有开户即送微信红包活动，点击“个人养老开户”即可参与，不仅送现金红包，还能参与抽奖送最新款iPhone！！！", "text");
 
                 logger.info("returnOther=" + replyMessage);
             } else if (map.get("Event").equals("CLICK")) {
@@ -83,14 +84,14 @@ public class MessageServiceImpl implements MessageService {
                     logger.info("returnOther="+replyMessage);
                 }else if (eventKey.equals("V001_VIP")) {
                     //回复图片
-                    WeChartTextMessage text = new WeChartTextMessage();
-                    text.setContent(wxKeyWordHandlerService.handleKeyWord(fromUserName, toUserName, "余额"));
-                    text.setToUserName(fromUserName);
-                    text.setFromUserName(toUserName);
-                    text.setCreateTime(new Date().getTime());
-                    text.setMsgType("text");
+                    WeChatImageMessage image = new WeChatImageMessage();
+                    image.setToUserName(fromUserName);
+                    image.setFromUserName(toUserName);
+                    image.setCreateTime(new Date().getTime());
+                    image.setMsgType("image");
+                    image.setMediaId("9p5YYfju2Pe2yw1BRhQr-bfhzZn2jjpNkyUikIu_DTemX1oYi6ypPZpnpEBmgrCJ");
 
-                    replyMessage = MsgUtil.textMessageToXML(text);
+                    replyMessage = MsgUtil.imageMessageToXML(image);
                     logger.info("returnOther="+replyMessage);
                 } else if (eventKey.equals("V001_GET_MONEY")) {
                     /*boolean sendRedPackFlag = detectSendRedPack(fromUserName);

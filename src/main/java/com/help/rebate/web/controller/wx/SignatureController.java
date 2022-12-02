@@ -30,6 +30,11 @@ public class SignatureController {
     public static String message_send_url_2 = "https://api.weixin.qq.com/cgi-bin/template/get_industry?access_token=ACCESS_TOKEN";
     public static String send_template_message = "https://api.weixin.qq.com/cgi-bin/message/template/send?access_token=ACCESS_TOKEN";
     public static String send_wechat_red_envelop = "https://api.mch.weixin.qq.com/mmpaymkttransfers/sendredpack";
+    // 素材上传(POST)URL
+    public static String UPLOAD_MEDIA = "https://api.weixin.qq.com/cgi-bin/media/upload";
+    // 素材下载:不支持视频文件的下载(GET)
+    public static String DOWNLOAD_MEDIA = "http://file.api.weixin.qq.com/cgi-bin/media/get?access_token=%s&media_id=%s";
+
     @Autowired
     private WxCheckSignatureService wxCheckSignatureService;
     @Autowired

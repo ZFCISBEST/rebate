@@ -1,21 +1,30 @@
 package com.help.rebate.utils;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.help.rebate.vo.WeChartTextMessage;
+import com.help.rebate.vo.WeChatImageMessage;
+import com.help.rebate.web.controller.wx.SignatureController;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.core.util.QuickWriter;
 import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
 import com.thoughtworks.xstream.io.xml.PrettyPrintWriter;
 import com.thoughtworks.xstream.io.xml.XppDriver;
+import org.apache.http.HttpException;
+import org.apache.logging.log4j.core.net.Protocol;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.codec.multipart.FilePart;
+import sun.net.www.http.HttpClient;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -116,26 +125,88 @@ public class MsgUtil {
             return xstream.toXML(textMessage);
     }
 
-//        String xml = null;
-//        if(textMessage.getMsgType().equals("text")) {
-//            xml = "<xml>\n" +
-//                    "  <ToUserName>" +"![CDATA["+ textMessage.getFromUserName() +"]]"+ "</ToUserName>\n" +
-//                    "  <FromUserName>" + "![CDATA["+ textMessage.getToUserName() +"]]" + "</FromUserName>\n" +
-//                    "  <CreateTime>" + new Date().getTime() + "</CreateTime>\n" +
-//                    "  <MsgType>" + "![CDATA[" + "text"+ "]]" + "</MsgType>\n" +
-//                    "  <Content>" + "![CDATA[" + "Hello HI " + textMessage.getContent()+"]]" + "</Content>\n" +
-//                    "</xml>";
-//        } else {
-//            xml = "<xml>\n" +
-//                    "  <ToUserName>" +"![CDATA["+ textMessage.getFromUserName() +"]]"+ "</ToUserName>\n" +
-//                    "  <FromUserName>" + "![CDATA["+ textMessage.getToUserName() +"]]" + "</FromUserName>\n" +
-//                    "  <CreateTime>" + new Date().getTime() + "</CreateTime>\n" +
-//                    "  <MsgType>" + "![CDATA[" + "text"+ "]]" + "</MsgType>\n" +
-//                    "  <Content>" + "![CDATA[" + "Hello HI " + "非文字消息本君回复不了。" +"]]" + "</Content>\n" +
-//                    "</xml>";
+    public static String imageMessageToXML(WeChatImageMessage imageMessage){
+
+        xstream.alias("xml", imageMessage.getClass());
+        return xstream.toXML(imageMessage);
+    }
+
+
+    public static String getDownloadUrl(String token, String mediaId) {
+        return String.format(SignatureController.DOWNLOAD_MEDIA, token, mediaId);
+    }
+
+    public static File downloadMedia(String fileName, String token, String mediaId) {
+        String path = getDownloadUrl(token, mediaId);
+        //return httpRequestToFile(fileName, url, "GET", null);
+        if (fileName == null || path == null) {
+            return null;
+        }
+        File file = null;
+        HttpURLConnection conn = null;
+        InputStream inputStream = null;
+        FileOutputStream fileOut = null;
+        try {
+            URL url = new URL(path);
+            conn = (HttpURLConnection) url.openConnection();
+            conn.setDoOutput(true);
+            conn.setDoInput(true);
+            conn.setUseCaches(false);
+            conn.setRequestMethod("GET");
+
+            inputStream = conn.getInputStream();
+            if (inputStream != null) {
+                file = new File(fileName);
+            } else {
+                return file;
+            }
+
+            //写入到文件
+            fileOut = new FileOutputStream(file);
+            if (fileOut != null) {
+                int c = inputStream.read();
+                while (c != -1) {
+                    fileOut.write(c);
+                    c = inputStream.read();
+                }
+            }
+        } catch (Exception e) {
+        } finally {
+            if (conn != null) {
+                conn.disconnect();
+            }
+
+            try {
+                inputStream.close();
+                fileOut.close();
+            } catch (IOException execption) {
+            }
+        }
+        return file;
+    }
+
+//    @WebServlet(name = "UploadMediaServlet")
+//    public class UploadMediaServlet extends HttpServlet {
+//        @Override
+//        protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+//
 //        }
 //
-//        return xml;
+//        @Override
+//        protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+//            UploadMediaApiUtil uploadMediaApiUtil = new UploadMediaApiUtil();
+//            String appId = "wx8948d77934e934e0";
+//            String appSecret = "d4babf8b4bc341167b283e21e129e073";
+//            String accessToken = uploadMediaApiUtil.getAccessToken(appId,appSecret);
+//
+//            String filePath = "D:\\img\\1.jpg";
+//            File file = new File(filePath);
+//            String type = "IMAGE";
+//            JSONObject jsonObject = uploadMediaApiUtil.uploadMedia(file,accessToken,type);
+//            System.out.println(jsonObject.toString());
+//        }
+//    }
+
 
     public static void main(String[] args) throws IOException {
         String content = "<xml>\n" +

@@ -91,7 +91,18 @@ public class MessageServiceImpl implements MessageService {
                     image.setMsgType("image");
                     image.setMediaId("9p5YYfju2Pe2yw1BRhQr-bfhzZn2jjpNkyUikIu_DTemX1oYi6ypPZpnpEBmgrCJ");
 
-                    replyMessage = MsgUtil.imageMessageToXML(image);
+                    replyMessage = String.format(
+                            "<xml>" +
+                                    "<ToUserName><![CDATA[%s]]></ToUserName>" +
+                                    "<FromUserName><![CDATA[%s]]></FromUserName>" +
+                                    "<CreateTime>%s</CreateTime>" +
+                                    "<MsgType><![CDATA[image]]></MsgType>" +
+                                    "<Image>" +
+                                    " <MediaId><![CDATA[%s]]></MediaId>" +
+                                    "</Image>" +
+                                    "</xml>",
+                            fromUserName,toUserName, new Date().getTime(),"9p5YYfju2Pe2yw1BRhQr-bfhzZn2jjpNkyUikIu_DTemX1oYi6ypPZpnpEBmgrCJ"
+                    );
                     logger.info("returnOther="+replyMessage);
                 } else if (eventKey.equals("V001_GET_MONEY")) {
                     /*boolean sendRedPackFlag = detectSendRedPack(fromUserName);

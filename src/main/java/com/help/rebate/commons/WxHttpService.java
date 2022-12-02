@@ -35,7 +35,7 @@ public class WxHttpService {
 
     static{
         try {
-// 创建SSLContext对象，并使用我们指定的信任管理器初始化
+            // 创建SSLContext对象，并使用我们指定的信任管理器初始化
             //TrustManager[] tm = { new MyX509TrustManager() };
             // 实例化密钥库 & 初始化密钥工厂
             KeyStore keyStore = KeyStore.getInstance("PKCS12");

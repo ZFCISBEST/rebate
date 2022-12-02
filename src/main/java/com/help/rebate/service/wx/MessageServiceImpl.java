@@ -65,13 +65,24 @@ public class MessageServiceImpl implements MessageService {
         if(msgType.equals("event")) {
             if(map.get("Event").equals("subscribe")) {
                 // 订阅
-                replyMessage = wrapReturnMsg(fromUserName, toUserName, "感谢您的关注，本服务号当前提供淘宝链接返利功能，将商品链接发送给服务号，使用服务号返回的链接购买商品，确认收货后可以通过平台提取优惠现金。", "text");
+                replyMessage = wrapReturnMsg(fromUserName, toUserName, "本公众号致力于给大家薅各种羊毛，参与福利活动，做你的贴心省钱/赚钱小管家。目前有开户即送微信红包活动，点击“个人养老开户”即可参与，不仅送现金红包，现在还抽奖送最新款iPhone！！！", "text");
 
                 logger.info("returnOther=" + replyMessage);
             } else if (map.get("Event").equals("CLICK")) {
                 String eventKey = map.get("EventKey");// 事件KEY值，与创建自定义菜单时指定的KEY值对应
                 if (eventKey.equals("V001_CHECK_MONEY")) {
                     //查看余额
+                    WeChartTextMessage text = new WeChartTextMessage();
+                    text.setContent(wxKeyWordHandlerService.handleKeyWord(fromUserName, toUserName, "余额"));
+                    text.setToUserName(fromUserName);
+                    text.setFromUserName(toUserName);
+                    text.setCreateTime(new Date().getTime());
+                    text.setMsgType("text");
+
+                    replyMessage = MsgUtil.textMessageToXML(text);
+                    logger.info("returnOther="+replyMessage);
+                }else if (eventKey.equals("V001_VIP")) {
+                    //回复图片
                     WeChartTextMessage text = new WeChartTextMessage();
                     text.setContent(wxKeyWordHandlerService.handleKeyWord(fromUserName, toUserName, "余额"));
                     text.setToUserName(fromUserName);

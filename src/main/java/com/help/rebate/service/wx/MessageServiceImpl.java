@@ -130,7 +130,12 @@ public class MessageServiceImpl implements MessageService {
             //自动回复
             replyMessage = wrapReturnMsg(fromUserName, toUserName, returnContent, msgType);
             logger.info("returnText = {}", replyMessage);
-        } else {
+        } else if (msgType.equals("image")) {
+            // 图片信息
+            String PicUrl = map.get("PicUrl");
+            replyMessage = wrapReturnMsg(fromUserName, toUserName, "图片"+PicUrl+"若为个人养老开户成功信息，公众号将在1-2个工作日内核实，核实成功自动发送现金红包！！！其它信息目前公众号无法提供服务。", "text");
+            logger.info("returnOther=" + replyMessage);
+        }else {
             replyMessage = wrapReturnMsg(fromUserName, toUserName, "公众号无法提供相关服务。", "text");
             logger.info("returnOther=" + replyMessage);
         }

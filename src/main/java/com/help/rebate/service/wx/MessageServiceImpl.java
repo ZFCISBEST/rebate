@@ -2,6 +2,7 @@ package com.help.rebate.service.wx;
 
 import com.alibaba.fastjson.JSON;
 import com.help.rebate.service.V2TaobaoCommissionAccountService;
+import com.help.rebate.service.V2YljDetailInfoService;
 import com.help.rebate.service.WxKeyWordHandlerService;
 import com.help.rebate.utils.Checks;
 import com.help.rebate.utils.MsgUtil;
@@ -39,6 +40,12 @@ public class MessageServiceImpl implements MessageService {
      */
     @Resource
     private V2TaobaoCommissionAccountService v2TaobaoCommissionAccountService;
+
+    /**
+     * 养老金相关服务
+     */
+    @Resource
+    private V2YljDetailInfoService v2YljDetailInfoService;
 
     @Override
     public String newMessageRequest(HttpServletRequest request) {
@@ -105,15 +112,28 @@ public class MessageServiceImpl implements MessageService {
                     );
                     logger.info("returnOther="+replyMessage);
                 } else if (eventKey.equals("V001_GET_MONEY")) {
-                    /*boolean sendRedPackFlag = detectSendRedPack(fromUserName);
-                    if (!sendRedPackFlag) {
-                        //默认的回复
-                        replyMessage = wrapReturnMsg(fromUserName, toUserName, "待开发领取红包功能。", "text");
-                        return replyMessage;
-                    }*/
-
                     //触发发红包
-                    replyMessage = triggerSendConpon(fromUserName, toUserName);
+                    replyMessage = triggerSendConpon(null, fromUserName, toUserName);
+                }
+                else if (eventKey.equals("get1yuan")) {
+                    //触发发红包
+                    replyMessage = triggerSendConpon(100, fromUserName, toUserName);
+                }
+                else if (eventKey.equals("get5yuan")) {
+                    //触发发红包
+                    replyMessage = triggerSendConpon(500, fromUserName, toUserName);
+                }
+                else if (eventKey.equals("get20yuan")) {
+                    //触发发红包
+                    replyMessage = triggerSendConpon(2000, fromUserName, toUserName);
+                }
+                else if (eventKey.equals("get50yuan")) {
+                    //触发发红包
+                    replyMessage = triggerSendConpon(5000, fromUserName, toUserName);
+                }
+                else if (eventKey.equals("get200yuan")) {
+                    //触发发红包
+                    replyMessage = triggerSendConpon(20000, fromUserName, toUserName);
                 }
             }
         } else if (msgType.equals("text")) {
@@ -132,8 +152,13 @@ public class MessageServiceImpl implements MessageService {
             logger.info("returnText = {}", replyMessage);
         } else if (msgType.equals("image")) {
             // 图片信息
-            String PicUrl = map.get("PicUrl");
-            replyMessage = wrapReturnMsg(fromUserName, toUserName, "您发送的图片若为个人养老开户成功信息，公众号将在2-3个工作日内核实，核实成功自动发送现金红包！！！其它信息目前公众号无法提供服务。", "text");
+            String picUrl = map.get("PicUrl");
+
+            //存储
+            v2YljDetailInfoService.createNewItem(fromUserName, picUrl);
+
+            //回复信息
+            replyMessage = wrapReturnMsg(fromUserName, toUserName, "您发送的图片若为个人养老开户成功信息，公众号将在2-3个工作日内核实，核实成功自动发送现金红包，勿多次发送哦。其它信息目前公众号无法提供服务。", "text");
             logger.info("returnOther=" + replyMessage);
         }else {
             replyMessage = wrapReturnMsg(fromUserName, toUserName, "公众号无法提供相关服务。", "text");
@@ -179,12 +204,12 @@ public class MessageServiceImpl implements MessageService {
      * @param toUserName
      * @return
      */
-    private String triggerSendConpon(String fromUserName, String toUserName) {
+    private String triggerSendConpon(Integer withdrawalAmountInit, String fromUserName, String toUserName) {
         String replyMessage;
 
         try {
             //触发提现, 返回提现的钱（分）
-            int withdrawalAmount = v2TaobaoCommissionAccountService.getWithdrawalAmount();
+            int withdrawalAmount = withdrawalAmountInit == null ? v2TaobaoCommissionAccountService.getWithdrawalAmount() : withdrawalAmountInit;
             Checks.isTrue(withdrawalAmount > 0, "提现金额不能为0");
 
             //先扣款

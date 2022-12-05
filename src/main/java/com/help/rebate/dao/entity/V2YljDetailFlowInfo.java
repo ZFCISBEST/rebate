@@ -1,7 +1,5 @@
 package com.help.rebate.dao.entity;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import lombok.Data;
@@ -10,73 +8,61 @@ import lombok.Data;
  * v2_ylj_detail_flow_info
  * @author 
  */
-@ApiModel(value="com.help.rebate.dao.entity.V2YljDetailFlowInfo流水信息表")
 @Data
 public class V2YljDetailFlowInfo implements Serializable {
     /**
      * 主键
      */
-    @ApiModelProperty(value="主键")
     private Long id;
 
     /**
      * 创建时间
      */
-    @ApiModelProperty(value="创建时间")
     private LocalDateTime gmtCreate;
 
     /**
      * 修改时间
      */
-    @ApiModelProperty(value="修改时间")
     private LocalDateTime gmtModified;
 
     /**
      * 依赖表‘open_detail_info’中的流水单号
      */
-    @ApiModelProperty(value="依赖表‘open_detail_info’中的流水单号")
     private String yljStubFlowId;
 
     /**
      * 操作类型，0-审核，1-发红包
      */
-    @ApiModelProperty(value="操作类型，0-审核，1-发红包")
     private Byte operationType;
 
     /**
      * 如果是审核，记录审核状态，0-新建，1-审核中，2-审核通过，3-审核不通过
      */
-    @ApiModelProperty(value="如果是审核，记录审核状态，0-新建，1-审核中，2-审核通过，3-审核不通过")
     private Byte verifyStatus;
 
     /**
      * 审核状态信息，如审批不过，给出原因
      */
-    @ApiModelProperty(value="审核状态信息，如审批不过，给出原因")
     private String verifyStatusMsg;
 
     /**
      * 红包状态，0-未发，1、发送中，2-发送成功，3、发送失败
      */
-    @ApiModelProperty(value="红包状态，0-未发，1、发送中，2-发送成功，3、发送失败")
     private Byte conponStatus;
 
     /**
      * 红包状态，如发送失败，给出原因
      */
-    @ApiModelProperty(value="红包状态，如发送失败，给出原因")
     private String conponStatusMsg;
 
     /**
      * 红包金额（单位: 分）
      */
-    @ApiModelProperty(value="红包金额（单位: 分）")
     private Integer conponAmount;
 
     /**
      * 状态字段，0表示不删除，1表示逻辑删除
      */
-    @ApiModelProperty(value="状态字段，0表示不删除，1表示逻辑删除")
     private Byte status;
 
     private static final long serialVersionUID = 1L;

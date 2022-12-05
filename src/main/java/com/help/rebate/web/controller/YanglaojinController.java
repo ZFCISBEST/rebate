@@ -6,6 +6,7 @@ import com.help.rebate.dao.entity.V2YljDetailInfo;
 import com.help.rebate.model.GenericRowListDTO;
 import com.help.rebate.model.LoginResultDTO;
 import com.help.rebate.model.V2YljDetailInfoDTO;
+import com.help.rebate.service.V2YljDetailInfoService;
 import com.help.rebate.web.response.SafeServiceResponse;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -14,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,9 +27,8 @@ import java.util.List;
 public class YanglaojinController {
     private static final Logger logger = LoggerFactory.getLogger(YanglaojinController.class);
 
-    public static List<V2YljDetailInfo> allData = null;
-    public static int allSize = 200;
-
+    @Resource
+    private V2YljDetailInfoService v2YljDetailInfoService;
 
     @ApiOperation("查询和获取数据")
     @GetMapping("/queryYangLaoJinList")
@@ -35,35 +36,14 @@ public class YanglaojinController {
         try{
             SafeServiceResponse.startBiz();
 
-            List<V2YljDetailInfo> list = new ArrayList<V2YljDetailInfo>();
-            if (allData == null) {
-                allData = new ArrayList<V2YljDetailInfo>();
-                for (int i = 0; i < allSize; i++) {
-                    V2YljDetailInfo v2YljDetailInfo = new V2YljDetailInfo();
-                    v2YljDetailInfo.setId(i + 0L);
-                    v2YljDetailInfo.setGmtCreated(LocalDateTime.now());
-                    v2YljDetailInfo.setGmtModified(LocalDateTime.now());
-                    v2YljDetailInfo.setOpenId("oo-" + i);
-                    v2YljDetailInfo.setMediaPicUrl("url--" + i + ".gif");
-                    v2YljDetailInfo.setYljStubFlowId("stub_" + i);
-                    v2YljDetailInfo.setVerifyStatus((byte)0);
-                    v2YljDetailInfo.setVerifyStatusMsg("成功");
-                    v2YljDetailInfo.setConponStatus((byte)0);
-                    v2YljDetailInfo.setConponStatusMsg("成功");
-                    v2YljDetailInfo.setConponAmount(0);
-                    v2YljDetailInfo.setStatus((byte)0);
-                    allData.add(v2YljDetailInfo);
-                }
-            }
+            List<V2YljDetailInfo> v2YljDetailInfos = v2YljDetailInfoService.listAll(v2YljDetailInfoDTO, v2YljDetailInfoDTO.getCurrent(), v2YljDetailInfoDTO.getPageSize());
 
-            //获取页数
-            list = allData;
-
+            long all = v2YljDetailInfoService.countAll(v2YljDetailInfoDTO, v2YljDetailInfoDTO.getCurrent(), v2YljDetailInfoDTO.getPageSize());
             //返回指定页数
-            logger.info("【查询】参数:{}", JSON.toJSONString(v2YljDetailInfoDTO, true));
+            //logger.info("【查询】参数:{}", JSON.toJSONString(v2YljDetailInfoDTO, true));
 
             //返回
-            return SafeServiceResponse.success(new GenericRowListDTO<V2YljDetailInfo>(list, allSize, true));
+            return SafeServiceResponse.success(new GenericRowListDTO<V2YljDetailInfo>(v2YljDetailInfos, (int) all, true));
         }catch(Exception e){
             logger.error("fail to execute[/yanglaojin/queryYangLaoJinList]", e);
             return SafeServiceResponse.fail(e.toString());
@@ -78,13 +58,10 @@ public class YanglaojinController {
         try{
             SafeServiceResponse.startBiz();
 
-            V2YljDetailInfo v2YljDetailInfo = allData.stream().filter(a -> a.getId() == id).findFirst().get();
-
-            v2YljDetailInfo.setVerifyStatus(verifyStatus);
-            v2YljDetailInfo.setVerifyStatusMsg(verifyStatusMsg);
+            int affectedCnt = v2YljDetailInfoService.verifyYlj(id, verifyStatus, verifyStatusMsg);
 
             //返回
-            return SafeServiceResponse.success(true);
+            return SafeServiceResponse.success(affectedCnt == 1);
         }catch(Exception e){
             logger.error("fail to execute[/yanglaojin/updateVerifyStatus]", e);
             return SafeServiceResponse.fail(e.toString());

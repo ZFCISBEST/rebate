@@ -89,7 +89,7 @@ public class MessageServiceImpl implements MessageService {
                     image.setFromUserName(toUserName);
                     image.setCreateTime(new Date().getTime());
                     image.setMsgType("image");
-                    image.setMediaId("9p5YYfju2Pe2yw1BRhQr-bfhzZn2jjpNkyUikIu_DTemX1oYi6ypPZpnpEBmgrCJ");
+                    image.setMediaId("AKG7FG_cwz3uqX_DwlPk_xrxyMtvkLlFXRor99JEY4DLUzSHLuADW653UXQR0ODP");
 
                     replyMessage = String.format(
                             "<xml>" +
@@ -101,7 +101,7 @@ public class MessageServiceImpl implements MessageService {
                                     " <MediaId><![CDATA[%s]]></MediaId>" +
                                     "</Image>" +
                                     "</xml>",
-                            fromUserName,toUserName, new Date().getTime(),"9p5YYfju2Pe2yw1BRhQr-bfhzZn2jjpNkyUikIu_DTemX1oYi6ypPZpnpEBmgrCJ"
+                            fromUserName,toUserName, new Date().getTime(),"AKG7FG_cwz3uqX_DwlPk_xrxyMtvkLlFXRor99JEY4DLUzSHLuADW653UXQR0ODP"
                     );
                     logger.info("returnOther="+replyMessage);
                 } else if (eventKey.equals("V001_GET_MONEY")) {
@@ -133,7 +133,7 @@ public class MessageServiceImpl implements MessageService {
         } else if (msgType.equals("image")) {
             // 图片信息
             String PicUrl = map.get("PicUrl");
-            replyMessage = wrapReturnMsg(fromUserName, toUserName, "图片"+PicUrl+"若为个人养老开户成功信息，公众号将在1-2个工作日内核实，核实成功自动发送现金红包！！！其它信息目前公众号无法提供服务。", "text");
+            replyMessage = wrapReturnMsg(fromUserName, toUserName, "您发送的图片若为个人养老开户成功信息，公众号将在2-3个工作日内核实，核实成功自动发送现金红包！！！其它信息目前公众号无法提供服务。", "text");
             logger.info("returnOther=" + replyMessage);
         }else {
             replyMessage = wrapReturnMsg(fromUserName, toUserName, "公众号无法提供相关服务。", "text");

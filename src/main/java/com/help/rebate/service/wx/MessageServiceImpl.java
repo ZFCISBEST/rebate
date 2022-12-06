@@ -96,7 +96,8 @@ public class MessageServiceImpl implements MessageService {
                     image.setFromUserName(toUserName);
                     image.setCreateTime(new Date().getTime());
                     image.setMsgType("image");
-                    image.setMediaId("AKG7FG_cwz3uqX_DwlPk_xrxyMtvkLlFXRor99JEY4DLUzSHLuADW653UXQR0ODP");
+                    //image.setMediaId("AKG7FG_cwz3uqX_DwlPk_xrxyMtvkLlFXRor99JEY4DLUzSHLuADW653UXQR0ODP");
+                    image.setMediaId("6IR5b9DmdG0tW42-umnE9JDYixKdqEcEhNtWQLL4fZCrc1v2ESRXz84-VLbYEk3M");
 
                     replyMessage = String.format(
                             "<xml>" +

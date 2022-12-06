@@ -97,7 +97,8 @@ public class MessageServiceImpl implements MessageService {
                     image.setCreateTime(new Date().getTime());
                     image.setMsgType("image");
                     //image.setMediaId("AKG7FG_cwz3uqX_DwlPk_xrxyMtvkLlFXRor99JEY4DLUzSHLuADW653UXQR0ODP");
-                    image.setMediaId("6IR5b9DmdG0tW42-umnE9JDYixKdqEcEhNtWQLL4fZCrc1v2ESRXz84-VLbYEk3M");
+                    String mediaId = "6IR5b9DmdG0tW42-umnE9JDYixKdqEcEhNtWQLL4fZCrc1v2ESRXz84-VLbYEk3M";
+                    image.setMediaId(mediaId);
 
                     replyMessage = String.format(
                             "<xml>" +
@@ -109,7 +110,7 @@ public class MessageServiceImpl implements MessageService {
                                     " <MediaId><![CDATA[%s]]></MediaId>" +
                                     "</Image>" +
                                     "</xml>",
-                            fromUserName,toUserName, new Date().getTime(),"AKG7FG_cwz3uqX_DwlPk_xrxyMtvkLlFXRor99JEY4DLUzSHLuADW653UXQR0ODP"
+                            fromUserName,toUserName, new Date().getTime(), mediaId
                     );
                     logger.info("returnOther="+replyMessage);
                 } else if (eventKey.equals("V001_GET_MONEY")) {

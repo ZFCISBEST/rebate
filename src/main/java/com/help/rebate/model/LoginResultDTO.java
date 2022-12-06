@@ -9,4 +9,5 @@ public class LoginResultDTO implements Serializable {
     String status;
     String type;
     String currentAuthority;
+    String access;
 }

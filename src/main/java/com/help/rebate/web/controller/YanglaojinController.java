@@ -1,10 +1,8 @@
 package com.help.rebate.web.controller;
+import java.time.LocalDateTime;
 
-import com.alibaba.fastjson.JSON;
-import com.help.rebate.dao.entity.V2TaobaoUserInfo;
 import com.help.rebate.dao.entity.V2YljDetailInfo;
 import com.help.rebate.model.GenericRowListDTO;
-import com.help.rebate.model.LoginResultDTO;
 import com.help.rebate.model.V2YljDetailInfoDTO;
 import com.help.rebate.service.V2YljDetailInfoService;
 import com.help.rebate.web.response.SafeServiceResponse;
@@ -16,8 +14,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @Api("yllgAPI")
@@ -38,7 +34,25 @@ public class YanglaojinController {
 
             List<V2YljDetailInfo> v2YljDetailInfos = v2YljDetailInfoService.listAll(v2YljDetailInfoDTO, v2YljDetailInfoDTO.getCurrent(), v2YljDetailInfoDTO.getPageSize());
 
+            //http://mmbiz.qpic.cn/mmbiz_jpg/XpGLU7WoibqBvO5KyRAJOia03yjPBrwVJiad1XnrkoAt5xoA17Hf4WyRT82DWAxkFLGeMRaqjAJ7mlmZT03X8de3Q/0
+            /*V2YljDetailInfo v2YljDetailInfo = new V2YljDetailInfo();
+            v2YljDetailInfo.setId(0L);
+            v2YljDetailInfo.setGmtCreated(LocalDateTime.now());
+            v2YljDetailInfo.setGmtModified(LocalDateTime.now());
+            v2YljDetailInfo.setOpenId("222222");
+            v2YljDetailInfo.setMediaPicUrl("http://mmbiz.qpic.cn/mmbiz_jpg/XpGLU7WoibqBvO5KyRAJOia03yjPBrwVJiad1XnrkoAt5xoA17Hf4WyRT82DWAxkFLGeMRaqjAJ7mlmZT03X8de3Q/0");
+            v2YljDetailInfo.setYljStubFlowId("5555");
+            v2YljDetailInfo.setVerifyStatus((byte)0);
+            v2YljDetailInfo.setVerifyStatusMsg("");
+            v2YljDetailInfo.setConponStatus((byte)0);
+            v2YljDetailInfo.setConponStatusMsg("");
+            v2YljDetailInfo.setConponAmount(0);
+            v2YljDetailInfo.setStatus((byte)0);
+            v2YljDetailInfos.add(v2YljDetailInfo);*/
+
+
             long all = v2YljDetailInfoService.countAll(v2YljDetailInfoDTO, v2YljDetailInfoDTO.getCurrent(), v2YljDetailInfoDTO.getPageSize());
+            //all += 1;
             //返回指定页数
             //logger.info("【查询】参数:{}", JSON.toJSONString(v2YljDetailInfoDTO, true));
 

@@ -13,7 +13,7 @@ public class LoginUserInfo {
 
     static {
         username2InfoMap.put("admin", createDefault("admin", "admin", "admin"));
-        username2InfoMap.put("admin", createDefault("yanglaojin", "admin", "admin"));
+        username2InfoMap.put("yanglaojin", createDefault("yanglaojin", "admin", "admin"));
     }
 
     /**

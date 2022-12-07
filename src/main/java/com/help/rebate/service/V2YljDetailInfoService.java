@@ -189,7 +189,7 @@ public class V2YljDetailInfoService {
      */
     public int verifyYlj(Long id, Byte verifyStatus, String verifyStatusMsg) {
         V2YljDetailInfo v2YljDetailInfo = v2YljDetailInfoDao.selectByPrimaryKey(id);
-        if (v2YljDetailInfo == null || v2YljDetailInfo.getStatus() == 0) {
+        if (v2YljDetailInfo == null || v2YljDetailInfo.getStatus() != 0) {
             return 0;
         }
 

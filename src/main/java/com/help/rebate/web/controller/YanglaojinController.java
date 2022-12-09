@@ -5,6 +5,7 @@ import com.help.rebate.dao.entity.V2YljDetailInfo;
 import com.help.rebate.model.GenericRowListDTO;
 import com.help.rebate.model.V2YljDetailInfoDTO;
 import com.help.rebate.service.V2YljDetailInfoService;
+import com.help.rebate.utils.Checks;
 import com.help.rebate.web.response.SafeServiceResponse;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -68,16 +69,37 @@ public class YanglaojinController {
     @GetMapping("/updateVerifyStatus")
     public SafeServiceResponse<Boolean> updateVerifyStatus(@ApiParam(name = "verifyStatus", value = "验证状态") @RequestParam Byte verifyStatus,
                                                            @ApiParam(name = "verifyStatusMsg", value = "验证状态信息") @RequestParam String verifyStatusMsg,
+                                                           @ApiParam(name = "pushMsgToUser", value = "发送消息给用户吗") @RequestParam Byte pushMsgToUser,
                                                            @ApiParam(name = "id", value = "主键") @RequestParam Long id) {
         try{
             SafeServiceResponse.startBiz();
 
-            int affectedCnt = v2YljDetailInfoService.verifyYlj(id, verifyStatus, verifyStatusMsg);
+            int affectedCnt = v2YljDetailInfoService.verifyYlj(id, verifyStatus, verifyStatusMsg, pushMsgToUser);
 
             //返回
             return SafeServiceResponse.success(affectedCnt == 1);
         }catch(Exception e){
             logger.error("fail to execute[/yanglaojin/updateVerifyStatus]", e);
+            return SafeServiceResponse.fail(e.toString());
+        }
+    }
+
+    @ApiOperation("发送红包")
+    @GetMapping("/sendConpon")
+    public SafeServiceResponse<Boolean> sendConpon(@ApiParam(name = "conponAmount", value = "红包金额(元）") @RequestParam Integer conponAmount,
+                                                   @ApiParam(name = "id", value = "主键") @RequestParam Long id) {
+        try{
+            SafeServiceResponse.startBiz();
+
+            //验证先
+            Checks.isTrue(conponAmount > 0 && conponAmount <= 200, "红包金额需在200元以内");
+
+            int tempConponAmount = v2YljDetailInfoService.sendConpon(id, conponAmount);
+
+            //返回
+            return SafeServiceResponse.success(tempConponAmount == conponAmount);
+        }catch(Exception e){
+            logger.error("fail to execute[/yanglaojin/sendConpon]", e);
             return SafeServiceResponse.fail(e.toString());
         }
     }

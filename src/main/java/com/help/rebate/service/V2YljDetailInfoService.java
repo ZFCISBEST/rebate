@@ -1,12 +1,18 @@
 package com.help.rebate.service;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.help.rebate.commons.WxHttpService;
 import com.help.rebate.dao.V2TaobaoUserInfoDao;
 import com.help.rebate.dao.V2YljDetailFlowInfoDao;
 import com.help.rebate.dao.V2YljDetailInfoDao;
 import com.help.rebate.dao.entity.*;
 import com.help.rebate.model.V2YljDetailInfoDTO;
+import com.help.rebate.service.wx.SendRedPackageService;
 import com.help.rebate.utils.Checks;
 import com.help.rebate.utils.EmptyUtils;
+import com.help.rebate.utils.TimeUtil;
+import com.help.rebate.web.controller.wx.SignatureController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -32,6 +38,38 @@ public class V2YljDetailInfoService {
     private V2YljDetailInfoDao v2YljDetailInfoDao;
     @Resource
     private V2YljDetailFlowInfoDao v2YljDetailFlowInfoDao;
+
+    /**
+     * 发红包服务
+     */
+    @Resource
+    private SendRedPackageService sendRedPackageService;
+
+    /**
+     * 养老金开户状态推送
+     */
+    public static String pushMsgToUserTemplate = "{\n" +
+            "    \"touser\": \"$openId\", \n" +
+            "    \"template_id\": \"HxzwhA9W_XfsVDyqSSKZCXAIabGyAi3PLfHXsvRHFNA\", \n" +
+            "    \"data\": {\n" +
+            "        \"first\": {\n" +
+            "            \"value\": \"$tellContent\", \n" +
+            "            \"color\": \"#173177\"\n" +
+            "        }, \n" +
+            "        \"keyword1\": {\n" +
+            "            \"value\": \"$审核状态\", \n" +
+            "            \"color\": \"#173177\"\n" +
+            "        }, \n" +
+            "        \"keyword2\": {\n" +
+            "            \"value\": \"$审核时间\", \n" +
+            "            \"color\": \"#173177\"\n" +
+            "        },\n" +
+            "        \"remark\": {\n" +
+            "            \"value\": \"$备注\", \n" +
+            "            \"color\": \"#173177\"\n" +
+            "        }\n" +
+            "    }\n" +
+            "}";
 
     /**
      * 插入一个新的记录
@@ -187,7 +225,7 @@ public class V2YljDetailInfoService {
      * 更新信息
      * @return
      */
-    public int verifyYlj(Long id, Byte verifyStatus, String verifyStatusMsg) {
+    public int verifyYlj(Long id, Byte verifyStatus, String verifyStatusMsg, Byte pushMsgToUser) {
         V2YljDetailInfo v2YljDetailInfo = v2YljDetailInfoDao.selectByPrimaryKey(id);
         if (v2YljDetailInfo == null || v2YljDetailInfo.getStatus() != 0) {
             return 0;
@@ -206,7 +244,51 @@ public class V2YljDetailInfoService {
         //生成流水
         generateFlow((byte) 0, v2YljDetailInfo);
 
+        //最后推送状态
+        if (pushMsgToUser != null && pushMsgToUser == 0) {
+            String msg = startPushMsgToUser(v2YljDetailInfo);
+            logger.info("[审核]主动推送结果: {}", msg);
+        }
+
         return affectedCnt;
+    }
+
+    /**
+     * 开始状态推送
+     * @param v2YljDetailInfo
+     */
+    private String startPushMsgToUser(V2YljDetailInfo v2YljDetailInfo) {
+        //发送的url
+        String url = SignatureController.send_template_message.replace("ACCESS_TOKEN", SignatureController.accessToken());
+
+        //定义内容
+        Byte verifyStatus = v2YljDetailInfo.getVerifyStatus();
+        String shortMsg = "审核通过";
+        if (verifyStatus == 0) {
+            shortMsg = "新建";
+        }
+        else if (verifyStatus == 1){
+            shortMsg = "审核中";
+        }
+        else if (verifyStatus != 2){
+            shortMsg = "审核未通过";
+        }
+        String message = pushMsgToUserTemplate.replace("$openId", v2YljDetailInfo.getOpenId()).replace("$tellContent", shortMsg);
+        message = message.replace("$审核状态", v2YljDetailInfo.getVerifyStatusMsg())
+                .replace("$审核时间", TimeUtil.formatLocalDate(v2YljDetailInfo.getGmtModified()))
+                .replace("$备注", "审核未通过可重新提交审核");
+
+        //发送
+        JSONObject jsonObject = WxHttpService.httpsRequest(url, "POST", message);
+        if (jsonObject == null) {
+            return "消息发送失败，原因未知 - " + v2YljDetailInfo.getOpenId();
+        }
+
+        //带原因的结果
+        if (0 != jsonObject.getInteger("errcode")) {
+            return "消息发送失败(errCode: " + jsonObject.getInteger("errcode")  + ", errMsg: "+ jsonObject.getString("errmsg") + ") - " + v2YljDetailInfo.getOpenId();
+        }
+        return "消息推送成功 - " + v2YljDetailInfo.getOpenId();
     }
 
     /**
@@ -214,28 +296,41 @@ public class V2YljDetailInfoService {
      * 发送的金额
      * @return
      */
-    public int sendConpon(Long id) {
+    public synchronized int sendConpon(Long id, Integer conponAmount) {
         V2YljDetailInfo v2YljDetailInfo = v2YljDetailInfoDao.selectByPrimaryKey(id);
-        if (v2YljDetailInfo == null || v2YljDetailInfo.getStatus() == 0) {
-            return 0;
-        }
 
         //判定
-        if (v2YljDetailInfo.getConponStatus() != null && v2YljDetailInfo.getConponStatus() == 2) {
+        Checks.isTrue(v2YljDetailInfo != null && v2YljDetailInfo.getStatus() == 0, "该记录已不存在，不可发红包");
+        Checks.isTrue(v2YljDetailInfo.getVerifyStatus() == 2, "审批不通过，不可发红包");
+        Checks.isTrue(v2YljDetailInfo.getConponStatus() != 1, "红包已在发送中，不可重复发红包");
+        Checks.isTrue(v2YljDetailInfo.getConponStatus() != 2, "红包已发，不可重复发红包");
+
+        //判定
+        if (v2YljDetailInfo.getConponStatus() != null && (v2YljDetailInfo.getConponStatus() == 2 && v2YljDetailInfo.getConponStatus() == 1)) {
             return v2YljDetailInfo.getConponAmount();
         }
 
         //发送红包
-        // TODO: 2022/12/5 获取结果
+        conponAmount = 100 * conponAmount;
+
         //0-未发，1、发送中，2-发送成功，3、发送失败
+        String sendResult = triggerSendConpon(conponAmount, v2YljDetailInfo.getOpenId());
         byte sendConponResult = 3;
-        String sendConponResultMsg = "发送失败-尚未真正发送";
+        String sendConponResultMsg = "发送失败 - " + sendResult;
+        if (sendResult.equals("success")) {
+            sendConponResult = 2;
+            sendConponResultMsg = "红包发送成功";
+
+            //发送成功了，给用户一个推送
+            //String msg = startPushMsgToUser(v2YljDetailInfo, sendConponResultMsg);
+            //logger.info("[发红包]主动推送结果: {}", msg);
+        }
 
         //设置
         v2YljDetailInfo.setGmtModified(LocalDateTime.now());
         v2YljDetailInfo.setConponStatus(sendConponResult);
         v2YljDetailInfo.setConponStatusMsg(sendConponResultMsg);
-        v2YljDetailInfo.setConponAmount(v2YljDetailInfo.getConponAmount());
+        v2YljDetailInfo.setConponAmount(conponAmount);
 
         //更新
         int affectedCnt = v2YljDetailInfoDao.updateByPrimaryKeySelective(v2YljDetailInfo);
@@ -245,5 +340,38 @@ public class V2YljDetailInfoService {
 
         //发送结果
         return sendConponResult == 2 ? v2YljDetailInfo.getConponAmount() : 0;
+    }
+
+    /**
+     * 触发发红包
+     * 发个红包，分
+     * @param openId
+     * @param withdrawalAmount
+     * @return
+     */
+    private String triggerSendConpon(Integer withdrawalAmount, String openId) {
+        String replyMessage;
+        System.out.println("==开发发红包==");
+
+        try {
+            //实际发红包
+            SendRedPackageService.SendPackReturnMsgWrapper returnMsgWrapper = sendRedPackageService.sendRedPack2(openId, withdrawalAmount);
+            String msg = JSON.toJSONString(returnMsgWrapper);
+            if (returnMsgWrapper.judgeSuccessful()) {
+                logger.info("发送红包给[{}]成功: {}", openId, msg);
+
+                replyMessage = "success";
+            }
+            else {
+                replyMessage = returnMsgWrapper.getReturn_msg();
+                logger.info("发送红包给[{}]失败: {}", openId, msg);
+                return replyMessage;
+            }
+        } catch (Exception e) {
+            logger.info("发送红包给[{}]失败", openId, e);
+            replyMessage = e.getMessage();
+        }
+        System.out.println("==发红包完成==");
+        return replyMessage;
     }
 }

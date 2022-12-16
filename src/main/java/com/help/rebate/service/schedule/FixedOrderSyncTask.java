@@ -86,7 +86,7 @@ public class FixedOrderSyncTask {
     /**
      * 周期调度执行器
      */
-    @Scheduled(cron = "*/60 * * * * ?")
+    @Scheduled(cron = "*/5 * * * * ?")
     public void execute() {
         if (!running) {
             //logger.debug("[fix-sync-task] running flag:{}", running);
@@ -222,7 +222,7 @@ public class FixedOrderSyncTask {
 
         //log输出
         if (EmptyUtils.isEmpty(orderBindResultVOS)) {
-            logger.info("[fix-order-sync-task] sync bind order - time range[{}, {}], no any bind order",
+            logger.info("[fix-order-sync-task] sync bind order - time range[{}, {}], 无订单绑定",
                     TimeUtil.formatLocalDate(localStartTime), TimeUtil.formatLocalDate(endTime));
             return;
         }

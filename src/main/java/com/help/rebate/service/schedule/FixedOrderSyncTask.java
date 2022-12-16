@@ -89,13 +89,14 @@ public class FixedOrderSyncTask {
     @Scheduled(cron = "*/60 * * * * ?")
     public void execute() {
         if (!running) {
-            logger.debug("[fix-sync-task] running flag:{}", running);
+            //logger.debug("[fix-sync-task] running flag:{}", running);
             return;
         }
 
         //获取令牌
         if (!rateLimiterManager.acquire(tokenCnt)) {
-            logger.info("[fix-sync-task] rate limit: token is not enough");
+            //logger.info("[fix-sync-task] rate limit: token is not enough");
+            return;
         }
 
         //获取同步开始时间
@@ -111,7 +112,7 @@ public class FixedOrderSyncTask {
 
         //时间判定
         if (endTime.isAfter(LocalDateTime.now())) {
-            logger.info("[fix-sync-task] 当前时间[{}]小于结束时间[{}], 跳过本次同步", TimeUtil.formatLocalDate(LocalDateTime.now()), TimeUtil.formatLocalDate(endTime));
+            //logger.info("[fix-sync-task] 当前时间[{}]小于结束时间[{}], 跳过本次同步", TimeUtil.formatLocalDate(LocalDateTime.now()), TimeUtil.formatLocalDate(endTime));
             return;
         }
 

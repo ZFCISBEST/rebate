@@ -60,21 +60,21 @@ public class FixedCommissionAccountTask {
     public void execute() {
         //获取令牌
         if (!rateLimiterManager.acquire(tokenCnt)) {
-            logger.info("[fix-commission-account-task] rate limit: token is not enough[300]");
+            //logger.info("[fix-commission-account-task] rate limit: token is not enough[300]");
             return;
         }
 
         //执行
         try {
             //当前时间
-            LocalDateTime tenMinuteAgo = LocalDateTime.now().minusMinutes(30);
+            LocalDateTime tenMinuteAgo = LocalDateTime.now().minusMinutes(120);
 
             //十分钟以内的订单更新绑定
             String orderStartModifiedTime = TimeUtil.formatLocalDate(tenMinuteAgo);
-            List<String> tradeParentIds = v2TaobaoCommissionAccountService.computeOrderDetailToAccount(orderStartModifiedTime, 30L);
+            List<String> tradeParentIds = v2TaobaoCommissionAccountService.computeOrderDetailToAccount(orderStartModifiedTime, 120L);
 
             logger.info("[fix-commission-account-task] 转结算执行成功，时间范围:[{}, 分钟数:{}], 父订单列表:{}",
-                    orderStartModifiedTime, 30, tradeParentIds.stream().collect(Collectors.joining(",")));
+                    orderStartModifiedTime, 120, tradeParentIds.stream().collect(Collectors.joining(",")));
         } catch(Exception e) {
             logger.error("[fix-commission-account-task] 将绑定订单转结算发生错误", e);
         }

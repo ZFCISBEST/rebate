@@ -273,7 +273,7 @@ public class V2TaobaoCommissionAccountService {
      * @param orderStartModifiedTime
      * @param minuteStep
      */
-    public List<String> computeOrderDetailToAccount(String orderStartModifiedTime, Long minuteStep) {
+    public synchronized List<String> computeOrderDetailToAccount(String orderStartModifiedTime, Long minuteStep) {
         //确定时间范围
         LocalDateTime startTime = TimeUtil.parseLocalDate(orderStartModifiedTime);
         String endTime = TimeUtil.formatLocalDate(startTime.plusMinutes(minuteStep));

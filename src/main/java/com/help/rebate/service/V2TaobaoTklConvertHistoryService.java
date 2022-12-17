@@ -47,10 +47,17 @@ public class V2TaobaoTklConvertHistoryService {
         V2TaobaoTklConvertHistoryInfoExample.Criteria criteria01 = tklConvertHistoryExample.or();
         V2TaobaoTklConvertHistoryInfoExample.Criteria criteria02 = tklConvertHistoryExample.or();
 
-        List<String> staticAndDynamicItemId = convertDynamicItemId(itemId);
+        //List<String> staticAndDynamicItemId = convertDynamicItemId(itemId);
+        String staticAndDynamicItemId = convertDynamicItemIdToStatic(itemId);
         if (!EmptyUtils.isEmpty(itemId)) {
-            criteria01.andItemIdIn(staticAndDynamicItemId);
-            criteria02.andItemIdIn(staticAndDynamicItemId);
+            if (itemId.contains("-")) {
+                criteria01.andItemIdLike("%-" + staticAndDynamicItemId);
+                criteria02.andItemIdLike("%-" + staticAndDynamicItemId);
+            }
+            else {
+                criteria01.andItemIdEqualTo(staticAndDynamicItemId);
+                criteria02.andItemIdEqualTo(staticAndDynamicItemId);
+            }
         }
         if (!EmptyUtils.isEmpty(pubSite)) {
             //这里现在只默认查询的是 虚拟virtual，会员ID为唯一的virtualId //virtualId|mm_120037479_18710025_65896653
@@ -139,10 +146,16 @@ public class V2TaobaoTklConvertHistoryService {
         if (limit > 0) {
             historyExample.setLimit(limit);
         }
-        List<String> staticAndDynamicItemId = convertDynamicItemId(itemId);
+        String staticAndDynamicItemId = convertDynamicItemIdToStatic(itemId);
 
         V2TaobaoTklConvertHistoryInfoExample.Criteria criteria = historyExample.createCriteria();
-        criteria.andItemIdIn(staticAndDynamicItemId);
+        if (itemId.contains("-")) {
+            criteria.andItemIdLike("%-" + staticAndDynamicItemId);
+        }
+        else {
+            criteria.andItemIdEqualTo(staticAndDynamicItemId);
+        }
+
         criteria.andPubSiteTypeEqualTo(pubSiteType);
         if (openId != null) {
             criteria.andOpenIdEqualTo(openId);
@@ -167,5 +180,11 @@ public class V2TaobaoTklConvertHistoryService {
         String[] itemIds = itemId.split("-");
         itemIds[0] = itemId;
         return Arrays.stream(itemIds).collect(Collectors.toList());
+    }
+
+    public static String convertDynamicItemIdToStatic(String itemId) {
+        //针对动态itemId，重构一下
+        String[] itemIds = itemId.split("-");
+        return itemIds[itemIds.length - 1];
     }
 }

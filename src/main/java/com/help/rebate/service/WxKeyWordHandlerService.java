@@ -117,7 +117,7 @@ public class WxKeyWordHandlerService {
         }
         if (content.startsWith("查询订单:")) {
             content = content.replaceFirst("查询订单:", "");
-            List<V2TaobaoOrderOpenidMapInfo> v2TaobaoOrderOpenidMapInfos = v2TaobaoOrderOpenidMapService.selectBindInfoByTradeParentId(content, fromUserName);
+            List<V2TaobaoOrderOpenidMapInfo> v2TaobaoOrderOpenidMapInfos = v2TaobaoOrderOpenidMapService.selectBindInfoByTradeParentIdAndOpenId(content, fromUserName);
             return "共查询到绑定的订单数[" + v2TaobaoOrderOpenidMapInfos.size() + "]";
         }
 

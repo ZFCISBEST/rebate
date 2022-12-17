@@ -21,8 +21,6 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.help.rebate.service.ddx.tb.DdxInviteCodeManager.PublisherInfoType.specialId;
-
 /**
  * 订单绑定服务
  *
@@ -76,7 +74,7 @@ public class V2TaobaoOrderBindService {
         OrderBindResultVO orderBindResultVO = new OrderBindResultVO();
 
         //首先看看，是不是已经绑定过了
-        List<V2TaobaoOrderOpenidMapInfo> orderOpenidMapList = v2TaobaoOrderOpenidMapService.selectBindInfoByTradeId(parentTradeId, null);
+        List<V2TaobaoOrderOpenidMapInfo> orderOpenidMapList = v2TaobaoOrderOpenidMapService.selectBindInfoByTradeParentId(parentTradeId, null);
         if (!EmptyUtils.isEmpty(orderOpenidMapList)) {
             //that means: has bind already
             V2TaobaoOrderOpenidMapInfo orderOpenidMap = orderOpenidMapList.get(0);
@@ -170,7 +168,7 @@ public class V2TaobaoOrderBindService {
         Map<String, V2TaobaoOrderDetailInfo> tradeId2OrderDetailMap = orderDetailList.stream().collect(Collectors.toMap(a -> a.getTradeId(), a -> a));
 
         //查询哪些已经绑定过了
-        List<V2TaobaoOrderOpenidMapInfo> orderOpenidMapList = v2TaobaoOrderOpenidMapService.selectBindInfoByTradeId(parentTradeId, null);
+        List<V2TaobaoOrderOpenidMapInfo> orderOpenidMapList = v2TaobaoOrderOpenidMapService.selectBindInfoByTradeParentId(parentTradeId, null);
 
         //如果已经存在了，那么先执行更新操作，如订单状态的演变等
         for (V2TaobaoOrderOpenidMapInfo orderOpenidMap : orderOpenidMapList) {
@@ -376,7 +374,7 @@ public class V2TaobaoOrderBindService {
     private void insertOrUpdateOrderOpenidMap(String openId, MapType mapType, V2TaobaoUserInfo userInfos, V2TaobaoOrderDetailInfo orderDetail) {
         //先查询，万一存在，就得更新，防止操作错误
         V2TaobaoOrderOpenidMapInfo newOrderOpenidMap = null;
-        List<V2TaobaoOrderOpenidMapInfo> orderOpenidMapList = v2TaobaoOrderOpenidMapService.selectBindInfoByTradeId(orderDetail.getTradeParentId(), orderDetail.getTradeId());
+        List<V2TaobaoOrderOpenidMapInfo> orderOpenidMapList = v2TaobaoOrderOpenidMapService.selectBindInfoByTradeParentId(orderDetail.getTradeParentId(), orderDetail.getTradeId());
         if (!orderOpenidMapList.isEmpty()) {
             newOrderOpenidMap = orderOpenidMapList.get(0);
         }
@@ -500,7 +498,7 @@ public class V2TaobaoOrderBindService {
      * @return
      */
     public void recordRefundFee(String tradeId, String refundFeeStr) {
-        List<V2TaobaoOrderOpenidMapInfo> orderOpenidMapList = v2TaobaoOrderOpenidMapService.selectBindInfoByTradeId(null, tradeId);
+        List<V2TaobaoOrderOpenidMapInfo> orderOpenidMapList = v2TaobaoOrderOpenidMapService.selectBindInfoByTradeParentId(null, tradeId);
         Checks.isTrue(orderOpenidMapList.size() == 1, "订单不唯一，更新失败");
 
         //验证

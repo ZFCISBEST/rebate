@@ -6,17 +6,13 @@ import com.help.rebate.dao.V2TaobaoOrderDetailInfoDao;
 import com.help.rebate.dao.entity.*;
 import com.help.rebate.model.WideOrderDetailListDTO;
 import com.help.rebate.model.WideOrderDetailListVO;
-import com.help.rebate.service.schedule.FixedOrderSyncTask;
 import com.help.rebate.utils.EmptyUtils;
-import com.help.rebate.utils.TimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -72,7 +68,7 @@ public class V2TaobaoDashboardService {
 
         //根据结果，查询绑定信息
         List<String> tradeIds = orderDetails.stream().map(a -> a.getTradeId()).collect(Collectors.toList());
-        List<V2TaobaoOrderOpenidMapInfo> v2TaobaoOrderOpenidMapInfos = v2TaobaoOrderOpenidMapService.selectBindInfoByTradeId(tradeIds);
+        List<V2TaobaoOrderOpenidMapInfo> v2TaobaoOrderOpenidMapInfos = v2TaobaoOrderOpenidMapService.selectBindInfoByTradeParentId(tradeIds);
         Map<String, V2TaobaoOrderOpenidMapInfo> orderId2BindInfoMap = v2TaobaoOrderOpenidMapInfos.stream().collect(Collectors.toMap(a -> a.getTradeId(), a -> a, (a, b) -> a));
 
         //序列化、反序列化

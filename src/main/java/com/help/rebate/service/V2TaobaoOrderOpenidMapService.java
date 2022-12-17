@@ -85,7 +85,7 @@ public class V2TaobaoOrderOpenidMapService {
      * @param openId
      * @return
      */
-    public List<V2TaobaoOrderOpenidMapInfo> selectBindInfoByTradeParentId(String tradeParentId, String openId) {
+    public List<V2TaobaoOrderOpenidMapInfo> selectBindInfoByTradeParentIdAndOpenId(String tradeParentId, String openId) {
         V2TaobaoOrderOpenidMapInfoExample orderOpenidMapExample = new V2TaobaoOrderOpenidMapInfoExample();
         orderOpenidMapExample.setLimit(50);
         V2TaobaoOrderOpenidMapInfoExample.Criteria criteria = orderOpenidMapExample.createCriteria();
@@ -109,7 +109,7 @@ public class V2TaobaoOrderOpenidMapService {
      * @param tradeId
      * @return
      */
-    public List<V2TaobaoOrderOpenidMapInfo> selectBindInfoByTradeId(String parentTradeId, String tradeId) {
+    public List<V2TaobaoOrderOpenidMapInfo> selectBindInfoByTradeParentId(String parentTradeId, String tradeId) {
         V2TaobaoOrderOpenidMapInfoExample orderOpenidMapExample = new V2TaobaoOrderOpenidMapInfoExample();
         orderOpenidMapExample.setLimit(50);
         V2TaobaoOrderOpenidMapInfoExample.Criteria criteria = orderOpenidMapExample.createCriteria();
@@ -133,7 +133,7 @@ public class V2TaobaoOrderOpenidMapService {
      * @param parentTradeIds
      * @return
      */
-    public List<V2TaobaoOrderOpenidMapInfo> selectBindInfoByTradeId(List<String> parentTradeIds) {
+    public List<V2TaobaoOrderOpenidMapInfo> selectBindInfoByTradeParentId(List<String> parentTradeIds) {
         if (EmptyUtils.isEmpty(parentTradeIds)) {
             return Collections.emptyList();
         }
@@ -141,6 +141,27 @@ public class V2TaobaoOrderOpenidMapService {
         V2TaobaoOrderOpenidMapInfoExample orderOpenidMapExample = new V2TaobaoOrderOpenidMapInfoExample();
         V2TaobaoOrderOpenidMapInfoExample.Criteria criteria = orderOpenidMapExample.createCriteria();
         criteria.andTradeParentIdIn(parentTradeIds);
+        criteria.andStatusEqualTo((byte) 0);
+
+        //查询
+        List<V2TaobaoOrderOpenidMapInfo> orderDetails = v2TaobaoOrderOpenidMapInfoDao.selectByExample(orderOpenidMapExample);
+        return orderDetails;
+    }
+
+    /**
+     *
+     * 通过交易单号查询
+     * @param tradeIds
+     * @return
+     */
+    public List<V2TaobaoOrderOpenidMapInfo> selectBindInfoByTradeId(List<String> tradeIds) {
+        if (EmptyUtils.isEmpty(tradeIds)) {
+            return Collections.emptyList();
+        }
+
+        V2TaobaoOrderOpenidMapInfoExample orderOpenidMapExample = new V2TaobaoOrderOpenidMapInfoExample();
+        V2TaobaoOrderOpenidMapInfoExample.Criteria criteria = orderOpenidMapExample.createCriteria();
+        criteria.andTradeIdIn(tradeIds);
         criteria.andStatusEqualTo((byte) 0);
 
         //查询

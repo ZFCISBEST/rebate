@@ -94,7 +94,7 @@ public class TaobaoOrderBindController {
             Checks.isTrue(!EmptyUtils.isEmpty(openId), "openId和specialId不能同时为空");
 
             //插入
-            List<V2TaobaoOrderOpenidMapInfo> orderOpenidMapList = v2TaobaoOrderOpenidMapService.selectBindInfoByTradeParentId(tradeParentId, openId);
+            List<V2TaobaoOrderOpenidMapInfo> orderOpenidMapList = v2TaobaoOrderOpenidMapService.selectBindInfoByTradeParentIdAndOpenId(tradeParentId, openId);
             if (EmptyUtils.isEmpty(orderOpenidMapList)) {
                 return SafeServiceResponse.success("尚未绑定");
             }

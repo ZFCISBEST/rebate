@@ -68,7 +68,7 @@ public class V2TaobaoDashboardService {
 
         //根据结果，查询绑定信息
         List<String> tradeIds = orderDetails.stream().map(a -> a.getTradeId()).collect(Collectors.toList());
-        List<V2TaobaoOrderOpenidMapInfo> v2TaobaoOrderOpenidMapInfos = v2TaobaoOrderOpenidMapService.selectBindInfoByTradeParentId(tradeIds);
+        List<V2TaobaoOrderOpenidMapInfo> v2TaobaoOrderOpenidMapInfos = v2TaobaoOrderOpenidMapService.selectBindInfoByTradeId(tradeIds);
         Map<String, V2TaobaoOrderOpenidMapInfo> orderId2BindInfoMap = v2TaobaoOrderOpenidMapInfos.stream().collect(Collectors.toMap(a -> a.getTradeId(), a -> a, (a, b) -> a));
 
         //序列化、反序列化

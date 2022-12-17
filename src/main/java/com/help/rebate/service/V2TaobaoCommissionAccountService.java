@@ -283,7 +283,7 @@ public class V2TaobaoCommissionAccountService {
         List<String> tradeParentIds = orderDetailList.stream().map(a -> a.getTradeParentId()).distinct().collect(Collectors.toList());
 
         //查询订单绑定表
-        List<V2TaobaoOrderOpenidMapInfo> v2TaobaoOrderOpenidMapInfos = v2TaobaoOrderOpenidMapService.selectBindInfoByTradeId(tradeParentIds);
+        List<V2TaobaoOrderOpenidMapInfo> v2TaobaoOrderOpenidMapInfos = v2TaobaoOrderOpenidMapService.selectBindInfoByTradeParentId(tradeParentIds);
 
         //只保留两种 - 结算成功-3、订单【待提取、提取中，提取成功，提取失败, 提取超时】，修改为【结算xxx】
         List<V2TaobaoOrderOpenidMapInfo> allEligiableOrderMapInfos = v2TaobaoOrderOpenidMapInfos.stream()

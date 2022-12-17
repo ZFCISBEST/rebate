@@ -62,6 +62,9 @@ public class V2TaobaoOrderBindService {
     @Resource
     private V2TaobaoCommissionAccountService v2TaobaoCommissionAccountService;
 
+    @Resource
+    private V2TaobaoCommissionRatioInfoService v2TaobaoCommissionRatioInfoService;
+
     /**
      * 用户通过前端，直接发送过来的，期望绑定的订单
      * 如果按照订单，没有查到，那么给用户报相应提示，这里不做任何缓存，提示用户稍后再试，因为可能还没来得及订单同步，或者订单输入错误了
@@ -384,6 +387,8 @@ public class V2TaobaoOrderBindService {
             newOrderOpenidMap.setTradeId(orderDetail.getTradeId());
             newOrderOpenidMap.setTradeParentId(orderDetail.getTradeParentId());
             newOrderOpenidMap.setCommissionStatusMsg("待提取");
+
+            newOrderOpenidMap.setCommissionRatio(Double.valueOf(v2TaobaoCommissionRatioInfoService.selectCommissionRatio(openId) * 1000).intValue());
         }
 
         //公共更新字段

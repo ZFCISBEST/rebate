@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.text.DecimalFormat;
 
 /**
@@ -48,7 +49,7 @@ public class DdxReturnPriceService {
      * @return
      */
     public TklDO generateReturnPriceInfo(String tkl, String relationId, String specialId, String externalId,
-                                         Double tempReturnRate){
+                                         int tempReturnRate){
         String pubSite = "mm_120037479_18710025_65896653";
         return generateReturnPriceInfo(tkl, relationId, specialId, externalId, pubSite, tempReturnRate);
     }
@@ -65,10 +66,10 @@ public class DdxReturnPriceService {
      * @return
      */
     public TklDO generateReturnPriceInfo(String tkl, String relationId, String specialId, String externalId,
-                                         String pubSite, Double tempReturnRate){
+                                         String pubSite, int tempReturnRate){
         try{
-            if (tempReturnRate == null || tempReturnRate <= 0) {
-                tempReturnRate = 0.8;
+            if (tempReturnRate <= 0) {
+                tempReturnRate = 900;
             }
 
             //解析淘口令
@@ -86,11 +87,14 @@ public class DdxReturnPriceService {
             String qhFinalPrice = PropertyValueResolver.getProperty(jsonObject, "data.itemInfo.qh_final_price") + "";
 
             //计算券后价
-            double returnPrice = Double.parseDouble(maxCommissionRate) * tempReturnRate * Double.parseDouble(qhFinalPrice) / 100;
+            BigDecimal returnPrice = new BigDecimal(maxCommissionRate)
+                    .multiply(new BigDecimal(tempReturnRate))
+                    .multiply(new BigDecimal(qhFinalPrice))
+                    .multiply(new BigDecimal("0.00001"));
 
             //兼容ios14及其以上
             String newCouponTpwd = longCouponTpwd;
-            if (Double.parseDouble(coupon) <= 0) {
+            if (new BigDecimal(coupon).compareTo(new BigDecimal("0")) <= 0) {
                 String longItemTpwd = PropertyValueResolver.getProperty(jsonObject, "data.long_item_tpwd");
                 newCouponTpwd = longItemTpwd;
             }

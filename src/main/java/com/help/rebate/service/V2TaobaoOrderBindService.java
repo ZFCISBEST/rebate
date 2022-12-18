@@ -388,7 +388,7 @@ public class V2TaobaoOrderBindService {
             newOrderOpenidMap.setTradeParentId(orderDetail.getTradeParentId());
             newOrderOpenidMap.setCommissionStatusMsg("待提取");
 
-            newOrderOpenidMap.setCommissionRatio(Double.valueOf(v2TaobaoCommissionRatioInfoService.selectCommissionRatio(openId) * 1000).intValue());
+            newOrderOpenidMap.setCommissionRatio(v2TaobaoCommissionRatioInfoService.selectCommissionRatio(openId));
         }
 
         //公共更新字段
@@ -511,7 +511,7 @@ public class V2TaobaoOrderBindService {
 
         //数值判定
         BigDecimal refundFee = NumberUtil.parseBigDecimal(refundFeeStr);
-        Checks.isTrue(refundFee != null && !(refundFee.doubleValue() <= 0), "给定的返利金额不正确");
+        Checks.isTrue(refundFee != null && refundFee.compareTo(new BigDecimal("0")) > 0, "给定的维权金额不正确，必须大于0");
 
         //更新
         orderOpenidMap.setRefundFee(refundFeeStr);

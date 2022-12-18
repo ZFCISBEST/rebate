@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
@@ -51,9 +52,9 @@ public class DdxPddItemConverter {
      * @param tempReturnRate
      * @return
      */
-    public PddLinkDO generateReturnPriceInfo(String url, String openId, Double tempReturnRate){
-        if (tempReturnRate == null || tempReturnRate <= 0) {
-            tempReturnRate = 0.8;
+    public PddLinkDO generateReturnPriceInfo(String url, String openId, int tempReturnRate){
+        if (tempReturnRate <= 0) {
+            tempReturnRate = 900;
         }
 
         //获取
@@ -91,7 +92,7 @@ public class DdxPddItemConverter {
         allIn += "sign = " + goodsSign;
 
         //返利计算
-        double commissionShare = (minGroupPrice - couponDiscount) / 100.0 * promotionRate / 1000.0 * tempReturnRate;
+        BigDecimal commissionShare = new BigDecimal((minGroupPrice - couponDiscount) * promotionRate * tempReturnRate).multiply(new BigDecimal("0.000000001"));
 
         //根据模板生成新的淘口令
         String content = template_simple.replace("$finalPrice", decimal.format(minGroupPrice / 100.0))

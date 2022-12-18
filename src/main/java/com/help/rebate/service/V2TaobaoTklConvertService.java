@@ -83,7 +83,7 @@ public class V2TaobaoTklConvertService {
         String specialId = v2TaobaoUserInfo.getSpecialId();
 
         //1、首先，获取默认的返利比例
-        double commissionRatio = v2TaobaoCommissionRatioInfoService.selectCommissionRatio(openId);
+        int commissionRatio = v2TaobaoCommissionRatioInfoService.selectCommissionRatio(openId);
 
         //2、vip|site vip = virtualId，或者各种relationId
         List<String> allPubSiteCombinations = v2TaobaoPubSiteService.getAllPubSiteCombinations(pubSiteType);
@@ -164,10 +164,10 @@ public class V2TaobaoTklConvertService {
      * @param tkl
      * @param specialId
      * @param pubSiteCombination
-     * @param commissionRatio
+     * @param commissionRatio 千分位返利比例
      * @return
      */
-    private DtkReturnPriceService.TklDO convertTkl(String tkl, String specialId, String pubSiteCombination, double commissionRatio) {
+    private DtkReturnPriceService.TklDO convertTkl(String tkl, String specialId, String pubSiteCombination, int commissionRatio) {
         String[] vipIdAndPubSite = pubSiteCombination.split("\\|");
         String vipId = null;
         String pubSite = vipIdAndPubSite[1];

@@ -29,10 +29,11 @@ public class V2TaobaoCommissionRatioInfoService {
 
     /**
      * 查询返利比例
+     * 千分位
      * @param openId
      * @return
      */
-    public double selectCommissionRatio(String openId) {
+    public int selectCommissionRatio(String openId) {
         V2TaobaoCommissionRatioInfoExample info = new V2TaobaoCommissionRatioInfoExample();
         info.setOrderByClause("id desc");
         info.setLimit(1);
@@ -54,15 +55,15 @@ public class V2TaobaoCommissionRatioInfoService {
 
         //返回一个默认值
         if (v2TaobaoCommissionRatioInfos.size() == 0) {
-            return 0.85;
+            return 850;
         }
 
         //获取第一个,千分位的
         Integer commissionRatio = v2TaobaoCommissionRatioInfos.get(0).getCommissionRatio();
         if (commissionRatio == null || commissionRatio <= 0) {
-            return 0.85;
+            return 850;
         }
 
-        return commissionRatio * 1.0 / 1000.0;
+        return commissionRatio;
     }
 }

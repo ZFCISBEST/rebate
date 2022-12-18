@@ -119,7 +119,7 @@ public class TaobaoCommissionAccountController {
     @ApiOperation("设置提现配置(内存)")
     @RequestMapping("/setWithdrawalConfig")
     public SafeServiceResponse<Map<String, String>> setWithdrawalConfig(
-            @ApiParam(name = "totalAccount", value = "银行卡总余额") @RequestParam(required = false) String totalAccount,
+            @ApiParam(name = "totalAccount", value = "银行卡总余额（元）") @RequestParam(required = false) String totalAccount,
             @ApiParam(name = "maxWithdrawalTimesPerUser", value = "最大提现次数") @RequestParam(required = false) Integer maxWithdrawalTimesPerUser,
             @ApiParam(name = "withdrawalAmount", value = "单次提现额度（精确到分）") @RequestParam(required = false) Integer withdrawalAmount
     ) {

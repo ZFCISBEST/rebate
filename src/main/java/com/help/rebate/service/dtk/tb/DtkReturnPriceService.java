@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.text.DecimalFormat;
 
 /**
@@ -48,10 +49,11 @@ public class DtkReturnPriceService {
      * @param relationId
      * @param specialId
      * @param externalId
+     * @param tempReturnRate 千分位返利比例
      * @return
      */
     public DtkReturnPriceService.TklDO generateReturnPriceInfo(String tkl, String relationId, String specialId, String externalId,
-                                                               Double tempReturnRate){
+                                                               int tempReturnRate){
         String pubSite = "mm_120037479_18710025_65896653";
         return generateReturnPriceInfo(tkl, relationId, specialId, externalId, pubSite, tempReturnRate);
     }
@@ -64,21 +66,23 @@ public class DtkReturnPriceService {
      * @param specialId
      * @param externalId
      * @param pubSite
-     * @param tempReturnRate
+     * @param tempReturnRate 千分位返利比例
      * @return
      */
     public DtkReturnPriceService.TklDO generateReturnPriceInfo(String tkl, String relationId, String specialId, String externalId,
-                                                               String pubSite, Double tempReturnRate){
+                                                               String pubSite, int tempReturnRate){
         JSONObject jsonObject = null;
         try{
-            if (tempReturnRate == null || tempReturnRate <= 0) {
-                tempReturnRate = 0.8;
+            if (tempReturnRate <= 0) {
+                tempReturnRate = 850;
             }
 
             //解析淘口令
             jsonObject = dtkItemConverter.getPrivilegeTkl(tkl, relationId, specialId, externalId, pubSite);
             String longCouponTpwd = PropertyValueResolver.getProperty(jsonObject, "data.longTpwd");
             String maxCommissionRate = PropertyValueResolver.getProperty(jsonObject, "data.maxCommissionRate", true);
+
+            //百分位的数，如35，表示返利35%
             if (maxCommissionRate == null || maxCommissionRate.equals("null")) {
                 maxCommissionRate = PropertyValueResolver.getProperty(jsonObject, "data.minCommissionRate");
             }
@@ -88,7 +92,11 @@ public class DtkReturnPriceService {
             String qhFinalPrice = PropertyValueResolver.getProperty(jsonObject, "data.actualPrice") + "";
 
             //计算预计返利
-            double returnPrice = Double.parseDouble(maxCommissionRate) * tempReturnRate * Double.parseDouble(qhFinalPrice) / 100;
+            BigDecimal returnPrice = new BigDecimal(maxCommissionRate)
+                    .multiply(new BigDecimal(tempReturnRate))
+                    .multiply(new BigDecimal(qhFinalPrice))
+                    //百分位的返利比例 /100，千分位的本平台返利抽佣后的比例 / 1000
+                    .multiply(new BigDecimal("0.00001"));
 
             //兼容ios14及其以上 - 这里与订单侠不同，暂时没有可用字段用于判断
             String newCouponTpwd = longCouponTpwd;

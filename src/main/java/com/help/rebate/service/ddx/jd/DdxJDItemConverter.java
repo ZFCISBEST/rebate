@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
@@ -53,12 +54,12 @@ public class DdxJDItemConverter {
      * @param materialId
      * @param positionId
      * @param subUnionId
-     * @param tempReturnRate
+     * @param tempReturnRate 千分位的返利比例
      * @return
      */
-    public JDLinkDO generateReturnPriceInfo(String materialId, Long positionId, String subUnionId, Double tempReturnRate){
-        if (tempReturnRate == null || tempReturnRate <= 0) {
-            tempReturnRate = 0.8;
+    public JDLinkDO generateReturnPriceInfo(String materialId, Long positionId, String subUnionId, int tempReturnRate){
+        if (tempReturnRate <= 0) {
+            tempReturnRate = 900;
         }
 
         //获取
@@ -68,13 +69,13 @@ public class DdxJDItemConverter {
         //解析参数
         Long skuId = data.getLong("skuId");
         String skuName = data.getString("skuName");
-        double lowestPrice = Double.parseDouble(PropertyValueResolver.getProperty(data, "priceInfo.lowestPrice", true) + "");
-        double commissionShare = Double.parseDouble(PropertyValueResolver.getProperty(data, "commissionInfo.commissionShare", true) + "");
-        double plusCommissionShare = Double.parseDouble(PropertyValueResolver.getProperty(data, "commissionInfo.plusCommissionShare", true) + "");
+        BigDecimal lowestPrice = new BigDecimal(PropertyValueResolver.getProperty(data, "priceInfo.lowestPrice", true) + "");
+        BigDecimal commissionShare = new BigDecimal(PropertyValueResolver.getProperty(data, "commissionInfo.commissionShare", true) + "");
+        BigDecimal plusCommissionShare = new BigDecimal(PropertyValueResolver.getProperty(data, "commissionInfo.plusCommissionShare", true) + "");
         String owner = PropertyValueResolver.getProperty(data, "owner");
-        double fenchengPercent = 1.0;
+        BigDecimal fenchengPercent = new BigDecimal("1");
         if (!"g".equals(owner)) {
-            fenchengPercent = 0.9;
+            fenchengPercent = new BigDecimal("0.9");
         }
 
         //京东口令 - 京口令（匹配到红包活动有效配置才会返回京口令）
@@ -82,8 +83,8 @@ public class DdxJDItemConverter {
         String link = PropertyValueResolver.getProperty(data, "shortURL");
 
         //返利计算
-        commissionShare = commissionShare * fenchengPercent * tempReturnRate;
-        plusCommissionShare = plusCommissionShare * fenchengPercent * tempReturnRate;
+        commissionShare = commissionShare.multiply(fenchengPercent).multiply(new BigDecimal(tempReturnRate)).multiply(new BigDecimal("0.001"));
+        plusCommissionShare = plusCommissionShare.multiply(fenchengPercent).multiply(new BigDecimal(tempReturnRate)).multiply(new BigDecimal("0.001"));
 
         //根据模板生成新的淘口令
         String content = template_simple.replace("$finalPrice", decimal.format(lowestPrice))

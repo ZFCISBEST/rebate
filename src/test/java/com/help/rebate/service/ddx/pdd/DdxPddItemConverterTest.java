@@ -18,7 +18,7 @@ class DdxPddItemConverterTest {
     void generateReturnPriceInfo() {
         String url = "https://p.pinduoduo.com/fqVaKzTD";
         String customId = "wx_zhoufachao";
-        Double tempReturnRate = 0.9;
+        int tempReturnRate = 900;
 
         DdxPddItemConverter.PddLinkDO pddLinkDO = ddxPddItemConverter.generateReturnPriceInfo(url, customId, tempReturnRate);
         System.out.println(pddLinkDO.getLinkInfo());

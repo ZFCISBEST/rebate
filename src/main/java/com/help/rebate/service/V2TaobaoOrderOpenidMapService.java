@@ -237,6 +237,7 @@ public class V2TaobaoOrderOpenidMapService {
         V2TaobaoOrderOpenidMapInfoExample.Criteria criteria = orderOpenidMapExample.createCriteria();
         criteria.andStatusEqualTo((byte) 0);
         criteria.andOrderStatusEqualTo(3);
+        criteria.andCommissionStatusMsgEqualTo("结算成功");
 
         double commission = v2TaobaoOrderOpenidMapInfoDao.sumAllTheoreticalCommissionByExample(orderOpenidMapExample);
         return new BigDecimal(NumberUtil.format(commission));

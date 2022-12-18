@@ -30,4 +30,11 @@ public interface V2TaobaoOrderOpenidMapInfoDao {
     int updateByPrimaryKeySelective(V2TaobaoOrderOpenidMapInfo record);
 
     int updateByPrimaryKey(V2TaobaoOrderOpenidMapInfo record);
+
+    /**
+     * 计算总返利
+     * @param example
+     * @return
+     */
+    double sumAllTheoreticalCommissionByExample(V2TaobaoOrderOpenidMapInfoExample example);
 }

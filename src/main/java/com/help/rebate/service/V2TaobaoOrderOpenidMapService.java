@@ -6,11 +6,13 @@ import com.help.rebate.dao.entity.V2TaobaoOrderOpenidMapInfo;
 import com.help.rebate.dao.entity.V2TaobaoOrderOpenidMapInfoExample;
 import com.help.rebate.utils.Checks;
 import com.help.rebate.utils.EmptyUtils;
+import com.help.rebate.utils.NumberUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -199,5 +201,44 @@ public class V2TaobaoOrderOpenidMapService {
         //查询
         List<V2TaobaoOrderOpenidMapInfo> orderDetails = v2TaobaoOrderOpenidMapInfoDao.selectByExample(orderOpenidMapExample);
         return orderDetails;
+    }
+
+    /**
+     * 统计最近几天的订单量
+     * @param lastDaysOfOrder
+     * @return
+     */
+    public long countParentOrderCountOfLastDays(Integer lastDaysOfOrder) {
+        //这么多订单，过滤出能绑定成功的
+        List<V2TaobaoOrderDetailInfo> v2TaobaoOrderDetailInfos = v2TaobaoOrderService.selectOrderOfLastDays(lastDaysOfOrder);
+        List<String> tradeParentIds = v2TaobaoOrderDetailInfos.stream().map(a -> a.getTradeParentId()).collect(Collectors.toList());
+        if (tradeParentIds.size() == 0) {
+            return 0;
+        }
+
+        //这里再查一遍
+        V2TaobaoOrderOpenidMapInfoExample orderOpenidMapExample = new V2TaobaoOrderOpenidMapInfoExample();
+        V2TaobaoOrderOpenidMapInfoExample.Criteria criteria = orderOpenidMapExample.createCriteria();
+        criteria.andStatusEqualTo((byte) 0);
+        criteria.andTradeParentIdIn(tradeParentIds);
+
+        //最近几天的数据
+        List<V2TaobaoOrderOpenidMapInfo> orderDetails = v2TaobaoOrderOpenidMapInfoDao.selectByExample(orderOpenidMapExample);
+        long count = orderDetails.stream().map(a -> a.getTradeParentId()).distinct().mapToInt(a -> 1).count();
+        return count;
+    }
+
+    /**
+     * 理论上的总返利
+     * @return
+     */
+    public BigDecimal sumAllTheoreticalCommission() {
+        V2TaobaoOrderOpenidMapInfoExample orderOpenidMapExample = new V2TaobaoOrderOpenidMapInfoExample();
+        V2TaobaoOrderOpenidMapInfoExample.Criteria criteria = orderOpenidMapExample.createCriteria();
+        criteria.andStatusEqualTo((byte) 0);
+        criteria.andOrderStatusEqualTo(3);
+
+        double commission = v2TaobaoOrderOpenidMapInfoDao.sumAllTheoreticalCommissionByExample(orderOpenidMapExample);
+        return new BigDecimal(NumberUtil.format(commission));
     }
 }

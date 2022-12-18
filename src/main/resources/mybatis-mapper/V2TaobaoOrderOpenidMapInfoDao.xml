@@ -400,4 +400,11 @@
       `status` = #{status,jdbcType=TINYINT}
     where id = #{id,jdbcType=INTEGER}
   </update>
+
+  <select id="sumAllTheoreticalCommissionByExample" parameterType="com.help.rebate.dao.entity.V2TaobaoOrderOpenidMapInfoExample" resultType="java.lang.Double">
+    select sum(pub_share_pre_fee - alimama_share_fee) from v2_taobao_order_openid_map_info
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
 </mapper>

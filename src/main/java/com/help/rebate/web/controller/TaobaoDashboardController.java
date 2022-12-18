@@ -1,5 +1,6 @@
 package com.help.rebate.web.controller;
 
+import com.help.rebate.model.DashboardVO;
 import com.help.rebate.model.GenericRowListDTO;
 import com.help.rebate.model.WideOrderDetailListDTO;
 import com.help.rebate.model.WideOrderDetailListVO;
@@ -42,6 +43,22 @@ public class TaobaoDashboardController {
             return SafeServiceResponse.success(new GenericRowListDTO<WideOrderDetailListVO>(wideOrderDetailListVOs, (int) all, true));
         }catch(Exception e){
             logger.error("fail to execute[/dashboard/queryOrderList]", e);
+            return SafeServiceResponse.fail(e.toString());
+        }
+    }
+
+    @ApiOperation("订单统计大盘")
+    @GetMapping("/queryDashboard")
+    public SafeServiceResponse<DashboardVO> queryDashboard(@ApiParam(name = "lastDaysOfOrder", value = "最近几天的订单") Integer lastDaysOfOrder) {
+        try{
+            SafeServiceResponse.startBiz();
+
+            DashboardVO dashboardVO = v2TaobaoDashboardService.queryDashboard(lastDaysOfOrder);
+
+            //返回
+            return SafeServiceResponse.success(dashboardVO);
+        }catch(Exception e){
+            logger.error("fail to execute[/dashboard/queryDashboard]", e);
             return SafeServiceResponse.fail(e.toString());
         }
     }

@@ -175,6 +175,28 @@ public class V2TaobaoTklConvertHistoryService {
         return tklConvertHistories;
     }
 
+    /**
+     * 获取最近几天的转链的次数
+     * @param lastDaysOfOrder
+     * @return
+     */
+    public long countConvertCountOfLastDays(Integer lastDaysOfOrder) {
+        LocalDateTime localDateTime = LocalDateTime.now().minusDays(lastDaysOfOrder);
+        int year = localDateTime.getYear();
+        int month = localDateTime.getMonth().getValue();
+        int dayOfMonth = localDateTime.getDayOfMonth();
+        LocalDateTime startTime = LocalDateTime.of(year, month, dayOfMonth, 0, 0, 0);
+
+        V2TaobaoTklConvertHistoryInfoExample historyExample = new V2TaobaoTklConvertHistoryInfoExample();
+        V2TaobaoTklConvertHistoryInfoExample.Criteria criteria = historyExample.createCriteria();
+        //我们只对7天内转链的商品负责 - 7 * 24 * 3600 * 1000
+        criteria.andGmtCreatedGreaterThanOrEqualTo(startTime);
+        criteria.andStatusEqualTo((byte) 0);
+
+        //转链次数
+        return v2TaobaoTklConvertHistoryInfoDao.countByExample(historyExample);
+    }
+
     public static List<String> convertDynamicItemId(String itemId) {
         //针对动态itemId，重构一下
         String[] itemIds = itemId.split("-");

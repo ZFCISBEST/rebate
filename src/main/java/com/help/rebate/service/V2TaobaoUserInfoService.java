@@ -97,6 +97,20 @@ public class V2TaobaoUserInfoService {
     }
 
     /**
+     * 列出所有的用户 - 反正也没有多少，查完
+     * @return
+     */
+    public long countAll() {
+        //查出所有没有被删除的
+        V2TaobaoUserInfoExample example = new V2TaobaoUserInfoExample();
+        V2TaobaoUserInfoExample.Criteria criteria = example.createCriteria();
+        criteria.andStatusEqualTo((byte) 0);
+
+        //查询
+        return v2TaobaoUserInfoDao.countByExample(example);
+    }
+
+    /**
      * 查询用户信息
      * @param openId
      * @return

@@ -4,14 +4,18 @@ package com.help.rebate.service;
 import com.alibaba.fastjson.JSON;
 import com.help.rebate.dao.V2TaobaoOrderDetailInfoDao;
 import com.help.rebate.dao.entity.*;
+import com.help.rebate.model.DashboardVO;
 import com.help.rebate.model.WideOrderDetailListDTO;
 import com.help.rebate.model.WideOrderDetailListVO;
+import com.help.rebate.utils.Checks;
 import com.help.rebate.utils.EmptyUtils;
+import com.help.rebate.utils.NumberUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -27,11 +31,8 @@ import java.util.stream.Collectors;
 public class V2TaobaoDashboardService {
     private static final Logger logger = LoggerFactory.getLogger(V2TaobaoDashboardService.class);
 
-    /**
-     * 订单详情接口
-     */
     @Resource
-    private V2TaobaoOrderService v2TaobaoOrderService;
+    private V2TaobaoOrderBindService v2TaobaoOrderBindService;
 
     /**
      * 订单详情接口
@@ -39,11 +40,23 @@ public class V2TaobaoDashboardService {
     @Resource
     private V2TaobaoOrderDetailInfoDao v2TaobaoOrderDetailInfoDao;
 
+    /**
+     * 订单详情接口
+     */
     @Resource
-    private V2TaobaoOrderBindService v2TaobaoOrderBindService;
+    private V2TaobaoOrderService v2TaobaoOrderService;
 
     @Resource
     private V2TaobaoOrderOpenidMapService v2TaobaoOrderOpenidMapService;
+
+    @Resource
+    private V2TaobaoTklConvertHistoryService v2TaobaoTklConvertHistoryService;
+
+    @Resource
+    private V2TaobaoUserInfoService v2TaobaoUserInfoService;
+
+    @Resource
+    private V2TaobaoCommissionAccountService v2TaobaoCommissionAccountService;
 
     /**
      *
@@ -161,5 +174,41 @@ public class V2TaobaoDashboardService {
         if (orderStatus != null) {
             criteria.andStatusEqualTo(orderStatus);
         }
+    }
+
+    /**
+     * 查询大盘
+     * @return
+     * @param lastDaysOfOrder
+     */
+    public DashboardVO queryDashboard(Integer lastDaysOfOrder) {
+        Checks.isTrue(lastDaysOfOrder > 0, "天数必须大于0");
+
+        //大盘视图
+        DashboardVO dashboardVO = new DashboardVO();
+
+        //先查总用户数
+        long userCount = v2TaobaoUserInfoService.countAll();
+        dashboardVO.setUserCount(userCount);
+
+        //再查所有用户的返利
+        List<V2TaobaoCommissionAccountInfo> v2TaobaoCommissionAccountInfos = v2TaobaoCommissionAccountService.listAllUserCommissions();
+        BigDecimal allTotalCommission = v2TaobaoCommissionAccountInfos.stream().map(a -> a.getTotalCommission()).reduce((x, y) -> x.add(y)).get();
+        BigDecimal allRemainingCommission = v2TaobaoCommissionAccountInfos.stream().map(a -> a.getRemainCommission()).reduce((x, y) -> x.add(y)).get();
+        dashboardVO.setAllUserTotalCommission(NumberUtil.format(allTotalCommission));
+        dashboardVO.setAllUserRemainingCommission(NumberUtil.format(allRemainingCommission));
+
+        //统计所有理论上的返利
+        BigDecimal allTheoreticalCommission = v2TaobaoOrderOpenidMapService.sumAllTheoreticalCommission();
+        dashboardVO.setTheoreticalEarnings(NumberUtil.format(allTheoreticalCommission.subtract(allTotalCommission)));
+
+        //最近7日转链的次数
+        long convertCount = v2TaobaoTklConvertHistoryService.countConvertCountOfLastDays(lastDaysOfOrder);
+        dashboardVO.setConvertTklCountOfLast7Days(convertCount);
+
+        //最近7天的订单量
+        long orderCount = v2TaobaoOrderOpenidMapService.countParentOrderCountOfLastDays(lastDaysOfOrder);
+        dashboardVO.setOrderCountOfLast7Days(orderCount);
+        return dashboardVO;
     }
 }

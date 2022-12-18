@@ -13,8 +13,11 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 订单数据服务
@@ -238,6 +241,29 @@ public class V2TaobaoOrderService {
 
         criteria.andTbPaidTimeGreaterThanOrEqualTo(originalTbPayTime);
         criteria.andTkStatusIn(orderStatusList);
+        criteria.andStatusEqualTo((byte) 0);
+
+        //查询
+        List<V2TaobaoOrderDetailInfo> orderDetails = v2TaobaoOrderDetailInfoDao.selectByExample(orderDetailExample);
+        return orderDetails;
+    }
+
+    /**
+     * 查询最近几天的订单
+     * @param lastDaysOfOrder
+     * @return
+     */
+    public List<V2TaobaoOrderDetailInfo> selectOrderOfLastDays(Integer lastDaysOfOrder) {
+        V2TaobaoOrderDetailInfoExample orderDetailExample = new V2TaobaoOrderDetailInfoExample();
+        V2TaobaoOrderDetailInfoExample.Criteria criteria = orderDetailExample.createCriteria();
+
+        LocalDateTime localDateTime = LocalDateTime.now().minusDays(lastDaysOfOrder);
+        int year = localDateTime.getYear();
+        int month = localDateTime.getMonth().getValue();
+        int dayOfMonth = localDateTime.getDayOfMonth();
+        LocalDateTime startTime = LocalDateTime.of(year, month, dayOfMonth, 0, 0, 0);
+        criteria.andTbPaidTimeGreaterThanOrEqualTo(startTime);
+        criteria.andTkStatusIn(Stream.of(12, 14, 3).collect(Collectors.toList()));
         criteria.andStatusEqualTo((byte) 0);
 
         //查询

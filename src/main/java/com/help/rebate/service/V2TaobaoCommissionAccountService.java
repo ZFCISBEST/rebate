@@ -486,4 +486,16 @@ public class V2TaobaoCommissionAccountService {
     public int getWithdrawalAmount() {
         return withdrawalAmount;
     }
+
+    /**
+     * 列出所有用户的返利
+     */
+    public List<V2TaobaoCommissionAccountInfo> listAllUserCommissions() {
+        V2TaobaoCommissionAccountInfoExample accountInfoExample = new V2TaobaoCommissionAccountInfoExample();
+        accountInfoExample.setOrderByClause("id asc");
+        V2TaobaoCommissionAccountInfoExample.Criteria criteria = accountInfoExample.createCriteria();
+        criteria.andStatusEqualTo((byte) 0);
+        List<V2TaobaoCommissionAccountInfo> v2TaobaoCommissionAccountInfos = v2TaobaoCommissionAccountInfoDao.selectByExample(accountInfoExample);
+        return v2TaobaoCommissionAccountInfos;
+    }
 }

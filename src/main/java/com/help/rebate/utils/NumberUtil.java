@@ -50,4 +50,10 @@ public class NumberUtil {
     public static String format(double BigDecimal) {
         return decimalFormat.format(BigDecimal);
     }
+
+    public static void main(String[] args) {
+        String a = "800.00001";
+        int b = 800;
+        System.out.println(format(new BigDecimal(a).compareTo(new BigDecimal(b))));
+    }
 }

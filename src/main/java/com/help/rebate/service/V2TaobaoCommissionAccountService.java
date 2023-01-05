@@ -4,10 +4,7 @@ import java.math.BigDecimal;
 import com.help.rebate.dao.V2TaobaoCommissionAccountFlowInfoDao;
 import com.help.rebate.dao.V2TaobaoCommissionAccountInfoDao;
 import com.help.rebate.dao.entity.*;
-import com.help.rebate.utils.Checks;
-import com.help.rebate.utils.EmptyUtils;
-import com.help.rebate.utils.NumberUtil;
-import com.help.rebate.utils.TimeUtil;
+import com.help.rebate.utils.*;
 import com.help.rebate.vo.CommissionVO;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -68,6 +65,8 @@ public class V2TaobaoCommissionAccountService {
      * 每次提现，固定的钱数，精确到分
      */
     private int withdrawalAmount = 100;
+
+    private LRUCache openId2TixianMapCache = new LRUCache(256);
 
     /**
      * 查询返利信息
@@ -139,6 +138,10 @@ public class V2TaobaoCommissionAccountService {
     public synchronized long triggerWithdrawal(String openId, int withdrawalAmount) {
         V2TaobaoCommissionAccountInfo v2TaobaoCommissionAccountInfo = selectV2TaobaoCommissionAccountInfo(openId);
         BigDecimal remainCommission = v2TaobaoCommissionAccountInfo.getRemainCommission();
+
+        //判断，能不能提现,次数是否有剩余
+        boolean xianOrError = tiXianOrError(openId);
+        Checks.isTrue(xianOrError, "今日提现次数已用完，明日再试");
 
         //判断，是不是金额太大了
         BigDecimal withdrawalAmountDecimal = new BigDecimal(withdrawalAmount).multiply(new BigDecimal("0.01"));
@@ -498,5 +501,28 @@ public class V2TaobaoCommissionAccountService {
         criteria.andStatusEqualTo((byte) 0);
         List<V2TaobaoCommissionAccountInfo> v2TaobaoCommissionAccountInfos = v2TaobaoCommissionAccountInfoDao.selectByExample(accountInfoExample);
         return v2TaobaoCommissionAccountInfos;
+    }
+
+    /**
+     * 判断能不能提现
+     * @return
+     */
+    public synchronized boolean tiXianOrError(String openId) {
+        String yyyyMMdd = TimeUtil.format(new Date(), "yyyyMMdd");
+        Object result = openId2TixianMapCache.get(openId + "|" + yyyyMMdd);
+        if (result == null) {
+            openId2TixianMapCache.put(openId + "|" + yyyyMMdd, 1);
+            return true;
+        }
+
+        //否则
+        int times = (int) result;
+        if (times >= 3){
+            return false;
+        }
+        else {
+            openId2TixianMapCache.put(openId + "|" + yyyyMMdd, times + 1);
+            return true;
+        }
     }
 }

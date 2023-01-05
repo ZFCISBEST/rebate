@@ -193,8 +193,8 @@ public class V2TaobaoDashboardService {
 
         //再查所有用户的返利
         List<V2TaobaoCommissionAccountInfo> v2TaobaoCommissionAccountInfos = v2TaobaoCommissionAccountService.listAllUserCommissions();
-        BigDecimal allTotalCommission = v2TaobaoCommissionAccountInfos.stream().map(a -> a.getTotalCommission()).reduce((x, y) -> x.add(y)).get();
-        BigDecimal allRemainingCommission = v2TaobaoCommissionAccountInfos.stream().map(a -> a.getRemainCommission()).reduce((x, y) -> x.add(y)).get();
+        BigDecimal allTotalCommission = v2TaobaoCommissionAccountInfos.stream().map(a -> a.getTotalCommission()).reduce((x, y) -> x.add(y)).orElse(new BigDecimal("0"));
+        BigDecimal allRemainingCommission = v2TaobaoCommissionAccountInfos.stream().map(a -> a.getRemainCommission()).reduce((x, y) -> x.add(y)).orElse(new BigDecimal("0"));
         dashboardVO.setAllUserTotalCommission(NumberUtil.format(allTotalCommission));
         dashboardVO.setAllUserRemainingCommission(NumberUtil.format(allRemainingCommission));
 

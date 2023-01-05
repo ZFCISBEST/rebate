@@ -91,7 +91,7 @@ public class V2TaobaoCommissionAccountService {
         List<V2TaobaoOrderOpenidMapInfo> v2TaobaoOrderOpenidMapInfos = v2TaobaoOrderOpenidMapService.selectBindInfoByOpenId(openId, orderStatusList, commissionStatusMsgList);
 
         //这些订单是需要提取的
-        BigDecimal sumCommission = v2TaobaoOrderOpenidMapInfos.stream().map(a -> {
+        Optional<BigDecimal> bigDecimalOptional = v2TaobaoOrderOpenidMapInfos.stream().map(a -> {
             Integer commissionRatio = a.getCommissionRatio();
             if (commissionRatio == null) {
                 commissionRatio = 900;
@@ -99,7 +99,8 @@ public class V2TaobaoCommissionAccountService {
             BigDecimal ratio = new BigDecimal(commissionRatio).multiply(new BigDecimal("0.001"));
             BigDecimal pubShareFee = new BigDecimal((a.getOrderStatus() == 3 ? a.getPubShareFee() : a.getPubSharePreFee()));
             return ratio.multiply(pubShareFee);
-        }).reduce((x, y) -> x.add(y)).get();
+        }).reduce((x, y) -> x.add(y));
+        BigDecimal sumCommission = bigDecimalOptional.orElse(new BigDecimal("0"));
 
         //未来待结算金额
         commissionVO.setFutureCommission(NumberUtil.format(sumCommission));
@@ -332,7 +333,7 @@ public class V2TaobaoCommissionAccountService {
         }).collect(Collectors.toMap(a -> (String) a[0], a -> (BigDecimal) a[1]));
 
         //总钱数
-        BigDecimal sumCommission = tradeId2FeeMap.values().stream().reduce((x, y) -> x.add(y)).get();
+        BigDecimal sumCommission = tradeId2FeeMap.values().stream().reduce((x, y) -> x.add(y)).orElse(new BigDecimal("0"));
 
         //订单更新，先更新为结算成功
         List<Integer> ids = orderBindList.stream().map(a -> a.getId()).collect(Collectors.toList());
@@ -386,7 +387,7 @@ public class V2TaobaoCommissionAccountService {
         }).collect(Collectors.toMap(a -> (String) a[0], a -> (BigDecimal) a[1]));
 
         //总维权钱数
-        BigDecimal sumCommission = tradeId2FeeMap.values().stream().reduce((x, y) -> x.add(y)).get();
+        BigDecimal sumCommission = tradeId2FeeMap.values().stream().reduce((x, y) -> x.add(y)).orElse(new BigDecimal("0"));
 
         //查询账户数据
         V2TaobaoCommissionAccountInfo currentAccountInfo = selectV2TaobaoCommissionAccountInfo(openId);

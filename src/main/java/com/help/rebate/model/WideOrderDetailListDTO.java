@@ -12,6 +12,12 @@ public class WideOrderDetailListDTO {
     private Integer pageSize;
 
     /**
+     * openId
+     */
+    @ApiModelProperty(value="openId")
+    private String openId;
+
+    /**
      * 父订单号
      */
     @ApiModelProperty(value="父订单号")
@@ -51,5 +57,5 @@ public class WideOrderDetailListDTO {
      * 状态字段，0表示不删除，1表示逻辑删除
      */
     @ApiModelProperty(value="状态字段，0表示不删除，1表示逻辑删除")
-    private Byte orderStatus;
+    private Byte status;
 }

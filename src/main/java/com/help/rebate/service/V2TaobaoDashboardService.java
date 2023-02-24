@@ -73,6 +73,18 @@ public class V2TaobaoDashboardService {
         example.setLimit(pageSize);
         V2TaobaoOrderDetailInfoExample.Criteria criteria = example.createCriteria();
 
+        //如果openId不为空
+        List<V2TaobaoOrderOpenidMapInfo> v2TaobaoOrderOpenidMapInfos = null;
+        String openId = wideOrderDetailListDTO.getOpenId();
+        if (openId != null) {
+            v2TaobaoOrderOpenidMapInfos =
+                    v2TaobaoOrderOpenidMapService.selectBindInfoByTradeParentIdsAndOpenId(null, openId, (current - 1) * pageSize + 0L, pageSize);
+
+            //获取所有的tradeId
+            List<String> tradeIds = v2TaobaoOrderOpenidMapInfos.stream().map(a -> a.getTradeId()).collect(Collectors.toList());
+            criteria.andTradeIdIn(tradeIds);
+        }
+
         //添加其他查询条件
         addOtherQueryCondition(wideOrderDetailListDTO, criteria);
 
@@ -80,8 +92,10 @@ public class V2TaobaoDashboardService {
         List<V2TaobaoOrderDetailInfo> orderDetails = v2TaobaoOrderDetailInfoDao.selectByExample(example);
 
         //根据结果，查询绑定信息
-        List<String> tradeIds = orderDetails.stream().map(a -> a.getTradeId()).collect(Collectors.toList());
-        List<V2TaobaoOrderOpenidMapInfo> v2TaobaoOrderOpenidMapInfos = v2TaobaoOrderOpenidMapService.selectBindInfoByTradeId(tradeIds);
+        if (v2TaobaoOrderOpenidMapInfos == null) {
+            List<String> tradeIds = orderDetails.stream().map(a -> a.getTradeId()).collect(Collectors.toList());
+            v2TaobaoOrderOpenidMapInfos = v2TaobaoOrderOpenidMapService.selectBindInfoByTradeId(tradeIds);
+        }
         Map<String, V2TaobaoOrderOpenidMapInfo> orderId2BindInfoMap = v2TaobaoOrderOpenidMapInfos.stream().collect(Collectors.toMap(a -> a.getTradeId(), a -> a, (a, b) -> a));
 
         //序列化、反序列化
@@ -108,6 +122,12 @@ public class V2TaobaoDashboardService {
      * @return
      */
     public long countAll(WideOrderDetailListDTO wideOrderDetailListDTO, Integer current, Integer pageSize) {
+        //如果openId不为空
+        String openId = wideOrderDetailListDTO.getOpenId();
+        if (openId != null) {
+            return v2TaobaoOrderOpenidMapService.countBindInfoByTradeParentIdsAndOpenId(null, openId);
+        }
+
         //查出所有的，包括删除和没删除的
         V2TaobaoOrderDetailInfoExample example = new V2TaobaoOrderDetailInfoExample();
         V2TaobaoOrderDetailInfoExample.Criteria criteria = example.createCriteria();
@@ -134,7 +154,7 @@ public class V2TaobaoDashboardService {
         String specialId = wideOrderDetailListDTO.getSpecialId();
         //这个使用like
         String itemTitle = wideOrderDetailListDTO.getItemTitle();
-        Byte orderStatus = wideOrderDetailListDTO.getOrderStatus();
+        Byte orderStatus = wideOrderDetailListDTO.getStatus();
 
         //切分
         if (!EmptyUtils.isEmpty(tradeParentId)) {

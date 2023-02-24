@@ -105,6 +105,56 @@ public class V2TaobaoOrderOpenidMapService {
     }
 
     /**
+     * 通过交易单号、openId
+     * @param openId
+     * @param offset
+     * @param pageSize
+     * @return
+     */
+    public List<V2TaobaoOrderOpenidMapInfo> selectBindInfoByTradeParentIdsAndOpenId(List<String> tradeParentIds, String openId, Long offset, Integer pageSize) {
+        V2TaobaoOrderOpenidMapInfoExample orderOpenidMapExample = new V2TaobaoOrderOpenidMapInfoExample();
+        V2TaobaoOrderOpenidMapInfoExample.Criteria criteria = orderOpenidMapExample.createCriteria();
+
+        if (offset != null) {
+            orderOpenidMapExample.setOrderByClause("gmt_modified desc");
+            orderOpenidMapExample.setOffset(offset);
+            orderOpenidMapExample.setLimit(pageSize);
+        }
+
+        if (!EmptyUtils.isEmpty(tradeParentIds)) {
+            criteria.andTradeParentIdIn(tradeParentIds);
+        }
+        if (!EmptyUtils.isEmpty(openId)) {
+            criteria.andOpenIdEqualTo(openId);
+        }
+
+        //查询
+        List<V2TaobaoOrderOpenidMapInfo> orderDetails = v2TaobaoOrderOpenidMapInfoDao.selectByExample(orderOpenidMapExample);
+        return orderDetails;
+    }
+
+    /**
+     * 通过交易单号、openId
+     * @param openId
+     * @return
+     */
+    public long countBindInfoByTradeParentIdsAndOpenId(List<String> tradeParentIds, String openId) {
+        V2TaobaoOrderOpenidMapInfoExample orderOpenidMapExample = new V2TaobaoOrderOpenidMapInfoExample();
+        V2TaobaoOrderOpenidMapInfoExample.Criteria criteria = orderOpenidMapExample.createCriteria();
+
+        if (!EmptyUtils.isEmpty(tradeParentIds)) {
+            criteria.andTradeParentIdIn(tradeParentIds);
+        }
+        if (!EmptyUtils.isEmpty(openId)) {
+            criteria.andOpenIdEqualTo(openId);
+        }
+
+        //查询
+        long count = v2TaobaoOrderOpenidMapInfoDao.countByExample(orderOpenidMapExample);
+        return count;
+    }
+
+    /**
      *
      * 通过交易单号查询
      * @param parentTradeId

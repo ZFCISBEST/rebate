@@ -43,19 +43,18 @@ public class TaobaoOrderBindController {
     @Autowired
     private V2TaobaoOrderOpenidMapService v2TaobaoOrderOpenidMapService;
 
-    @ApiOperation("根据给定的父订单号，以及用户信息（openId或者指定specialId），执行直接绑定，注意：幂等性")
+    @ApiOperation("根据给定的父订单号，以及用户信息（openId），执行直接绑定，注意：幂等性")
     @RequestMapping("/bindByTradeParentId")
     public SafeServiceResponse bindByTradeParentId(@ApiParam(name = "openId", value = "微信openId") @RequestParam String openId,
-                                      @ApiParam(name = "specialId", value = "淘宝联盟私域会员ID") @RequestParam(required = false) String specialId,
                                       @ApiParam(name = "tradeParentId", value = "交易父单号") @RequestParam String tradeParentId) {
         try{
             SafeServiceResponse.startBiz();
 
             //校验
-            Checks.isTrue(!EmptyUtils.isEmpty(openId) || !EmptyUtils.isEmpty(specialId), "openId和specialId不能同时为空");
+            Checks.isTrue(!EmptyUtils.isEmpty(openId), "openId不能为空");
 
             //插入
-            OrderBindResultVO orderBindResultVO = v2TaobaoOrderBindService.bindByTradeParentId(tradeParentId, openId, specialId);
+            OrderBindResultVO orderBindResultVO = v2TaobaoOrderBindService.bindByTradeParentId(tradeParentId, openId);
 
             //返回
             return SafeServiceResponse.success(orderBindResultVO);

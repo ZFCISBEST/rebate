@@ -305,6 +305,8 @@ public class FixedOrderSyncTask {
                 newOrderDetail.setId(orderDetail.getId());
                 newOrderDetail.setGmtCreated(orderDetail.getGmtCreated());
                 newOrderDetail.setGmtModified(LocalDateTime.now());
+                //状态也用之前的，防止删了（结算删）又被重建了
+                newOrderDetail.setStatus(orderDetail.getStatus());
                 v2TaobaoOrderService.update(newOrderDetail);
                 logger.info("[fix-sync-task] 更新 - parent:{}， trade:{}, oldStatus:{}, newStatus:{}", parentTradeId, tradeId, oldTkStatus, newTkStatus);
                 updateCnt++;

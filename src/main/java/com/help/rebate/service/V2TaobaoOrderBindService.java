@@ -70,10 +70,9 @@ public class V2TaobaoOrderBindService {
      * 如果按照订单，没有查到，那么给用户报相应提示，这里不做任何缓存，提示用户稍后再试，因为可能还没来得及订单同步，或者订单输入错误了
      * @param parentTradeId
      * @param openId
-     * @param specialId 额外给出的信息，用于将openid和specialid做强制映射，这个只是给管理员使用
      * @return 商品名称列表
      */
-    public OrderBindResultVO bindByTradeParentId(String parentTradeId, String openId, String specialId) {
+    public OrderBindResultVO bindByTradeParentId(String parentTradeId, String openId) {
         OrderBindResultVO orderBindResultVO = new OrderBindResultVO();
 
         //首先看看，是不是已经绑定过了
@@ -86,7 +85,7 @@ public class V2TaobaoOrderBindService {
 
             //返回已经绑定的信息
             orderBindResultVO.setOpenId(openId);
-            orderBindResultVO.setSpecialId(specialId);
+            orderBindResultVO.setSpecialId(null);
             orderBindResultVO.setTradeParentId(parentTradeId);
             List<String> tradeIdList = orderOpenidMapList.stream().map(a -> a.getTradeId()).collect(Collectors.toList());
             orderBindResultVO.getTradeIdItemIdList().addAll(tradeIdList);
@@ -96,21 +95,6 @@ public class V2TaobaoOrderBindService {
         //获取用户数据
         V2TaobaoUserInfo v2TaobaoUserInfo = v2TaobaoUserInfoService.selectByOpenId(openId);
         Checks.isNotNull(v2TaobaoUserInfo, "openid不存在");
-
-        //新的special和旧的不相同
-        String infosSpecialId = v2TaobaoUserInfo.getSpecialId();
-        Checks.isTrue(EmptyUtils.isEmpty(specialId) || EmptyUtils.isEmpty(infosSpecialId) || specialId.equals(infosSpecialId), "special已经存在，并且与给定的不相同");
-
-        //更新数据库
-        boolean needUpdate = false;
-        if (!EmptyUtils.isEmpty(specialId)) {
-            needUpdate = true;
-            v2TaobaoUserInfo.setSpecialId(specialId);
-        }
-        if (needUpdate) {
-            int affectedCnt = v2TaobaoUserInfoService.update(v2TaobaoUserInfo);
-            Checks.isTrue(affectedCnt == 1, "更新用户信息失败");
-        }
 
         //干正事，绑定
         //首先查询订单
@@ -123,7 +107,7 @@ public class V2TaobaoOrderBindService {
 
         //获取商品名称返回
         orderBindResultVO.setOpenId(openId);
-        orderBindResultVO.setSpecialId(specialId);
+        orderBindResultVO.setSpecialId(null);
         orderBindResultVO.setTradeParentId(parentTradeId);
         List<String> tradeIdList = v2TaobaoOrderDetailInfos.stream().map(a -> a.getTradeId()).collect(Collectors.toList());
         orderBindResultVO.getTradeIdItemIdList().addAll(tradeIdList);
@@ -198,15 +182,8 @@ public class V2TaobaoOrderBindService {
         }
 
         //有转链接的记录
-        String specialId = orderDetailList.get(0).getSpecialId();
-        //按照普通用户的方式来处理
-        if (EmptyUtils.isEmpty(specialId)) {
-            //通过商品&推广位来绑定
-            bindByPubSite(openidInfo, parentTradeId, orderDetailList, orderBindResultVO);
-        }
-        else {
-            bindBySpecialId(openidInfo, parentTradeId, orderDetailList, orderBindResultVO);
-        }
+        //通过商品&推广位来绑定
+        bindByPubSite(openidInfo, parentTradeId, orderDetailList, orderBindResultVO);
 
         return orderBindResultVO;
     }
@@ -243,41 +220,6 @@ public class V2TaobaoOrderBindService {
             orderBindResultVO.getTradeIdItemIdList().add(orderDetail.getTradeId());
         }
 
-    }
-
-    /**
-     * 会员用户，通过specialId进行绑定
-     * @param openidInfo
-     * @param parentTradeId
-     * @param orderDetailList
-     * @param orderBindResultVO
-     */
-    private void bindBySpecialId(BindOpenidInfo openidInfo, String parentTradeId, List<V2TaobaoOrderDetailInfo> orderDetailList, OrderBindResultVO orderBindResultVO) {
-        //这个是一定要存在的
-        V2TaobaoUserInfo userInfos = v2TaobaoUserInfoService.selectByOpenId(openidInfo.getOpenid());
-        String specialIdByUserInfo = userInfos.getSpecialId();
-
-        //订单中的specialId
-        String specialIdByOrderDetail = orderDetailList.get(0).getSpecialId();
-
-        //提前判定，这里为空，说明转链接的人，不是specialId。反正，这里直接得扔掉
-        if (!specialIdByOrderDetail.equalsIgnoreCase(specialIdByUserInfo)) {
-            //还是按照普通的推广位进行绑定
-            bindByPubSite(openidInfo, parentTradeId, orderDetailList, orderBindResultVO);
-        }
-
-        else {
-            //存储
-            for (V2TaobaoOrderDetailInfo orderDetail : orderDetailList) {
-                //先查询，万一存在，就得更新，防止操作错误
-                insertOrUpdateOrderOpenidMap(userInfos.getOpenId(), MapType.specialid_with_pubsite, userInfos, orderDetail);
-
-                //内容
-                orderBindResultVO.setOpenId(userInfos.getOpenId());
-                orderBindResultVO.setSpecialId(userInfos.getSpecialId());
-                orderBindResultVO.getTradeIdItemIdList().add(orderDetail.getTradeId());
-            }
-        }
     }
 
     /**

@@ -103,11 +103,7 @@ public class WxKeyWordHandlerService {
 
             String[] split = content.split(";");
             String tradeParentId = split[0];
-            String specialId = null;
-            if (split.length > 1) {
-                specialId = split[1];
-            }
-            OrderBindResultVO orderBindResultVO = v2TaobaoOrderBindService.bindByTradeParentId(tradeParentId, fromUserName, specialId);
+            OrderBindResultVO orderBindResultVO = v2TaobaoOrderBindService.bindByTradeParentId(tradeParentId, fromUserName);
             if (orderBindResultVO != null && orderBindResultVO.getTradeIdItemIdList() != null) {
                 return "共绑定商品数[" + orderBindResultVO.getTradeIdItemIdList().size() + "]";
             }

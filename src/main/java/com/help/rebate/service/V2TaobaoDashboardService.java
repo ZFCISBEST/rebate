@@ -262,7 +262,9 @@ public class V2TaobaoDashboardService {
 
         //状态是否都是已经可以结算的了
         Optional<V2TaobaoOrderDetailInfo> detailInfoOptional = v2TaobaoOrderDetailInfos.stream().filter(a -> a.getTkStatus() != 3).findFirst();
-        Checks.isTrue(!detailInfoOptional.isPresent(), "存在联盟尚未结算的订单-" + detailInfoOptional.get().getId());
+        if (detailInfoOptional.isPresent()) {
+            Checks.isTrue(!detailInfoOptional.isPresent(), "存在联盟尚未结算的订单-" + detailInfoOptional.get().getId());
+        }
 
         //开始订正
         for (V2TaobaoOrderDetailInfo v2TaobaoOrderDetailInfo : v2TaobaoOrderDetailInfos) {

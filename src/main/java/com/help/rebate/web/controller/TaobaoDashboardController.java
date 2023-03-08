@@ -11,10 +11,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -59,6 +56,23 @@ public class TaobaoDashboardController {
             return SafeServiceResponse.success(dashboardVO);
         }catch(Exception e){
             logger.error("fail to execute[/dashboard/queryDashboard]", e);
+            return SafeServiceResponse.fail(e.toString());
+        }
+    }
+
+    @ApiOperation("线下执行订单结算")
+    @GetMapping("/offlineOrderAccount")
+    public SafeServiceResponse<DashboardVO> offlineOrderAccount(@ApiParam(name = "orderIds", value = "订单ID集合，逗号隔开") @RequestParam String orderIds,
+                                                                @ApiParam(name = "commissionMsg", value = "结算备注") @RequestParam(required = false) String commissionMsg) {
+        try{
+            SafeServiceResponse.startBiz();
+
+            v2TaobaoDashboardService.offlineOrderAccount(orderIds, commissionMsg);
+
+            //返回
+            return SafeServiceResponse.success("标记结算成功");
+        }catch(Exception e){
+            logger.error("fail to execute[/dashboard/offlineOrderAccount]", e);
             return SafeServiceResponse.fail(e.toString());
         }
     }

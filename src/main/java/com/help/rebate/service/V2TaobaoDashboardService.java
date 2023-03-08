@@ -13,12 +13,14 @@ import com.help.rebate.utils.NumberUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -28,6 +30,7 @@ import java.util.stream.Collectors;
  * @date 21/11/14
  */
 @Service
+@Transactional
 public class V2TaobaoDashboardService {
     private static final Logger logger = LoggerFactory.getLogger(V2TaobaoDashboardService.class);
 
@@ -57,6 +60,9 @@ public class V2TaobaoDashboardService {
 
     @Resource
     private V2TaobaoCommissionAccountService v2TaobaoCommissionAccountService;
+
+    @Resource
+    private V2TaobaoOrderOfflineAccountDetailService v2TaobaoOrderOfflineAccountDetailService;
 
     /**
      *
@@ -230,5 +236,43 @@ public class V2TaobaoDashboardService {
         long orderCount = v2TaobaoOrderOpenidMapService.countParentOrderCountOfLastDays(lastDaysOfOrder);
         dashboardVO.setOrderCountOfLast7Days(orderCount);
         return dashboardVO;
+    }
+
+    /**
+     * 执行订单结算
+     * @param orderIds
+     * @param commissionMsg
+     */
+    public void offlineOrderAccount(String orderIds, String commissionMsg) {
+        if (commissionMsg == null || commissionMsg.trim().isEmpty()) {
+            commissionMsg = "无";
+        }
+
+        List<Integer> ids = Arrays.stream(orderIds.split(","))
+                .map(a -> a.trim())
+                .filter(a -> !a.isEmpty())
+                .map(a -> Integer.parseInt(a))
+                .collect(Collectors.toList());
+
+        //查出所有的记录
+        List<V2TaobaoOrderDetailInfo> v2TaobaoOrderDetailInfos = v2TaobaoOrderService.selectByIds(ids);
+
+        //必须完全匹配才行
+        Checks.isTrue(ids.size() == v2TaobaoOrderDetailInfos.size(), "存在不可结算项");
+
+        //状态是否都是已经可以结算的了
+        Optional<V2TaobaoOrderDetailInfo> detailInfoOptional = v2TaobaoOrderDetailInfos.stream().filter(a -> a.getTkStatus() != 3).findFirst();
+        Checks.isTrue(!detailInfoOptional.isPresent(), "存在联盟尚未结算的订单-" + detailInfoOptional.get().getId());
+
+        //开始订正
+        for (V2TaobaoOrderDetailInfo v2TaobaoOrderDetailInfo : v2TaobaoOrderDetailInfos) {
+            v2TaobaoOrderDetailInfo.setStatus((byte) 1);
+            int updateCnt = v2TaobaoOrderService.update(v2TaobaoOrderDetailInfo);
+            Checks.isTrue(updateCnt == 1, "未知错误，标记失败-" + v2TaobaoOrderDetailInfo.getId());
+
+            //记录下去
+            int insertCnt = v2TaobaoOrderOfflineAccountDetailService.insertNewRecord(v2TaobaoOrderDetailInfo, commissionMsg);
+            Checks.isTrue(insertCnt == 1, "未知错误，记录标记过程失败-" + v2TaobaoOrderDetailInfo.getId());
+        }
     }
 }

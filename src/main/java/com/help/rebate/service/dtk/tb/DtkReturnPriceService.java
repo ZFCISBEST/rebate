@@ -2,6 +2,7 @@ package com.help.rebate.service.dtk.tb;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.help.rebate.service.V2TaobaoCommissionRatioInfoService;
 import com.help.rebate.service.dtk.tb.DtkItemConverter;
 import com.help.rebate.service.dtk.tb.DtkReturnPriceService;
 import com.help.rebate.service.exception.ConvertException;
@@ -13,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 
@@ -28,8 +30,11 @@ public class DtkReturnPriceService {
     /**
      * 转链服务
      */
-    @Autowired
+    @Resource
     private DtkItemConverter dtkItemConverter;
+
+    @Resource
+    private V2TaobaoCommissionRatioInfoService v2TaobaoCommissionRatioInfoService;
 
     /**
      * 金额格式化
@@ -49,13 +54,11 @@ public class DtkReturnPriceService {
      * @param relationId
      * @param specialId
      * @param externalId
-     * @param tempReturnRate 千分位返利比例
      * @return
      */
-    public DtkReturnPriceService.TklDO generateReturnPriceInfo(String tkl, String relationId, String specialId, String externalId,
-                                                               int tempReturnRate){
+    public DtkReturnPriceService.TklDO generateReturnPriceInfo(String tkl, String relationId, String specialId, String externalId){
         String pubSite = "mm_120037479_18710025_65896653";
-        return generateReturnPriceInfo(tkl, relationId, specialId, externalId, pubSite, tempReturnRate);
+        return generateReturnPriceInfo(tkl, relationId, specialId, externalId, pubSite);
     }
 
 
@@ -66,17 +69,12 @@ public class DtkReturnPriceService {
      * @param specialId
      * @param externalId
      * @param pubSite
-     * @param tempReturnRate 千分位返利比例
      * @return
      */
     public DtkReturnPriceService.TklDO generateReturnPriceInfo(String tkl, String relationId, String specialId, String externalId,
-                                                               String pubSite, int tempReturnRate){
+                                                               String pubSite){
         JSONObject jsonObject = null;
         try{
-            if (tempReturnRate <= 0) {
-                tempReturnRate = 850;
-            }
-
             //解析淘口令
             jsonObject = dtkItemConverter.getPrivilegeTkl(tkl, relationId, specialId, externalId, pubSite);
             String longCouponTpwd = PropertyValueResolver.getProperty(jsonObject, "data.longTpwd");
@@ -91,9 +89,12 @@ public class DtkReturnPriceService {
             String coupon = PropertyValueResolver.getProperty(jsonObject, "data.couponInfo") + "";
             String qhFinalPrice = PropertyValueResolver.getProperty(jsonObject, "data.actualPrice") + "";
 
+            //计算动态返利比例 - 千分位的比例
+            int dynamicCommissionRate = v2TaobaoCommissionRatioInfoService.queryDynamicCommissionRatio(maxCommissionRate);
+
             //计算预计返利
             BigDecimal returnPrice = new BigDecimal(maxCommissionRate)
-                    .multiply(new BigDecimal(tempReturnRate))
+                    .multiply(new BigDecimal(dynamicCommissionRate))
                     .multiply(new BigDecimal(qhFinalPrice))
                     //百分位的返利比例 /100，千分位的本平台返利抽佣后的比例 / 1000
                     .multiply(new BigDecimal("0.00001"));

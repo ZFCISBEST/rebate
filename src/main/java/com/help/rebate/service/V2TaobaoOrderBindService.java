@@ -330,7 +330,9 @@ public class V2TaobaoOrderBindService {
             newOrderOpenidMap.setTradeParentId(orderDetail.getTradeParentId());
             newOrderOpenidMap.setCommissionStatusMsg("待提取");
 
-            newOrderOpenidMap.setCommissionRatio(v2TaobaoCommissionRatioInfoService.selectCommissionRatio(openId));
+            //修改为通过动态分配来计算返利
+            String totalCommissionRate = orderDetail.getTotalCommissionRate();
+            newOrderOpenidMap.setCommissionRatio(v2TaobaoCommissionRatioInfoService.queryDynamicCommissionRatio(totalCommissionRate));
         }
 
         //公共更新字段

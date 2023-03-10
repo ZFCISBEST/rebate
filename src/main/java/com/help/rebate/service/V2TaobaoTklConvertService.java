@@ -84,7 +84,7 @@ public class V2TaobaoTklConvertService {
         //String specialId = v2TaobaoUserInfo.getSpecialId();
 
         //1、首先，获取默认的返利比例
-        int commissionRatio = v2TaobaoCommissionRatioInfoService.selectCommissionRatio(openId);
+        //int commissionRatio = v2TaobaoCommissionRatioInfoService.selectCommissionRatio(openId);
 
         //2、vip|site vip = virtualId，或者各种relationId
         List<String> allPubSiteCombinations = v2TaobaoPubSiteService.getAllPubSiteCombinations(pubSiteType);
@@ -96,7 +96,7 @@ public class V2TaobaoTklConvertService {
         String pubSiteCombination = allPubSiteCombinations.get(index);
 
         //2.1.2、hash方式，选中后，开始转链
-        DtkReturnPriceService.TklDO newTkl = convertTkl(tkl, null, pubSiteCombination, commissionRatio);
+        DtkReturnPriceService.TklDO newTkl = convertTkl(tkl, null, pubSiteCombination);
 
         //2.1.3、获取商品ID - 查询转链记录表，看看该用户下是否已经转换过该商品，并使用了某个推广位
         String itemId = newTkl.getItemId();
@@ -109,7 +109,7 @@ public class V2TaobaoTklConvertService {
             String oldPubSiteCombination = tklConvertHistory.getPubsiteCombination();
 
             //重新转
-            newTkl = convertTkl(tkl, null, oldPubSiteCombination, commissionRatio);
+            newTkl = convertTkl(tkl, null, oldPubSiteCombination);
 
             //存储淘口令
             v2TaobaoTklConvertHistoryService.storeConvertRecord(tkl, openId, null, pubSiteType, newTkl, oldPubSiteCombination);
@@ -141,7 +141,7 @@ public class V2TaobaoTklConvertService {
             String newNotCostPubSiteComb = firstNotCostPubSiteComb.get();
 
             //重新转链接
-            newTkl = convertTkl(tkl, null, newNotCostPubSiteComb, commissionRatio);
+            newTkl = convertTkl(tkl, null, newNotCostPubSiteComb);
             v2TaobaoTklConvertHistoryService.storeConvertRecord(tkl, openId, null, pubSiteType, newTkl, newNotCostPubSiteComb);
             logger.info("[TklConvertService] bind openId[{}] and pubSite[{}] on item[{}], not used - 3, select new one", openId, newNotCostPubSiteComb, newTkl.getItemId());
             return newTkl.getTkl();
@@ -158,17 +158,16 @@ public class V2TaobaoTklConvertService {
      * @param tkl
      * @param specialId
      * @param pubSiteCombination
-     * @param commissionRatio 千分位返利比例
      * @return
      */
-    private DtkReturnPriceService.TklDO convertTkl(String tkl, String specialId, String pubSiteCombination, int commissionRatio) {
+    private DtkReturnPriceService.TklDO convertTkl(String tkl, String specialId, String pubSiteCombination) {
         String[] vipIdAndPubSite = pubSiteCombination.split("\\|");
         String vipId = null;
         String pubSite = vipIdAndPubSite[1];
 
         //优先，按照specialId来
         if (!EmptyUtils.isEmpty(specialId)) {
-            return dtkReturnPriceService.generateReturnPriceInfo(tkl, null, specialId, null, pubSite, commissionRatio);
+            return dtkReturnPriceService.generateReturnPriceInfo(tkl, null, specialId, null, pubSite);
         }
 
         //再按照 relationId来
@@ -176,6 +175,6 @@ public class V2TaobaoTklConvertService {
             vipId = vipIdAndPubSite[0];
         }
 
-        return dtkReturnPriceService.generateReturnPriceInfo(tkl, vipId, null, null, pubSite, commissionRatio);
+        return dtkReturnPriceService.generateReturnPriceInfo(tkl, vipId, null, null, pubSite);
     }
 }

@@ -66,4 +66,72 @@ public class V2TaobaoCommissionRatioInfoService {
 
         return commissionRatio;
     }
+
+    /**
+     * 直接计算动态返利比率
+     * 千分位
+     * @param totalCommissionRate 联盟官方返利比例, 佣金比率，百分位，如5.5，表示5.5%。
+     * @return
+     */
+    public int queryDynamicCommissionRatio(String totalCommissionRate) {
+        //这是默认值
+        int commissionRatio = 850;
+
+        try {
+            //直接算出来一份
+            double commissionRate = Double.parseDouble(totalCommissionRate);
+
+            //判定
+            if (commissionRate <= 10) {
+                commissionRatio = 850;
+            }
+            else if (commissionRate <= 15) {
+                commissionRatio = 800;
+            }
+            else if (commissionRate <= 25) {
+                commissionRatio = 750;
+            }
+            else {
+                commissionRatio = 700;
+            }
+        }
+        catch (Throwable throwable) {
+            logger.error("【queryDynamicCommissionRatio】计算动态返利出错, 将返回默认值{}", commissionRatio, throwable);
+        }
+
+        //分成这么几个档吧
+        return commissionRatio;
+    }
+
+    /**
+     * 直接计算动态返利比率
+     * 千分位
+     * @param totalCommissionRate 联盟官方返利比例, 佣金比率，百分位，如5.5，表示5.5%。
+     * @param totalCommissionFee 联盟官方返利金额，是比率*结算金额来的
+     * @return
+     */
+    public int queryDynamicCommissionRatio(String totalCommissionRate, String totalCommissionFee) {
+        //这是默认值
+        int commissionRatio = 850;
+
+        //直接算出来一份
+        double commissionRate = Double.parseDouble(totalCommissionRate);
+
+        //判定
+        if (commissionRate <= 10) {
+            commissionRatio = 850;
+        }
+        else if (commissionRate <= 15) {
+            commissionRatio = 800;
+        }
+        else if (commissionRate <= 25) {
+            commissionRatio = 750;
+        }
+        else {
+            commissionRatio = 700;
+        }
+
+        //分成这么几个档吧
+        return commissionRatio;
+    }
 }

@@ -21,7 +21,7 @@ class DtkReturnPriceServiceTest {
                 "【优惠券】 10 元\n" +
                 "\n" +
                 "7輹\uD83D\uDC4BZhi8$p7kr2vC0jOX$:// CZ6135,打開/";
-        DtkReturnPriceService.TklDO tklDO = dtkReturnPriceService.generateReturnPriceInfo(tkl, null, null, null, "mm_120037479_18710025_65896653", 1000);
+        DtkReturnPriceService.TklDO tklDO = dtkReturnPriceService.generateReturnPriceInfo(tkl, null, null, null, "mm_120037479_18710025_65896653");
         System.out.println(JSON.toJSONString(tklDO, true));
     }
 }

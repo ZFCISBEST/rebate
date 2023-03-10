@@ -266,6 +266,15 @@ public class V2TaobaoDashboardService {
             Checks.isTrue(!detailInfoOptional.isPresent(), "存在联盟尚未结算的订单-" + detailInfoOptional.get().getId());
         }
 
+        //判定是否已经绑定了
+        //根据结果，查询绑定信息
+        List<String> tradeIds = v2TaobaoOrderDetailInfos.stream().map(a -> a.getTradeId()).collect(Collectors.toList());
+        List<V2TaobaoOrderOpenidMapInfo> v2TaobaoOrderOpenidMapInfos = v2TaobaoOrderOpenidMapService.selectBindInfoByTradeId(tradeIds);
+        if (v2TaobaoOrderOpenidMapInfos.size() > 0) {
+            String msg = v2TaobaoOrderOpenidMapInfos.stream().map(a -> a.getTradeId() + ": " + a.getOpenId()).collect(Collectors.joining(","));
+            Checks.isTrue(v2TaobaoOrderOpenidMapInfos.size() == 0, "存在已经做了微信绑定的订单，无法线下结算，详情：" + msg);
+        }
+
         //开始订正
         for (V2TaobaoOrderDetailInfo v2TaobaoOrderDetailInfo : v2TaobaoOrderDetailInfos) {
             v2TaobaoOrderDetailInfo.setStatus((byte) 1);

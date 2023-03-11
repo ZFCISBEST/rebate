@@ -41,6 +41,15 @@ public class DtkItemConverter {
      * @return
      */
     public JSONObject getPrivilegeTkl(String tkl, String relationId, String specialId, String externalId, String pubSite) {
+        //优先直接转
+        try {
+            JSONObject twd2Twd = getTwd2Twd(tkl, relationId, specialId, externalId, pubSite);
+            return twd2Twd;
+        }
+        catch (Throwable throwable) {
+            logger.error("直接解析淘口令失败(tkl2tkl):{}，将尝试继续通过商品Id解析", tkl, throwable);
+        }
+
         //构建参数
         Map<String, Object> params = null;
         try {
@@ -80,10 +89,32 @@ public class DtkItemConverter {
      */
     public JSONObject getTwd2Twd(String tkl, String relationId, String specialId, String externalId, String pubSite) {
         //构建参数
-        Map<String, Object> params = buildParams(tkl, specialId, externalId, pubSite);
+        Map<String, Object> params = buildTkl2TklParams(tkl, specialId, externalId, pubSite);
 
         String result = prettyHttpService.get(DtkConfig.DTK_GET_TWD_2_TWD, params);
         return JSON.parseObject(String.valueOf(result));
+    }
+
+    private Map<String, Object> buildTkl2TklParams(String tkl, String specialId, String externalId, String pubSite) {
+        //基础参数
+        Map<String,Object> params = new TreeMap<>();
+        params.put("appKey", DtkConfig.dtkAppkey);
+        params.put("version", "v1.0.0");
+        params.put("content", tkl);
+
+        //推广位
+        params.put("pid", pubSite);
+
+        //关于ID的参数
+        if (!EmptyUtils.isEmpty(specialId)) {
+            params.put("special_id", specialId);
+        }
+        if (!EmptyUtils.isEmpty(externalId)) {
+            params.put("external_id", externalId);
+        }
+
+        params.put("sign", SignMD5Util.getSignStr(params, DtkConfig.dtkAppsecret));
+        return params;
     }
 
     private Map<String, Object> buildParams(String tkl, String specialId, String externalId, String pubSite) {
@@ -141,8 +172,8 @@ public class DtkItemConverter {
         //基础参数
         Map<String,Object> params = new TreeMap<>();
         params.put("appKey", DtkConfig.dtkAppkey);
-        params.put("content", tkl);
         params.put("version", "v1.0.0");
+        params.put("content", tkl);
         params.put("sign", SignMD5Util.getSignStr(params,DtkConfig.dtkAppsecret));
 
         String result = prettyHttpService.get(DtkConfig.DTK_PARSE_CONTENT２, params);

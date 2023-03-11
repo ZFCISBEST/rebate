@@ -49,6 +49,16 @@ public class DtkReturnPriceService {
             "【预计返】$returnPrice元";
 
     /**
+     * 生成的口令的模板
+     */
+    private static final String template_simple_with_title = "$title\n" +
+            "【券后价】$finalPrice元\n" +
+            "【优惠券】$conponInfo\n" +
+            "【预计返】$returnPrice元\n" +
+            "-------------" +
+            "$pwd";
+
+    /**
      * 生成淘口令转链
      * @param tkl
      * @param relationId
@@ -77,6 +87,7 @@ public class DtkReturnPriceService {
         try{
             //解析淘口令
             jsonObject = dtkItemConverter.getPrivilegeTkl(tkl, relationId, specialId, externalId, pubSite);
+            String goodTitle = PropertyValueResolver.getProperty(jsonObject, "data.title");
             String longCouponTpwd = PropertyValueResolver.getProperty(jsonObject, "data.longTpwd");
             String maxCommissionRate = PropertyValueResolver.getProperty(jsonObject, "data.maxCommissionRate", true);
 
@@ -100,17 +111,20 @@ public class DtkReturnPriceService {
                     .multiply(new BigDecimal("0.00001"));
 
             //兼容ios14及其以上 - 这里与订单侠不同，暂时没有可用字段用于判断
-            String newCouponTpwd = longCouponTpwd;
+            /*String newCouponTpwd = longCouponTpwd;
             if (EmptyUtils.isEmpty(coupon)) {
                 String tpwd = PropertyValueResolver.getProperty(jsonObject, "data.tpwd");
                 String longItemTpwd = PropertyValueResolver.getProperty(jsonObject, "data.shortUrl");
                 newCouponTpwd = tpwd + " " + longItemTpwd;
-            }
+            }*/
 
             //根据模板生成新的淘口令
-            String content = template_simple.replace("$finalPrice", qhFinalPrice)
+            String content = template_simple_with_title
+                    .replace("$title", goodTitle)
+                    .replace("$finalPrice", qhFinalPrice)
+                    .replace("$conponInfo", EmptyUtils.isEmpty(coupon) ? "无" : coupon)
                     .replace("$returnPrice", decimal.format(returnPrice))
-                    .replace("$pwd", newCouponTpwd);
+                    .replace("$pwd", longCouponTpwd);
 
             return new DtkReturnPriceService.TklDO(content, itemId);
         }catch(Throwable e){

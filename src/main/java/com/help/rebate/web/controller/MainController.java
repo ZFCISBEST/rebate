@@ -18,7 +18,7 @@ public class MainController {
     private static final Logger logger = LoggerFactory.getLogger(MainController.class);
 
     @ApiOperation("主页")
-    @RequestMapping({"/", "/ylj", "/ylj/**", "/**"})
+    @RequestMapping({"/", "/ylj", "/ylj/**"})
     public String homePage() {
         return "index";
     }

@@ -303,9 +303,13 @@ public class FixedOrderSyncTask {
             }
 
             //虽然状态一样，但是呢，可能是预售单，需要特殊处理一下
+            if (orderDetail.getTradeParentId().equals("1896560112614925470") || newOrderDetail.getTradeParentId().equals("1896560112614925470")) {
+                logger.info("[fix-sync-task] 特殊订单-预售单 - parent:{}， trade:{}, oldStatus:{}, newStatus:{}, oldTime:{}, newTIme:{}", parentTradeId, tradeId, oldTkStatus, newTkStatus, oldModifiedTime, newModifiedTime);
+            }
             if (oldTkStatus != null && oldModifiedTime != null && newModifiedTime != null
                     && oldTkStatus == newTkStatus
                     && oldModifiedTime.compareTo(newModifiedTime) < 0){
+                logger.info("[fix-sync-task] 特殊更新 - parent:{}， trade:{}, oldStatus:{}, newStatus:{}, oldTime:{}, newTIme:{}", parentTradeId, tradeId, oldTkStatus, newTkStatus, oldModifiedTime, newModifiedTime);
                 updateFlag = true;
             }
 

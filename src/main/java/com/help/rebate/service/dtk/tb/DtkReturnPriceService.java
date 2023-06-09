@@ -55,7 +55,7 @@ public class DtkReturnPriceService {
             "【券后价】$finalPrice元\n" +
             "【优惠券】$conponInfo\n" +
             "【预计返】$returnPrice元\n" +
-            "-------------" +
+            "-------------\n" +
             "$pwd";
 
     /**

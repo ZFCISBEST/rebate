@@ -293,11 +293,20 @@ public class FixedOrderSyncTask {
             V2TaobaoOrderDetailInfo orderDetail = orderDetails.get(0);
             Integer oldTkStatus = orderDetail.getTkStatus();
             Integer newTkStatus = newOrderDetail.getTkStatus();
+            String oldModifiedTime = orderDetail.getModifiedTime();
+            String newModifiedTime = newOrderDetail.getModifiedTime();
 
             //如果已经结算成功了，那么就不不更新了
             boolean updateFlag = true;
-            if (oldTkStatus != null && (oldTkStatus == 3 || oldTkStatus == 13) || oldTkStatus == newTkStatus) {
+            if (oldTkStatus != null && (oldTkStatus == 3 || oldTkStatus == 13 || oldTkStatus.equals(newTkStatus))) {
                 updateFlag = false;
+            }
+
+            //虽然状态一样，但是呢，可能是预售单，需要特殊处理一下
+            if (oldTkStatus != null && oldModifiedTime != null && newModifiedTime != null
+                    && oldTkStatus == newTkStatus
+                    && oldModifiedTime.compareTo(newModifiedTime) < 0){
+                updateFlag = true;
             }
 
             //执行更新

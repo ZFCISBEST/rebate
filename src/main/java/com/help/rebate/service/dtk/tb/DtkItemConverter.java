@@ -1,10 +1,13 @@
 package com.help.rebate.service.dtk.tb;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.help.rebate.commons.DtkConfig;
 import com.help.rebate.commons.PrettyHttpService;
 import com.help.rebate.utils.EmptyUtils;
+import com.help.rebate.utils.PropertyValueResolver;
+import com.help.rebate.utils.dtk.ApiClient;
 import com.help.rebate.utils.dtk.SignMD5Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,37 +47,71 @@ public class DtkItemConverter {
         //优先直接转
         try {
             JSONObject twd2Twd = getTwd2Twd(tkl, relationId, specialId, externalId, pubSite);
-            return twd2Twd;
+            Object data = PropertyValueResolver.getProperty(twd2Twd, "data", false);
+            if (data != null){
+                return twd2Twd;
+            }
+            else {
+                logger.error("直接解析淘口令失败(tkl2tkl):{}，失败提示:{}，将尝试间接解析联盟商品Id解析", tkl, PropertyValueResolver.getProperty(twd2Twd, "msg", false));
+            }
         }
         catch (Throwable throwable) {
-            logger.error("直接解析淘口令失败(tkl2tkl):{}，将尝试继续通过商品Id解析", tkl, throwable);
+            logger.error("直接解析淘口令失败(tkl2tkl):{}，将尝试间接解析联盟商品Id解析", tkl, throwable);
         }
 
-        //构建参数
-        Map<String, Object> params = null;
-        try {
-            params = buildParams(tkl, specialId, externalId, pubSite);
-        }
-        catch(Exception ex) {
-            logger.error("解析商品ID出错，重新解析:{}", tkl, ex);
-
-            //重新解析 DtkConfig.DTK_PARSE_CONTENT
-            try{
-                params = buildParams(tkl, DtkConfig.DTK_PARSE_CONTENT, specialId, externalId, pubSite);
-            }
-            catch(Exception e) {
-                logger.error("重新解析商品ID出错，无法重新解析", e);
-                throw new RuntimeException("无法解析出商品ID");
-            }
-        }
-
+        //获取商品详情
+        String stepName = "1-获取商品详情";
         try{
-            String result = prettyHttpService.get(DtkConfig.DTK_GET_PRIVILEGE_TKL, params);
-            return JSON.parseObject(String.valueOf(result));
-        }catch(Exception e) {
-            logger.error("转链接出错, {}", JSON.toJSONString(params), e);
-            throw new RuntimeException("当前商品转链接出错");
+            //商品详情
+            JSONObject orderDetailResponse = parseTaoKouLing(tkl);
+
+            //2、提取商品title
+            stepName = "2-提取商品title";
+            JSONObject orderDetail = orderDetailResponse.getObject("data", JSONObject.class);
+            JSONObject originInfo = orderDetail.getObject("originInfo", JSONObject.class);
+            String itemTitle = originInfo.getString("title");
+            String goodsId = orderDetail.getString("goodsId");
+            String sellerId = orderDetail.getString("sellerId");
+
+            //3、模糊搜索
+            stepName = "3-执行模糊搜索";
+            JSONObject fuzzyItemObject = getFuzzyItemList(itemTitle.replaceAll("[【】]", " "), 1, 50);
+            JSONArray fuzzyItemList = fuzzyItemObject.getObject("data", JSONObject.class).getJSONArray("list");
+
+            //4、匹配新商品ID
+            stepName = "4-匹配获取新商品ID,模糊列表个数-" + fuzzyItemList.size();
+            String targetGoodsId = null;
+            for (int i = 0; i < fuzzyItemList.size(); i++) {
+                JSONObject jsonObject = fuzzyItemList.getJSONObject(i);
+
+                String tempItemTitle = jsonObject.getString("title");
+                //这是联盟新ID
+                String tempGoodsId = jsonObject.getString("goodsId");
+                String tempSellerId = jsonObject.getString("sellerId");
+
+                if (tempItemTitle.equals(itemTitle) && tempSellerId.equals(sellerId)) {
+                    targetGoodsId = tempGoodsId;
+                    break;
+                }
+            }
+
+            //5、根据新商品ID，转为淘口令
+            stepName = "5-根据新商品ID，转为淘口令";
+            JSONObject tklResponse = getTkl(targetGoodsId);
+            if (tklResponse != null){
+                Object data = PropertyValueResolver.getProperty(tklResponse, "data.title", false);
+                if (data != null && data.equals("")){
+                    tklResponse.getJSONObject("data").put("title", itemTitle);
+                }
+            }
+
+            return tklResponse;
         }
+        catch (Throwable throwable) {
+            logger.error("间接解析淘口令失败（失败步骤点:{}）:{}", stepName, tkl, throwable);
+            throw new RuntimeException("无法解析出该商品的返利淘口令！");
+        }
+
     }
 
     /**
@@ -163,6 +200,14 @@ public class DtkItemConverter {
         return params;
     }
 
+    private Map<String, Object> buildCommonParams(String version) {
+        //基础参数
+        Map<String,Object> params = new TreeMap<>();
+        params.put("appKey", DtkConfig.dtkAppkey);
+        params.put("version", version);
+        return params;
+    }
+
     /**
      * 根据淘口令，获取商品信息，包含商品ID
      * @param tkl
@@ -199,4 +244,51 @@ public class DtkItemConverter {
         return JSON.parseObject(String.valueOf(result));
     }
 
+    /**
+     * 解析淘口令，url，淘口令，等各种格式均可以
+     * @param content
+     * @return
+     * @throws Exception
+     */
+    JSONObject parseTaoKouLing(String content) throws Exception {
+        String url = DtkConfig.DTK_PARSE_CONTENT;
+
+        Map<String, Object> paraMap = buildCommonParams("v1.0.0");
+        paraMap.put("content", content);
+        paraMap.put("sign", SignMD5Util.getSignStr(paraMap, DtkConfig.dtkAppsecret));
+
+        String result = prettyHttpService.get(url, paraMap);
+        return JSON.parseObject(result);
+    }
+
+    JSONObject getFuzzyItemList(String title, int pageNo, int pageSize) throws Exception {
+        //联盟搜索
+        //String url = "https://openapi.dataoke.com/api/tb-service/get-tb-service";
+        //超级搜索
+        String url = "https://openapi.dataoke.com/api/goods/list-super-goods";
+
+        Map<String, Object> paraMap = buildCommonParams("v1.3.0");
+        paraMap.put("keyWords", title);
+        paraMap.put("pageId", pageNo + "");
+        paraMap.put("pageSize", pageSize + "");
+        paraMap.put("type", "2");
+
+        paraMap.put("sign", SignMD5Util.getSignStr(paraMap, DtkConfig.dtkAppsecret));
+
+        String result = prettyHttpService.get(url, paraMap);
+        return JSON.parseObject(result);
+    }
+
+    JSONObject getTkl(String goodsId) throws Exception {
+        //高效转链
+        String url = "https://openapi.dataoke.com/api/tb-service/get-privilege-link";
+
+        Map<String, Object> paraMap = buildCommonParams("v1.3.1");
+        paraMap.put("goodsId", goodsId);
+
+        paraMap.put("sign", SignMD5Util.getSignStr(paraMap, DtkConfig.dtkAppsecret));
+
+        String result = prettyHttpService.get(url, paraMap);
+        return JSON.parseObject(result);
+    }
 }

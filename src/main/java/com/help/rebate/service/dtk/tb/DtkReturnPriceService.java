@@ -92,8 +92,12 @@ public class DtkReturnPriceService {
             String maxCommissionRate = PropertyValueResolver.getProperty(jsonObject, "data.maxCommissionRate", true);
 
             //百分位的数，如35，表示返利35%
-            if (maxCommissionRate == null || maxCommissionRate.equals("null")) {
+            if (maxCommissionRate == null || maxCommissionRate.equals("null") || maxCommissionRate.trim().length()==0) {
                 maxCommissionRate = PropertyValueResolver.getProperty(jsonObject, "data.minCommissionRate");
+            }
+            if (maxCommissionRate == null || maxCommissionRate.equals("null") || maxCommissionRate.trim().length()==0) {
+                logger.error("解析淘口令的返利比例失败:{}", tkl);
+                throw new RuntimeException("无返利信息");
             }
 
             String itemId = PropertyValueResolver.getProperty(jsonObject, "data.itemId") + "";

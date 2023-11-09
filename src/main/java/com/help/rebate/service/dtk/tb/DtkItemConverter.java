@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.help.rebate.commons.DtkConfig;
 import com.help.rebate.commons.PrettyHttpService;
 import com.help.rebate.utils.EmptyUtils;
+import com.help.rebate.utils.FenciUtil;
 import com.help.rebate.utils.PropertyValueResolver;
 import com.help.rebate.utils.dtk.ApiClient;
 import com.help.rebate.utils.dtk.SignMD5Util;
@@ -69,14 +70,21 @@ public class DtkItemConverter {
             stepName = "2-提取商品title";
             JSONObject orderDetail = orderDetailResponse.getObject("data", JSONObject.class);
             JSONObject originInfo = orderDetail.getObject("originInfo", JSONObject.class);
-            String itemTitle = originInfo.getString("title");
             String goodsId = orderDetail.getString("goodsId");
             String sellerId = orderDetail.getString("sellerId");
+            String itemTitle = originInfo.getString("title");
+            String shopName = originInfo.getString("shopName");
 
             //3、模糊搜索
             stepName = "3-执行模糊搜索";
-            JSONObject fuzzyItemObject = getFuzzyItemList(itemTitle.replaceAll("[【】]", " "), 1, 50);
+            String fenciKeyWords = FenciUtil.fenci(itemTitle.replaceAll("[【】]", " "));
+            JSONObject fuzzyItemObject = getFuzzyItemList(fenciKeyWords, 1, 50);
             JSONArray fuzzyItemList = fuzzyItemObject.getObject("data", JSONObject.class).getJSONArray("list");
+
+            //3.1
+            if (fuzzyItemList == null || fuzzyItemList.size() == 0) {
+                throw new RuntimeException("未找到匹配的商品！");
+            }
 
             //4、匹配新商品ID
             stepName = "4-匹配获取新商品ID,模糊列表个数-" + fuzzyItemList.size();
@@ -88,11 +96,27 @@ public class DtkItemConverter {
                 //这是联盟新ID
                 String tempGoodsId = jsonObject.getString("goodsId");
                 String tempSellerId = jsonObject.getString("sellerId");
+                String tempShopName = jsonObject.getString("shopName");
 
-                if (tempItemTitle.equals(itemTitle) && tempSellerId.equals(sellerId)) {
-                    targetGoodsId = tempGoodsId;
-                    break;
+                if (tempItemTitle.equals(itemTitle)) {
+                    if (!EmptyUtils.isEmpty(sellerId) && !EmptyUtils.isEmpty(tempSellerId)) {
+                        if (tempSellerId.equals(sellerId)) {
+                            targetGoodsId = tempGoodsId;
+                            break;
+                        }
+                    }
+                    else if (!EmptyUtils.isEmpty(shopName) && !EmptyUtils.isEmpty(tempShopName)) {
+                        if (tempShopName.equals(shopName)) {
+                            targetGoodsId = tempGoodsId;
+                            break;
+                        }
+                    }
                 }
+            }
+
+            //4.1 没匹配到
+            if (targetGoodsId == null) {
+                throw new RuntimeException("无法匹配到指定商品！");
             }
 
             //5、根据新商品ID，转为淘口令
